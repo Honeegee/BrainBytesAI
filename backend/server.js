@@ -1,14 +1,25 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const axios = require('axios');
 require('dotenv').config();
+
+// Import routes
+const messagesRouter = require('./routes/messages');
+const userProfilesRouter = require('./routes/userProfiles');
+const learningMaterialsRouter = require('./routes/learningMaterials');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: ['http://localhost:8080', 'http://localhost:3000'],
+  methods: ['GET', 'POST'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+// Add options handling for preflight requests
+app.options('*', cors());
 app.use(express.json());
 
 // Connect to MongoDB
@@ -22,84 +33,22 @@ mongoose.connect('mongodb://mongo:27017/brainbytes', {
   console.error('Failed to connect to MongoDB:', err);
 });
 
-// Define a simple schema for messages
-const messageSchema = new mongoose.Schema({
-  text: String,
-  createdAt: { type: Date, default: Date.now },
-  isAiResponse: { type: Boolean, default: false }
-});
-
-const Message = mongoose.model('Message', messageSchema);
-
-// API Routes
+// Welcome route
 app.get('/', (req, res) => {
-  res.json({ message: 'Welcome to the BrainBytes API' });
-});
-
-// Get all messages
-app.get('/api/messages', async (req, res) => {
-  try {
-    const messages = await Message.find().sort({ createdAt: -1 });
-    res.json(messages);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Create a new message and get AI response
-app.post('/api/messages', async (req, res) => {
-  try {
-    // Save user message
-    const userMessage = new Message({
-      text: req.body.text,
-      isAiResponse: false
-    });
-    await userMessage.save();
-
-    // Generate AI response using OpenRouter Gemini Pro
-    try {
-      const response = await axios.post('https://openrouter.ai/api/v1/chat/completions', {
-        model: 'google/gemini-pro',
-        messages: [
-          {
-            role: 'user',
-            content: req.body.text
-          }
-        ],
-        temperature: 0.7,
-        max_tokens: 200
-      }, {
-        headers: {
-          'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-          'HTTP-Referer': 'http://localhost:3000',
-          'Content-Type': 'application/json'
-        }
-      });
-
-      // Save AI response
-      const aiMessage = new Message({
-        text: response.data.choices[0].message.content,
-        isAiResponse: true
-      });
-      await aiMessage.save();
-
-      // Return both messages
-      res.status(201).json({
-        userMessage,
-        aiMessage
-      });
-    } catch (aiError) {
-      console.error('AI Error:', aiError);
-      // If AI fails, still return user message
-      res.status(201).json({
-        userMessage,
-        error: 'AI response generation failed'
-      });
+  res.json({ 
+    message: 'Welcome to the BrainBytes API',
+    endpoints: {
+      messages: '/api/messages',
+      userProfiles: '/api/users',
+      learningMaterials: '/api/materials'
     }
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
+  });
 });
+
+// Routes
+app.use('/api/messages', messagesRouter);
+app.use('/api/users', userProfilesRouter);
+app.use('/api/materials', learningMaterialsRouter);
 
 // Start the server
 app.listen(PORT, () => {

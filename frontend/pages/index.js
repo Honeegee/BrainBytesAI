@@ -5,12 +5,15 @@ export default function Home() {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
+  const [subjects, setSubjects] = useState([]);
+  const [selectedSubject, setSelectedSubject] = useState('');
+  const [userProfile, setUserProfile] = useState(null);
+  const [error, setError] = useState('');
 
   // Fetch messages from the API
   const fetchMessages = async () => {
     try {
       const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/messages`);
-      console.log('Fetched messages:', response.data); 
       setMessages(response.data);
       setLoading(false);
     } catch (error) {
@@ -19,33 +22,132 @@ export default function Home() {
     }
   };
 
+  // Fetch initial data
+  useEffect(() => {
+    let mounted = true;
+
+    const fetchInitialData = async () => {
+      try {
+        // Fetch subjects
+        const subjectsResponse = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/materials/subjects`);
+        if (mounted) setSubjects(subjectsResponse.data);
+
+        // Fetch messages
+        const messagesResponse = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/messages`);
+        if (mounted) setMessages(messagesResponse.data);
+
+        // Fetch user profile if available
+        const userId = localStorage.getItem('userId');
+        if (userId) {
+          const profileResponse = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/users/${userId}`);
+          if (mounted) setUserProfile(profileResponse.data);
+        }
+
+        if (mounted) setLoading(false);
+      } catch (error) {
+        console.error('Error fetching initial data:', error);
+        if (mounted) setLoading(false);
+      }
+    };
+
+    fetchInitialData();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   // Submit a new message and get AI response
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!newMessage.trim()) return;
     
     try {
-      setLoading(true);
-      console.log('Sending message:', newMessage); // Add logging
-      const response = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/messages`, { text: newMessage });
-      console.log('Response:', response.data); // Add logging
-      setNewMessage('');
-      fetchMessages();
+      try {
+        setLoading(true);
+        console.log('Sending message:', newMessage);
+        console.log('Backend URL:', process.env.NEXT_PUBLIC_BACKEND_URL);
+        
+        const messageData = {
+          text: newMessage,
+          subject: selectedSubject
+        };
+        
+        console.log('Sending request with data:', messageData);
+        const response = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/messages`, messageData);
+        console.log('Received response:', response.data);
+        
+        setNewMessage('');
+        console.log('Updating messages with response:', response.data);
+        if (response.data.userMessage && response.data.aiMessage) {
+          setMessages(prevMessages => {
+            const updatedMessages = [response.data.userMessage, response.data.aiMessage, ...prevMessages];
+            console.log('Updated messages state:', updatedMessages);
+            return updatedMessages;
+          });
+          // Scroll to top to show new messages
+          window.scrollTo(0, 0);
+        } else {
+          console.error('Invalid response format:', response.data);
+          setError('Received invalid response format from server');
+        }
+        setLoading(false);
+      } catch (error) {
+        console.error('Error details:', {
+          message: error.message,
+          response: error.response?.data,
+          status: error.response?.status
+        });
+        setError('Failed to send message. Please try again.');
+      }
     } catch (error) {
       console.error('Error posting message:', error);
+      setError(error.response?.data?.error || 'Failed to send message. Please try again.');
+      setTimeout(() => setError(''), 5000);
     } finally {
       setLoading(false);
     }
   };
 
-  // Load messages on component mount
-  useEffect(() => {
-    fetchMessages();
-  }, []);
-
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto', padding: '20px' }}>
-      <h1>BrainBytes Chat</h1>
+      {error && (
+        <div style={{
+          backgroundColor: '#fee2e2',
+          color: '#991b1b',
+          padding: '10px',
+          borderRadius: '4px',
+          marginBottom: '20px',
+          textAlign: 'center'
+        }}>
+          {error}
+        </div>
+      )}
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+        <h1>BrainBytes Chat</h1>
+        <nav style={{ display: 'flex', gap: '15px' }}>
+          <a href="/dashboard" style={{ color: '#0070f3', textDecoration: 'none' }}>Dashboard</a>
+          <a href="/profile" style={{ color: '#0070f3', textDecoration: 'none' }}>Profile</a>
+        </nav>
+      </header>
+
+      <div style={{ marginBottom: '20px' }}>
+        <select 
+          value={selectedSubject}
+          onChange={(e) => setSelectedSubject(e.target.value)}
+          style={{ 
+            width: '200px',
+            padding: '8px',
+            borderRadius: '4px',
+            border: '1px solid #ddd'
+          }}
+        >
+          <option value="">All Subjects</option>
+          {subjects.map(subject => (
+            <option key={subject} value={subject}>{subject}</option>
+          ))}
+        </select>
+      </div>
       
       <form onSubmit={handleSubmit} style={{ marginBottom: '20px' }}>
         <input
@@ -70,6 +172,20 @@ export default function Home() {
         </button>
       </form>
       
+      {userProfile && (
+        <div style={{ 
+          background: '#e3f2fd', 
+          padding: '10px', 
+          borderRadius: '4px',
+          marginBottom: '20px'
+        }}>
+          <p style={{ margin: 0 }}>
+            Welcome back, {userProfile.name}! 
+            {selectedSubject && ` Currently discussing: ${selectedSubject}`}
+          </p>
+        </div>
+      )}
+
       {loading ? (
         <p>Loading messages...</p>
       ) : (
@@ -78,7 +194,7 @@ export default function Home() {
             <p>No messages yet. Be the first to say something!</p>
           ) : (
             <ul style={{ listStyleType: 'none', padding: 0 }}>
-              {messages.map((message) => (
+              {messages.filter(message => message && typeof message === 'object').map((message) => (
                 <li 
                   key={message._id} 
                   style={{ 
@@ -91,7 +207,7 @@ export default function Home() {
                     position: 'relative'
                   }}
                 >
-                  {message.isAiResponse && (
+                  {message && message.isAiResponse && (
                     <div style={{ 
                       position: 'absolute',
                       left: '-25px',
@@ -111,8 +227,8 @@ export default function Home() {
                       AI
                     </div>
                   )}
-                  <p>{message.text}</p>
-                  <small>{new Date(message.createdAt).toLocaleString()}</small>
+                  <p>{message.text || 'No message content'}</p>
+                  <small>{message.createdAt ? new Date(message.createdAt).toLocaleString() : 'No timestamp'}</small>
                 </li>
               ))}
             </ul>
