@@ -1,24 +1,38 @@
+networks:
+  app-network:
+    driver: bridge
+
 services:
   # Frontend container
   frontend:
-    build: ./frontend
+    build: 
+      context: ./frontend
+      dockerfile: Dockerfile
     ports:
-      - "8080:3000"
+      - "3001:3000"
+    environment:
+      - NODE_ENV=development
     volumes:
       - ./frontend:/usr/src/app
       - /usr/src/app/node_modules
+    networks:
+      - app-network
     depends_on:
       - backend
-    restart: unless-stopped
+    restart: always
 
   # Backend API container
   backend:
     build: ./backend
     ports:
       - "3000:3000"
+    env_file:
+      - backend/.env
     volumes:
       - ./backend:/usr/src/app
       - /usr/src/app/node_modules
+    networks:
+      - app-network
     depends_on:
       - mongo
     restart: unless-stopped
@@ -30,6 +44,8 @@ services:
       - "27017:27017"
     volumes:
       - mongo-data:/data/db
+    networks:
+      - app-network
     restart: unless-stopped
 
 # Define volumes for persistent data

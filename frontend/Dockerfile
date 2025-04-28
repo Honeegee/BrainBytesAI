@@ -1,7 +1,17 @@
-FROM node:14-alpine
+FROM node:18-alpine
+
 WORKDIR /usr/src/app
-COPY package*.json .env* ./
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
 RUN npm install
+
+# Copy app source
 COPY . .
+
 EXPOSE 3000
+
+# Start Next.js in development mode
 CMD ["npm", "run", "dev"]

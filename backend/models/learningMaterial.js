@@ -31,7 +31,8 @@ const learningMaterialSchema = new mongoose.Schema({
   }],
   createdAt: {
     type: Date,
-    default: Date.now
+    default: Date.now,
+    index: true // Add index for efficient sorting
   },
   updatedAt: {
     type: Date,
@@ -45,8 +46,14 @@ learningMaterialSchema.pre('save', function(next) {
   next();
 });
 
-// Create indexes for efficient querying
+// Create compound indexes for efficient querying
 learningMaterialSchema.index({ subject: 1, topic: 1 });
 learningMaterialSchema.index({ tags: 1 });
+learningMaterialSchema.index({ resourceType: 1, difficulty: 1 });
+
+// Add index hints for common queries
+learningMaterialSchema.statics.findBySubject = function(subject) {
+  return this.find({ subject }).hint({ subject: 1, topic: 1 });
+};
 
 module.exports = mongoose.model('LearningMaterial', learningMaterialSchema);

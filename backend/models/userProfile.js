@@ -13,6 +13,10 @@ const userProfileSchema = new mongoose.Schema({
     trim: true,
     lowercase: true
   },
+  avatar: {
+    type: String,
+    default: ''
+  },
   preferredSubjects: [{
     type: String,
     trim: true
