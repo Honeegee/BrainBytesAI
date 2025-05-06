@@ -3,6 +3,8 @@ const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 const UserProfile = require('../models/userProfile');
+const Message = require('../models/message');
+const LearningMaterial = require('../models/learningMaterial');
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
@@ -151,5 +153,66 @@ router.delete('/:id', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+// Get user activity and progress
+router.get('/:id/activity', async (req, res) => {
+  try {
+    const userId = req.params.id;
+
+    // Get recent chat messages
+    const recentMessages = await Message.find({ userId })
+      .sort({ createdAt: -1 })
+      .limit(5);
+
+    // Get subjects engaged with and message counts
+    const messageStats = await Message.aggregate([
+      { $match: { userId } },
+      { $group: {
+        _id: '$subject',
+        count: { $sum: 1 },
+        lastInteraction: { $max: '$createdAt' }
+      }},
+      { $sort: { lastInteraction: -1 }}
+    ]);
+
+    // Get recently viewed learning materials
+    const recentMaterials = await LearningMaterial.find()
+      .sort({ createdAt: -1 })
+      .limit(5);
+
+    // Calculate subject-wise progress
+    const progress = messageStats.map(stat => ({
+      subject: stat._id || 'General',
+      interactions: stat.count,
+      lastInteraction: stat.lastInteraction,
+      level: calculateLevel(stat.count)
+    }));
+
+    res.json({
+      recentActivity: {
+        messages: recentMessages,
+        materials: recentMaterials
+      },
+      progress: progress,
+      stats: {
+        totalInteractions: progress.reduce((sum, p) => sum + p.interactions, 0),
+        activeSubjects: progress.length,
+        mostActiveSubject: progress.length > 0 ? 
+          progress.reduce((a, b) => a.interactions > b.interactions ? a : b).subject : 
+          null
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Helper function to calculate level based on interactions
+function calculateLevel(interactions) {
+  if (interactions < 10) return 'Beginner';
+  if (interactions < 25) return 'Intermediate';
+  if (interactions < 50) return 'Advanced';
+  return 'Expert';
+}
 
 module.exports = router;

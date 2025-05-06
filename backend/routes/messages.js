@@ -171,10 +171,6 @@ router.post('/', async (req, res) => {
       }).lean();
     }
 
-    if (!process.env.OPENROUTER_API_KEY) {
-      throw new Error('OpenRouter API key is not configured');
-    }
-
     // Get previous messages for context
     const previousMessages = await Message.find({ chatId: req.body.chatId })
       .sort({ createdAt: 1 })
@@ -189,43 +185,38 @@ router.post('/', async (req, res) => {
       ? `${conversationHistory}\n\nUser: ${req.body.text}\n\nReference material: ${relevantMaterial.content}\n\nAssistant:`
       : `${conversationHistory}\n\nUser: ${req.body.text}\n\nAssistant:`;
 
-    // Call AI API
-    openAiResponse = await axios.post(
-      'https://openrouter.ai/api/v1/chat/completions',
-      {
-        model: 'mistralai/mistral-7b-instruct',
-        messages: [
-          {
-            role: 'system',
-            content: 'You are a conversational AI that understands natural dialogue and context. Pay attention to pronouns and references like "it" or "that" in the user\'s messages, and connect them to the previous context. When the user refers back to previous topics, maintain the context of what was being discussed. Keep responses natural but concise, focusing on what the user is actually asking about rather than explaining how to use the chat interface.'
-          },
-          {
-            role: 'user',
-            content: prompt
-          }
-        ]
-      },
-      {
-        headers: {
-          'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-          'HTTP-Referer': process.env.OPENROUTER_REFERRER || 'https://brainbytes.ai',
-          'Content-Type': 'application/json'
+    // Call AI service
+    try {
+      openAiResponse = await axios.post(
+        'http://ai-service:3002/api/chat',
+        {
+          prompt,
+          conversationHistory
         },
-        timeout: 30000
+        {
+          timeout: 30000
+        }
+      );
+
+      if (!openAiResponse.data?.response) {
+        throw new Error('Invalid response format from AI service');
       }
-    );
 
-    if (!openAiResponse.data?.choices?.[0]?.message?.content) {
-      throw new Error('Invalid response format from AI service');
+      // Save AI response
+      aiMessage = new Message({
+        text: openAiResponse.data.response,
+        subject: req.body.subject || '',
+        chatId: req.body.chatId,
+        isAiResponse: true,
+        createdAt: new Date()
+      });
+    } catch (error) {
+      console.error('AI service error:', error);
+      if (error.response?.data?.error) {
+        throw new Error(error.response.data.error);
+      }
+      throw new Error('Failed to get AI response');
     }
-
-    // Save AI response
-    aiMessage = new Message({
-      text: openAiResponse.data.choices[0].message.content,
-      subject: req.body.subject || '',
-      chatId: req.body.chatId,
-      isAiResponse: true
-    });
     await aiMessage.save();
 
     // Return both messages

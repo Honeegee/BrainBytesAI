@@ -317,10 +317,13 @@ function Chat() {
                       >
                         {message.isAiResponse && (
                           <div className="w-8 h-8 rounded-full bg-bg-dark flex items-center justify-center overflow-hidden flex-shrink-0">
-                            <img
+                            <Image
                               src="/logo.png"
                               alt="BrainBytes AI"
+                              width={32}
+                              height={32}
                               className="w-full h-full object-cover"
+                              priority
                             />
                           </div>
                         )}
@@ -341,13 +344,14 @@ function Chat() {
                         {!message.isAiResponse && (
                           <div className="w-8 h-8 rounded-full bg-hf-yellow text-text-dark flex items-center justify-center text-sm font-bold flex-shrink-0 overflow-hidden">
                             {userProfile?.profileImage ? (
-                              <Image
-                                src={userProfile.profileImage}
-                                alt={userProfile.name}
-                                width={32}
-                                height={32}
-                                className="w-full h-full object-cover"
-                              />
+                            <Image
+                              src={userProfile.profileImage}
+                              alt={userProfile.name}
+                              width={32}
+                              height={32}
+                              className="w-full h-full object-cover"
+                              priority
+                            />
                             ) : (
                               <span>{userProfile?.name?.charAt(0)?.toUpperCase() || 'U'}</span>
                             )}
@@ -366,6 +370,7 @@ function Chat() {
                         width={32}
                         height={32}
                         className="w-full h-full object-cover"
+                        priority
                       />
                     </div>
                     <div className="p-3 rounded-lg max-w-xl shadow-sm bg-bg-dark-secondary border border-border-dark">

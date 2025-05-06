@@ -9,7 +9,7 @@ export default function Home() {
     const userId = localStorage.getItem('userId');
     
     if (token && userId) {
-      router.replace('/chat');
+      router.replace('/dashboard');
     } else {
       router.replace('/login');
     }
