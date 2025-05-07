@@ -18,14 +18,14 @@ app.post('/api/chat', async (req, res) => {
   try {
     const { prompt, conversationHistory } = req.body;
 
-    if (!process.env.OPENROUTER_API_KEY) {
-      throw new Error('OpenRouter API key is not configured');
+    if (!process.env.GROQ_API_KEY) {
+      throw new Error('Groq API key is not configured');
     }
 
     const openAiResponse = await axios.post(
-      'https://openrouter.ai/api/v1/chat/completions',
+      'https://api.groq.com/openai/v1/chat/completions',
       {
-        model: 'mistralai/mistral-7b-instruct',
+        model: 'deepseek-r1-distill-llama-70b',
         messages: [
           {
             role: 'system',
@@ -39,8 +39,7 @@ app.post('/api/chat', async (req, res) => {
       },
       {
         headers: {
-          'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-          'HTTP-Referer': process.env.OPENROUTER_REFERRER || 'https://brainbytes.ai',
+          'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
           'Content-Type': 'application/json'
         },
         timeout: 30000
