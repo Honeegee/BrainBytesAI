@@ -92,16 +92,31 @@ PORT=3000
 MONGODB_URI=mongodb://mongo:27017/brainbytes
 FRONTEND_URL=http://localhost:3001
 JWT_SECRET=brainbytes_jwt_secret_key_2024
+NODE_ENV=development
+RATE_LIMIT_WINDOW=15  # Rate limiting: 5 failed login attempts allowed per 15 minutes
+RATE_LIMIT_MAX=5
+COOKIE_SECURE=false
 
 # ai-service/.env
 PORT=3002
 OPENROUTER_API_KEY=your_openrouter_api_key
 OPENROUTER_REFERRER=https://brainbytes.ai
+NODE_ENV=development
+RATE_LIMIT_WINDOW=15  # Rate limiting: 50 AI service requests allowed per 15 minutes
+RATE_LIMIT_MAX=50
 
 # frontend/.env.local
 NEXT_PUBLIC_BACKEND_URL=http://localhost:3000
 API_URL=http://backend:3000
+NODE_ENV=development
 ```
+
+#### Rate Limiting Configuration
+- Backend service limits failed login attempts to 5 requests per 15-minute window
+- AI service limits API requests to 50 per 15-minute window
+- Rate limits are configured via environment variables (RATE_LIMIT_WINDOW and RATE_LIMIT_MAX)
+
+
 
 #### Database Setup
 When running the application through Docker, each developer will have their own local MongoDB instance:
