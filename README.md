@@ -23,7 +23,7 @@ BrainBytes is an AI-powered tutoring platform designed to provide accessible aca
 - CI/CD: GitHub Actions
 - Cloud Provider: Oracle Cloud Free Tier
 - Monitoring: Prometheus & Grafana
-- AI Integration: OpenRouter API (Mistral-7B model)
+- AI Integration: Groq API (deepseek-r1-distill-llama-70b model)
 
 ## Development Environment Setup Verification
 
@@ -56,7 +56,7 @@ BrainBytes is an AI-powered tutoring platform designed to provide accessible aca
 - Set up container networking and environment configurations
 
 ### Week 4: Integration and Testing
-- Integrate OpenRouter AI API
+- Integrate Groq API
 - Implement message history and UI improvements
 - Set up monitoring tools
 - Create project documentation
@@ -68,7 +68,7 @@ BrainBytes is an AI-powered tutoring platform designed to provide accessible aca
 - [x] Frontend development completed
 - [x] Backend API implementation
 - [x] MongoDB integration
-- [x] AI integration with OpenRouter
+- [x] AI integration with Groq API
 - [x] Chat interface implementation
 - [x] User authentication and security
 - [x] Error handling and monitoring
@@ -99,8 +99,7 @@ COOKIE_SECURE=false
 
 # ai-service/.env
 PORT=3002
-OPENROUTER_API_KEY=your_openrouter_api_key
-OPENROUTER_REFERRER=https://brainbytes.ai
+GROQ_API_KEY=your_groq_api_key
 NODE_ENV=development
 RATE_LIMIT_WINDOW=15  # Rate limiting: 50 AI service requests allowed per 15 minutes
 RATE_LIMIT_MAX=50
@@ -306,7 +305,7 @@ Database Indexes:
 
 ## AI Integration Details
 
-The platform integrates with OpenRouter API using the Mistral-7B model for intelligent tutoring:
+The platform integrates with Groq API using the deepseek-r1-distill-llama-70b model for intelligent tutoring:
 
 ### Features
 - Natural language understanding
