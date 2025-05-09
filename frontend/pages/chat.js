@@ -179,7 +179,7 @@ function Chat() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!newMessage.trim()) return;
+    if (!newMessage.trim() || !activeChatId) return;
     
     try {
       setLoading(true);
@@ -187,24 +187,33 @@ function Chat() {
       setIsTyping(true);
       
       const tempId = Date.now();
-      const isNewChat = !chatSessions.some(chat => chat.id === activeChatId && chat !== undefined);
+      const isNewChat = !chatSessions.some(chat => chat.id === activeChatId);
       
+      // Ensure we have a valid chatId
+      if (!activeChatId) {
+        throw new Error('No active chat selected');
+      }
+
       // Immediately show user message
-      setMessages(prevMessages => [...prevMessages, {
+      const userMessagePreview = {
         _id: tempId,
         text: newMessage,
         isAiResponse: false,
         createdAt: new Date().toISOString(),
         chatId: activeChatId
-      }]);
-      
-      // Prepare message data
-      const messageData = {
-        text: newMessage,
-        subject: selectedSubject,
-        chatId: activeChatId,
-        isFirstMessage: isNewChat // Tell backend if this is a new chat's first message
       };
+      
+      setMessages(prevMessages => [...prevMessages, userMessagePreview]);
+      
+      // Prepare message data with explicit validation
+      const messageData = {
+        text: newMessage.trim(),
+        subject: selectedSubject || '',
+        chatId: activeChatId,
+        isFirstMessage: isNewChat
+      };
+
+      console.log('Sending message with data:', messageData); // Debug log
 
       // Send message to backend
       const response = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/messages`, messageData);

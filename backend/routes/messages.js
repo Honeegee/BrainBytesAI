@@ -130,31 +130,25 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'Message text is required' });
     }
 
-    // Check if this is the first message of a new chat
-    if (req.body.isFirstMessage) {
-      userMessage = new Message({
-        text: req.body.text,
-        subject: req.body.subject || '',
-        chatId: req.body.chatId,
-        isAiResponse: false,
-        createdAt: new Date()
-      });
+    // Validate required fields
+    if (!req.body.chatId) {
+      return res.status(400).json({ error: 'chatId is required' });
+    }
+
+    // Create the user message
+    userMessage = new Message({
+      text: req.body.text,
+      subject: req.body.subject || '',
+      chatId: req.body.chatId,
+      isAiResponse: false,
+      createdAt: new Date()
+    });
+
+    try {
       await userMessage.save();
-    } else {
-      // Check if chat exists first
-      const existingChat = await Message.findOne({ chatId: req.body.chatId });
-      if (!existingChat) {
-        return res.status(404).json({ error: 'Chat not found' });
-      }
-      
-      // Save regular message
-      userMessage = new Message({
-        text: req.body.text,
-        subject: req.body.subject || '',
-        chatId: req.body.chatId,
-        isAiResponse: false
-      });
-      await userMessage.save();
+    } catch (error) {
+      console.error('Error saving user message:', error);
+      return res.status(500).json({ error: 'Failed to save user message' });
     }
 
     // Find relevant learning materials
@@ -185,7 +179,7 @@ router.post('/', async (req, res) => {
       ? `${conversationHistory}\n\nUser: ${req.body.text}\n\nReference material: ${relevantMaterial.content}\n\nAssistant:`
       : `${conversationHistory}\n\nUser: ${req.body.text}\n\nAssistant:`;
 
-    // Call AI service
+    // Call AI service with better error handling
     try {
       openAiResponse = await axios.post(
         'http://ai-service:3002/api/chat',
@@ -194,11 +188,22 @@ router.post('/', async (req, res) => {
           conversationHistory
         },
         {
-          timeout: 30000
+          timeout: 30000,
+          headers: {
+            'Content-Type': 'application/json'
+          }
         }
-      );
+      ).catch(error => {
+        console.error('AI service request failed:', {
+          status: error.response?.status,
+          data: error.response?.data,
+          message: error.message
+        });
+        throw new Error(`AI service connection failed: ${error.message}`);
+      });
 
-      if (!openAiResponse.data?.response) {
+      if (!openAiResponse?.data?.response) {
+        console.error('Invalid AI response format:', openAiResponse?.data);
         throw new Error('Invalid response format from AI service');
       }
 
@@ -212,10 +217,7 @@ router.post('/', async (req, res) => {
       });
     } catch (error) {
       console.error('AI service error:', error);
-      if (error.response?.data?.error) {
-        throw new Error(error.response.data.error);
-      }
-      throw new Error('Failed to get AI response');
+      throw new Error(error.message || 'Failed to get AI response');
     }
     await aiMessage.save();
 
@@ -232,16 +234,27 @@ router.post('/', async (req, res) => {
       status: error.response?.status
     });
 
-    // Send appropriate error response
+    // Send detailed error response
     if (userMessage) {
       return res.status(500).json({
         userMessage,
-        error: 'AI response generation failed. Please try again.'
+        error: error.message || 'AI response generation failed. Please try again.',
+        details: {
+          message: error.message,
+          response: error.response?.data,
+          status: error.response?.status
+        }
       });
     }
 
+    // If we couldn't even save the user message
     res.status(500).json({
-      error: error.message || 'Failed to process message'
+      error: error.message || 'Failed to process message',
+      details: {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      }
     });
   }
 });
