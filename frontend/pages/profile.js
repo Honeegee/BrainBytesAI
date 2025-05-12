@@ -88,8 +88,12 @@ function Profile() {
         }
       );
       
-      setProfile(prev => ({ ...prev, avatar: response.data.avatar }));
+      setProfile(prev => ({ ...prev, avatar: response.data.avatar, avatarFile: null, avatarPreview: null }));
       setMessage('Profile updated successfully!');
+      // Notify other tabs/components about the profile update
+      if (response.data.avatar) {
+        localStorage.setItem('profileUpdateTimestamp', new Date().getTime().toString());
+      }
       setTimeout(() => setMessage(''), 3000);
     } catch (error) {
       const errorMessage = error.response?.data?.error || 'Error updating profile. Please try again.';
@@ -130,21 +134,21 @@ function Profile() {
             />
             <label htmlFor="avatar-upload" className="cursor-pointer">
               {profile.avatarPreview || profile.avatar ? (
-                <div className="relative w-32 h-32 rounded-full overflow-hidden group-hover:opacity-80 transition-opacity">
+                <div className="relative w-24 h-24 sm:w-32 sm:h-32 rounded-full overflow-hidden group-hover:opacity-80 transition-opacity">
                   <img 
                     src={profile.avatarPreview || `${process.env.NEXT_PUBLIC_BACKEND_URL}${profile.avatar}`}
                     alt="Profile Avatar"
                     className="w-full h-full object-cover"
                   />
                   <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-6 sm:w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
                   </div>
                 </div>
               ) : (
-                <div className="w-32 h-32 rounded-full bg-hf-blue flex items-center justify-center text-white text-5xl font-bold group-hover:bg-blue-700 transition-colors">
+                <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-hf-blue flex items-center justify-center text-white text-4xl sm:text-5xl font-bold group-hover:bg-blue-700 transition-colors">
                   {profile.name ? (() => {
                     const initial = profile.name.charAt(0).toUpperCase();
                     if (typeof window !== 'undefined') {
@@ -219,18 +223,18 @@ function Profile() {
             </label>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
               {availableSubjects.map(subject => (
-                <label 
-                  key={subject} 
-                className="flex items-center space-x-3 p-3 rounded-md border border-border-dark hover:bg-bg-dark-secondary cursor-pointer"
+                <button 
+                  key={subject}
+                  type="button"
+                  onClick={() => handleSubjectChange(subject)}
+                  className={`p-3 rounded-md border ${
+                    profile.preferredSubjects.includes(subject)
+                      ? 'border-hf-blue bg-hf-blue bg-opacity-20 text-text-light'
+                      : 'border-border-dark hover:bg-bg-dark-secondary text-text-medium'
+                  } cursor-pointer transition-colors`}
                 >
-                  <input
-                    type="checkbox"
-                    checked={profile.preferredSubjects.includes(subject)}
-                    onChange={() => handleSubjectChange(subject)}
-                    className="h-4 w-4 text-hf-blue rounded border-border-dark focus:ring-hf-blue bg-bg-dark"
-                  />
-                  <span className="text-text-light">{subject}</span>
-                </label>
+                  {subject}
+                </button>
               ))}
             </div>
           </div>
@@ -242,6 +246,7 @@ function Profile() {
             Save Profile
           </button>
         </form>
+
       </div>
     </Layout>
   );

@@ -5,6 +5,7 @@ import axios from 'axios';
 import Layout from '../components/Layout';
 import ChatHistory from '../components/ChatHistory';
 import withAuth from '../components/withAuth';
+import ChatMessageContent from '../components/ChatMessageContent'; 
 
 function Chat() {
   const router = useRouter();
@@ -15,6 +16,7 @@ function Chat() {
   const [subjects, setSubjects] = useState([]);
   const [selectedSubject, setSelectedSubject] = useState('');
   const [userProfile, setUserProfile] = useState(null);
+  const [refreshSubjectsKey, setRefreshSubjectsKey] = useState(0);
   const [error, setError] = useState('');
   const [chatSessions, setChatSessions] = useState([]);
   const [activeChatId, setActiveChatId] = useState(null);
@@ -24,9 +26,7 @@ function Chat() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+
 
   const handleDeleteChat = async (chatId) => {
     try {
@@ -113,11 +113,24 @@ function Chat() {
       }
     };
 
+    const fetchSubjects = async () => {
+      try {
+        const subjectsResponse = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/materials/subjects`);
+        if (mounted) {
+          setSubjects(subjectsResponse.data);
+          // If selected subject no longer exists, reset it
+          if (selectedSubject && !subjectsResponse.data.includes(selectedSubject)) {
+            setSelectedSubject('');
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching subjects:', error);
+      }
+    };
+
     const fetchInitialData = async () => {
       try {
-        // Fetch subjects
-        const subjectsResponse = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/materials/subjects`);
-        if (mounted) setSubjects(subjectsResponse.data);
+        await fetchSubjects();
 
         // Fetch initial messages
         if (activeChatId) {
@@ -159,6 +172,15 @@ function Chat() {
     return () => {
       mounted = false;
     };
+  }, [refreshSubjectsKey]);
+
+  // Refresh subjects list every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setRefreshSubjectsKey(prev => prev + 1);
+    }, 30000);
+
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
@@ -293,25 +315,25 @@ function Chat() {
           onUpdateChat={handleUpdateChat}
         />
         <div className="flex-1 flex flex-col">
-        <div className="flex-1 overflow-y-auto p-4">
-          {error && (
-            <div className="bg-red-900 bg-opacity-50 text-red-200 p-3 rounded-md mb-4 text-center border border-red-700 text-sm">
-              {error}
-            </div>
-          )}
-          <div className="max-w-4xl mx-auto space-y-4 px-4">
-            {userProfile && (
-              <div className="bg-hf-blue bg-opacity-20 p-3 rounded-md mb-4">
-                <p className="text-blue-300 text-sm">
-                  Welcome back, {userProfile.name}!
-                  {selectedSubject && ` Currently discussing: ${selectedSubject}`}
-                </p>
-              </div>
-            )}
+          <div className="flex-1 overflow-y-auto p-4">
+            <div className="max-w-4xl mx-auto space-y-4">
+              {error && (
+                <div className="bg-red-900 bg-opacity-50 text-red-200 p-3 rounded-md text-center border border-red-700 text-sm">
+                  {error}
+                </div>
+              )}
+              {userProfile && (
+                <div className="bg-hf-blue bg-opacity-20 p-3 rounded-md">
+                  <p className="text-blue-300 text-sm">
+                    Welcome back, {userProfile.name}!
+                    {selectedSubject && ` Currently discussing: ${selectedSubject}`}
+                  </p>
+                </div>
+              )}
 
-            {loading && !messages.length ? (
-              <p className="text-text-medium text-center">Loading messages...</p>
-            ) : (
+              {loading && !messages.length ? (
+                <p className="text-text-medium text-center">Loading messages...</p>
+              ) : (
               <>
                 {messages.length === 0 && !loading && (
                   <p className="text-text-medium text-center">No messages yet. Start the conversation!</p>
@@ -337,15 +359,13 @@ function Chat() {
                           </div>
                         )}
                         <div
-                          className={`p-3 rounded-lg max-w-xl shadow-sm ${
+                          className={`p-3 rounded-lg ${
                             message.isAiResponse
-                              ? 'bg-bg-dark-secondary border border-border-dark text-text-light'
-                              : 'bg-hf-blue text-white'
+                              ? 'text-text-light' 
+                              : 'bg-hf-blue text-white max-w-xl'
                           }`}
                         >
-                          <p className="text-sm break-words whitespace-pre-wrap">
-                            {message.text || 'No message content'}
-                          </p>
+                          <ChatMessageContent text={message.text} />
                           <small className={`block mt-1 text-xs ${message.isAiResponse ? 'text-text-medium' : 'text-blue-200'}`}>
                             {message.createdAt ? new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'No timestamp'}
                           </small>
@@ -382,7 +402,7 @@ function Chat() {
                         priority
                       />
                     </div>
-                    <div className="p-3 rounded-lg max-w-xl shadow-sm bg-bg-dark-secondary border border-border-dark">
+                    <div className="p-3 rounded-lg"> 
                       <div className="flex gap-2">
                         <div className="w-2 h-2 bg-text-medium rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
                         <div className="w-2 h-2 bg-text-medium rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
@@ -393,58 +413,65 @@ function Chat() {
                 )}
               </>
             )}
+            </div>
           </div>
-        </div>
 
-        <div className="sticky bottom-0 z-10">
-          <form onSubmit={handleSubmit} className="max-w-4xl mx-auto px-2 py-2">
-            <div className="flex flex-col gap-2">
-              <div className="relative">
-                <textarea
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  placeholder="Message BrainBytes..."
-                  className="input bg-bg-dark-secondary border border-border-dark text-text-light flex-1 resize-none text-base py-3 px-4 rounded-xl focus:ring-hf-blue focus:border-hf-blue placeholder-text-medium pr-12"
-                  rows="3"
-                  disabled={loading}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault(); 
-                      handleSubmit(e);    
-                    }
-                  }}
-                />
-                <button
-                  type="submit"
-                  disabled={loading || !newMessage.trim()}
-                  className={`absolute right-3 bottom-3 bg-hf-blue hover:bg-blue-700 text-white p-2 rounded-full transition-colors ${
-                    (loading || !newMessage.trim()) ? 'opacity-50 cursor-not-allowed' : ''
-                  }`}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="22" y1="2" x2="11" y2="13"></line>
-                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-                  </svg>
-                </button>
-                <div className="absolute bottom-4 left-0 px-4">
+
+          <div className="sticky bottom-0 z-10">
+            <form onSubmit={handleSubmit} className="max-w-4xl mx-auto px-2 py-2">
+              {/* Main container for the input area, now flex-col */}
+              <div className="flex flex-col gap-2 bg-bg-dark-secondary border border-border-dark rounded-xl p-2">
+                {/* Row for textarea */}
+                <div className="relative flex items-end">
+                  <textarea
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    placeholder="Message BrainBytes..."
+                    className="input bg-transparent border-none text-text-light flex-1 resize-none text-base py-2 px-2 focus:ring-0 focus:border-none placeholder-text-medium"
+                    rows="1"
+                    disabled={loading}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSubmit(e);
+                      }
+                    }}
+                    style={{ minHeight: '40px' }} // Ensure textarea has some min height
+                  />
+                </div>
+                {/* Row for Filter and Send Button */}
+                <div className="flex items-center justify-between gap-2 pt-1">
                   <select
                     value={selectedSubject}
                     onChange={(e) => setSelectedSubject(e.target.value)}
-                    className="bg-bg-dark-secondary border border-border-dark text-text-light text-xs focus:ring-hf-blue focus:border-hf-blue h-8 pl-3 pr-6 py-1 rounded-full w-30"
+                                       className="bg-bg-dark-secondary border border-border-dark text-text-light text-xs focus:ring-hf-blue focus:border-hf-blue h-8 pl-3 pr-6 py-1 rounded-full w-30"
+
+                    title="Filter by subject" 
                   >
                     <option value="" className="text-text-medium">All Subjects</option>
                     {subjects.map(subject => (
                       <option key={subject} value={subject} className="text-text-light bg-bg-dark">{subject}</option>
                     ))}
                   </select>
+                  <button
+                    type="submit"
+                    disabled={loading || !newMessage.trim()}
+                    className={`bg-hf-blue hover:bg-blue-700 text-white p-2 rounded-full transition-colors flex-shrink-0 ${
+                      (loading || !newMessage.trim()) ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="22" y1="2" x2="11" y2="13"></line>
+                      <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                  </button>
                 </div>
               </div>
-            </div>
-          </form>
+            </form>
+          </div>
         </div>
       </div>
-    </div>
-  </Layout>
+    </Layout>
   );
 }
 

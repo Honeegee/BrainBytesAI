@@ -1,219 +1,175 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import LearningMaterials from '../components/LearningMaterials';
+import LearningMaterialUpload from '../components/LearningMaterialUpload';
+import axios from 'axios';
 
 export default function LearningPage() {
-  const [filters, setFilters] = useState({
-    subject: '',
-    topic: '',
-    resourceType: '',
-    search: ''
-  });
-  const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({
-    subject: '',
-    topic: '',
-    content: '',
-    resourceType: 'explanation',
-    difficulty: 'intermediate',
-    tags: ''
-  });
+  const [subjects, setSubjects] = useState([]);
+  const [selectedSubject, setSelectedSubject] = useState(null);
+  const [newSubjectName, setNewSubjectName] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const handleFilterChange = (e) => {
-    const { name, value } = e.target;
-    setFilters(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleFormChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const formDataToSend = new FormData();
-      Object.entries(formData).forEach(([key, value]) => {
-        if (key !== 'file') {
-          formDataToSend.append(key, value);
-        }
-      });
-      formDataToSend.append('tags', formData.tags.split(',').map(tag => tag.trim()));
-      if (formData.file) {
-        formDataToSend.append('file', formData.file);
+  useEffect(() => {
+    const fetchSubjects = async () => {
+      try {
+        const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/materials/subjects`);
+        setSubjects(response.data);
+      } catch (error) {
+        console.error('Error fetching subjects:', error);
+        setError('Failed to load subjects. Please try again later.');
+      } finally {
+        setLoading(false);
       }
+    };
+    fetchSubjects();
+  }, []);
 
-      await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/materials`, formDataToSend, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
+  const handleCreateSubject = async (e) => {
+    e.preventDefault();
+    if (!newSubjectName.trim()) return;
+
+    try {
+      await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/materials/subjects`, {
+        subject: newSubjectName.trim()
       });
-      setShowForm(false);
-      setFormData({
-        subject: '',
-        topic: '',
-        content: '',
-        resourceType: 'explanation',
-        difficulty: 'intermediate',
-        tags: ''
-      });
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/materials/subjects`);
+      setSubjects(response.data);
+      setNewSubjectName('');
     } catch (error) {
-      console.error('Error creating material:', error);
+      console.error('Error creating subject:', error);
+      setError('Failed to create subject. Please try again.');
     }
   };
 
+  if (loading) {
+    return (
+      <Layout darkMode={true}>
+        <div className="max-w-6xl mx-auto px-4 py-8">
+          <p className="text-text-medium">Loading...</p>
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout darkMode={true}>
-      <div className="max-w-4xl mx-auto">
-        <div className="flex justify-between items-center mt-8 mb-6">
-          <h1 className="text-2xl font-semibold text-text-light">Learning Materials</h1>
-          <button 
-            onClick={() => setShowForm(!showForm)}
-            className="px-4 py-2 bg-hf-blue text-white rounded hover:bg-blue-600 transition"
-          >
-            {showForm ? 'Cancel' : 'Add New Material'}
-          </button>
-        </div>
-
-        {showForm && (
-          <form onSubmit={handleSubmit} className="mb-8 p-6 bg-bg-dark-secondary rounded-lg">
-            <h2 className="text-xl font-medium mb-4 text-text-light">Add New Learning Material</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-text-medium mb-1">Subject</label>
-                <input
-                  type="text"
-                  name="subject"
-                  value={formData.subject}
-                  onChange={handleFormChange}
-                  className="w-full p-2 rounded bg-gray-800 border border-gray-600 text-text-light"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-text-medium mb-1">Topic</label>
-                <input
-                  type="text"
-                  name="topic"
-                  value={formData.topic}
-                  onChange={handleFormChange}
-                  className="w-full p-2 rounded bg-gray-800 border border-gray-600 text-text-light"
-                  required
-                />
-              </div>
-              <div className="md:col-span-2">
-                <label className="block text-text-medium mb-1">Content</label>
-                <textarea
-                  name="content"
-                  value={formData.content}
-                  onChange={handleFormChange}
-                  className="w-full p-2 rounded bg-gray-800 border border-gray-600 text-text-light min-h-[120px]"
-                  placeholder="Enter your learning material content"
-                  required
-                />
-              </div>
-              <div className="md:col-span-2">
-                <label className="block text-text-medium mb-1">Attach File (Optional)</label>
-                <input
-                  type="file"
-                  name="file"
-                  onChange={(e) => setFormData({...formData, file: e.target.files[0]})}
-                  className="w-full p-2 rounded bg-gray-800 border border-gray-600 text-text-light file:bg-gray-700 file:border-0 file:text-text-light"
-                  accept=".pdf,.doc,.docx,.txt,.md"
-                />
-                {formData.file && (
-                  <p className="text-xs text-text-medium mt-1">
-                    Selected: {formData.file.name}
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        {!selectedSubject ? (
+          <div className="space-y-8">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="text-3xl font-bold text-text-light">Learning Materials</h1>
+                  <p className="text-text-medium mt-2">
+                    {subjects.length} {subjects.length === 1 ? 'Subject' : 'Subjects'} Available
                   </p>
-                )}
+                </div>
               </div>
-              <div>
-                <label className="block text-text-medium mb-1">Resource Type</label>
-                <select
-                  name="resourceType"
-                  value={formData.resourceType}
-                  onChange={handleFormChange}
-                  className="w-full p-2 rounded bg-gray-800 border border-gray-600 text-text-light"
-                >
-                  <option value="definition">Definition</option>
-                  <option value="explanation">Explanation</option>
-                  <option value="example">Example</option>
-                  <option value="practice">Practice</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-text-medium mb-1">Tags (comma separated)</label>
+
+              {error && (
+                <div className="mt-4 p-4 bg-red-900/50 border border-red-500 rounded-lg">
+                  <p className="text-red-200">{error}</p>
+                </div>
+              )}
+            
+            {/* Create New Subject Form */}
+            <div className="bg-bg-dark-secondary rounded-xl p-6">
+              <h2 className="text-xl font-semibold text-text-light mb-4">Add New Subject</h2>
+              <form onSubmit={handleCreateSubject} className="flex gap-4">
                 <input
                   type="text"
-                  name="tags"
-                  value={formData.tags}
-                  onChange={handleFormChange}
-                className="w-full p-2 rounded bg-gray-800 border border-gray-600 text-text-light"
+                  value={newSubjectName}
+                  onChange={(e) => setNewSubjectName(e.target.value)}
+                  placeholder="Enter subject name (e.g., Mathematics, Physics)"
+                  className="flex-1 p-3 rounded-lg bg-gray-800 border border-gray-600 text-text-light placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-hf-blue focus:border-transparent"
                 />
-              </div>
+                <button
+                  type="submit"
+                  className="px-6 py-3 bg-hf-blue text-white rounded-lg hover:bg-blue-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-hf-blue"
+                >
+                  Create Subject
+                </button>
+              </form>
+              {error && <p className="mt-2 text-red-500">{error}</p>}
             </div>
-            <button
-              type="submit"
-              className="mt-4 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
-            >
-              Submit Material
-            </button>
-          </form>
-        )}
 
-        <div className="mb-6 p-4 bg-bg-dark-secondary rounded-lg">
-          <h2 className="text-lg font-medium mb-3 text-text-light">Filter Materials</h2>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <label className="block text-text-medium mb-1">Search Content</label>
-              <input
-                type="text"
-                name="search"
-                value={filters.search}
-                onChange={handleFilterChange}
-                className="w-full p-2 rounded bg-gray-800 border border-gray-600 text-text-light"
-                placeholder="Search material content..."
-              />
-            </div>
-            <div>
-              <label className="block text-text-medium mb-1">Subject</label>
-              <input
-                type="text"
-                name="subject"
-                value={filters.subject}
-                onChange={handleFilterChange}
-                className="w-full p-2 rounded bg-gray-800 border border-gray-600 text-text-light"
-              />
-            </div>
-            <div>
-              <label className="block text-text-medium mb-1">Topic</label>
-              <input
-                type="text"
-                name="topic"
-                value={filters.topic}
-                onChange={handleFilterChange}
-                className="w-full p-2 rounded bg-gray-800 border border-gray-600 text-text-light"
-              />
-            </div>
-            <div>
-              <label className="block text-text-medium mb-1">Resource Type</label>
-              <select
-                name="resourceType"
-                value={filters.resourceType}
-                onChange={handleFilterChange}
-                className="w-full p-2 rounded bg-gray-800 border border-gray-600 text-text-light"
-              >
-                <option value="">All Types</option>
-                <option value="definition">Definition</option>
-                <option value="explanation">Explanation</option>
-                <option value="example">Example</option>
-                <option value="practice">Practice</option>
-              </select>
+            {/* Subject Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {subjects.map((subject) => (
+                <div
+                  key={subject}
+                  onClick={() => setSelectedSubject(subject)}
+                  className="group p-6 rounded-xl bg-gray-800 border-2 border-gray-600 hover:border-hf-blue transition-all duration-200 text-left relative cursor-pointer"
+                >
+                  <div className="flex flex-col h-full">
+                    <div>
+                      <h3 className="text-xl font-semibold text-text-light mb-2">{subject}</h3>
+                      <p className="text-text-medium text-sm">Click to view learning materials</p>
+                    </div>
+                    <div className="mt-auto flex justify-between items-center pt-4">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (window.confirm(`Are you sure you want to delete ${subject} and all its materials?`)) {
+                            try {
+                              axios.delete(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/materials/subjects`, {
+                                data: { subject }
+                              })
+                                .then(() => {
+                                  axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/materials/subjects`)
+                                    .then(response => setSubjects(response.data))
+                                    .catch(error => {
+                                      console.error('Error fetching subjects:', error);
+                                      setError('Failed to refresh subjects list.');
+                                    });
+                                })
+                                .catch(error => {
+                                  console.error('Error deleting subject:', error);
+                                  setError('Failed to delete subject. Please try again.');
+                                });
+                            } catch (error) {
+                              console.error('Error:', error);
+                              setError('An unexpected error occurred.');
+                            }
+                          }
+                        }}
+                        className="text-red-400 hover:text-red-500 hover:bg-red-900/20 rounded-lg transition-colors px-3 py-1 text-sm z-20"
+                      >
+                        Delete
+                      </button>
+                      <span className="text-hf-blue opacity-0 group-hover:opacity-100 transition-opacity">
+                        View →
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
-        </div>
-
-        <LearningMaterials filters={filters} />
+        ) : (
+          <div className="space-y-6">
+            <div className="flex items-center gap-6 pb-6 border-b border-gray-700">
+              <button
+                onClick={() => setSelectedSubject(null)}
+                className="p-2 text-text-medium hover:text-text-light transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <div>
+                <h1 className="text-3xl font-bold text-text-light">{selectedSubject}</h1>
+                <p className="text-text-medium mt-1">Browse and manage learning materials</p>
+              </div>
+            </div>
+            
+            <LearningMaterials
+              subject={selectedSubject}
+              key={selectedSubject}
+            />
+          </div>
+        )}
       </div>
     </Layout>
   );

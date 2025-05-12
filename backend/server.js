@@ -16,6 +16,7 @@ const userProfilesRouter = require('./routes/userProfiles');
 const learningMaterialsRouter = require('./routes/learningMaterials');
 const authRouter = require('./routes/auth');
 
+
 // Constants
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -43,7 +44,7 @@ app.use(securityHeaders);
 
 // CORS configuration
 const corsOptions = {
-  origin: process.env.FRONTEND_URL,
+  origin: true, // Allow all origins in development
   credentials: true,
   methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'x-requested-with'],
@@ -97,6 +98,7 @@ app.use(apiRoutes.auth, authRouter);
 app.use(apiRoutes.messages, messagesRouter);
 app.use(apiRoutes.users, userProfilesRouter);
 app.use(apiRoutes.materials, learningMaterialsRouter);
+
 
 // Error handling middleware
 app.use((err, req, res, next) => {

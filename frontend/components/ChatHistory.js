@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 
-export default function ChatHistory({ chats, onNewChat, activeChatId, onDeleteChat, onUpdateChat }) {
-  const [isOpen, setIsOpen] = useState(true);
+export default function ChatHistory({ chats, onNewChat, activeChatId, onDeleteChat, onUpdateChat, onChatSelect }) {
+  const [isOpen, setIsOpen] = useState(true); // For desktop collapse
   const [searchQuery, setSearchQuery] = useState('');
   const [editingId, setEditingId] = useState(null);
   const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, chatId: null });
@@ -135,6 +135,11 @@ export default function ChatHistory({ chats, onNewChat, activeChatId, onDeleteCh
                         <div className="relative">
                           <Link 
                             href={`/chat?id=${chat.id}`}
+                            onClick={() => {
+                              if (onChatSelect) {
+                                onChatSelect();
+                              }
+                            }}
                             className={`flex items-center p-3 text-sm hover:bg-bg-dark group ${activeChatId === chat.id ? 'bg-bg-dark' : ''}`}
                           >
                             <span className="flex-1 truncate">{chat.title || `Chat ${chat.id}`}</span>
