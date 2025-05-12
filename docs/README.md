@@ -35,7 +35,7 @@ BrainBytes is an innovative AI-powered tutoring platform designed to provide acc
 1. Clone the repository:
    ```bash
    git clone https://github.com/Honeegee/BrainBytesAI.git
-   cd brainbytes
+   cd brainbytes-multi-container
    ```
 
 2. Set up environment variables (see [Setup Guide](SETUP.md))
