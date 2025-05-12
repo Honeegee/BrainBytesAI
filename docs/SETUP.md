@@ -19,7 +19,7 @@ Before setting up the BrainBytes AI Tutoring Platform, ensure you have the follo
 ### 1. Clone the Repository
 ```bash
 git clone https://github.com/Honeegee/BrainBytesAI.git
-cd brainbytes
+cd brainbytes-multi-container
 ```
 
 ### 2. Environment Variables
