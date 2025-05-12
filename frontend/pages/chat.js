@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import Image from 'next/image';
-import axios from 'axios';
+import api from '../lib/api';
 import Layout from '../components/Layout';
 import ChatHistory from '../components/ChatHistory';
 import withAuth from '../components/withAuth';
@@ -30,8 +30,7 @@ function Chat() {
 
   const handleDeleteChat = async (chatId) => {
     try {
-      // Delete chat from database
-      await axios.delete(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/messages/chats/${chatId}`);
+      await api.delete(`/api/messages/chats/${chatId}`);
       
       // Update local state
       setChatSessions(prevSessions => prevSessions.filter(chat => chat.id !== chatId));
@@ -55,7 +54,7 @@ function Chat() {
   const handleUpdateChat = async (chatId, newTitle) => {
     try {
       // Update title in database
-      await axios.put(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/messages/chats/${chatId}/title`, {
+      await api.put(`/api/messages/chats/${chatId}/title`, {
         title: newTitle
       });
       
@@ -79,11 +78,11 @@ function Chat() {
     }
   }, [router.query, chatSessions]);
 
-  // Load chats from database on initial mount
+  // Load chats from database
   useEffect(() => {
     const loadChats = async () => {
       try {
-        const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/messages/chats`);
+        const response = await api.get(`/api/messages/chats`);
         if (response.data && response.data.length > 0) {
           setChatSessions(response.data);
           // If no active chat is set, set the first one as active
@@ -97,25 +96,32 @@ function Chat() {
       }
     };
 
-    loadChats();
-  }, [activeChatId]);
+    // Only load chats if we're not already loading
+    if (!loading) {
+      loadChats();
+    }
+  }, [activeChatId, loading, router]);
 
   useEffect(() => {
     let mounted = true;
 
     const fetchMessages = async (chatId) => {
       try {
-        const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/messages?chatId=${chatId}`);
-        if (mounted) setMessages(response.data);
+        const response = await api.get(`/api/messages?chatId=${chatId}${selectedSubject ? `&subject=${selectedSubject}` : ''}`);
+        if (mounted) {
+          setMessages(response.data.messages);
+        }
       } catch (error) {
         console.error('Error fetching messages:', error);
-        if (mounted) setError('Failed to load messages. Please try again.');
+        if (mounted) {
+          setError('Failed to load messages. Please try again.');
+        }
       }
     };
 
     const fetchSubjects = async () => {
       try {
-        const subjectsResponse = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/materials/subjects`);
+        const subjectsResponse = await api.get(`/api/materials/subjects`);
         if (mounted) {
           setSubjects(subjectsResponse.data);
           // If selected subject no longer exists, reset it
@@ -137,24 +143,14 @@ function Chat() {
           await fetchMessages(activeChatId);
         }
 
-        // Fetch user profile if available
-        const userId = localStorage.getItem('userId');
-        if (!userId) {
-          router.replace('/login');
-          return;
-        }
-        
         try {
-          const profileResponse = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/users/${userId}`);
-          if (mounted) setUserProfile(profileResponse.data);
+          const userId = localStorage.getItem('userId');
+          if (userId) {
+            const profileResponse = await api.get(`/api/users/${userId}`);
+            if (mounted) setUserProfile(profileResponse.data);
+          }
         } catch (error) {
           console.error('Error fetching user profile:', error);
-          if (error.response?.status === 400 || error.response?.status === 404) {
-            // Clear invalid auth data and redirect to login
-            localStorage.removeItem('token');
-            localStorage.removeItem('userId');
-            router.replace('/login');
-          }
         }
 
         if (mounted) setLoading(false);
@@ -184,37 +180,54 @@ function Chat() {
   }, []);
 
   useEffect(() => {
-    if (activeChatId) {
-      setLoading(true);
-      axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/messages?chatId=${activeChatId}`)
-        .then(response => {
-          setMessages(response.data);
-          setLoading(false);
-        })
-        .catch(error => {
+    const loadMessages = async () => {
+      if (activeChatId) {
+        setLoading(true);
+        try {
+          const response = await api.get(`/api/messages?chatId=${activeChatId}${selectedSubject ? `&subject=${selectedSubject}` : ''}`);
+          setMessages(response.data.messages);
+        } catch (error) {
           console.error('Error loading chat messages:', error);
           setError('Failed to load chat messages');
+        } finally {
           setLoading(false);
-        });
-    }
-  }, [activeChatId]);
+        }
+      }
+    };
+
+    loadMessages();
+  }, [activeChatId, selectedSubject]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!newMessage.trim() || !activeChatId) return;
+    if (!newMessage.trim()) return;
     
     try {
       setLoading(true);
       setError('');
       setIsTyping(true);
       
-      const tempId = Date.now();
-      const isNewChat = !chatSessions.some(chat => chat.id === activeChatId);
+      // Store message content before clearing
+      const messageContent = newMessage.trim();
+      setNewMessage('');
       
-      // Ensure we have a valid chatId
-      if (!activeChatId) {
-        throw new Error('No active chat selected');
+      let currentChatId = activeChatId;
+      
+      // If no active chat, create one
+      if (!currentChatId) {
+        currentChatId = Date.now().toString();
+        // Update chat sessions first
+        setChatSessions(prev => [{
+          id: currentChatId,
+          title: 'New chat',
+          createdAt: new Date().toISOString()
+        }, ...prev]);
+        setActiveChatId(currentChatId);
+        router.push('/chat?id=' + currentChatId, undefined, { shallow: true });
       }
+      
+      const tempId = Date.now();
+      const isNewChat = !chatSessions.some(chat => chat.id === currentChatId);
 
       // Immediately show user message
       const userMessagePreview = {
@@ -222,7 +235,7 @@ function Chat() {
         text: newMessage,
         isAiResponse: false,
         createdAt: new Date().toISOString(),
-        chatId: activeChatId
+        chatId: currentChatId
       };
       
       setMessages(prevMessages => [...prevMessages, userMessagePreview]);
@@ -231,25 +244,24 @@ function Chat() {
       const messageData = {
         text: newMessage.trim(),
         subject: selectedSubject || '',
-        chatId: activeChatId,
+        chatId: currentChatId,
         isFirstMessage: isNewChat
       };
 
       console.log('Sending message with data:', messageData); // Debug log
 
       // Send message to backend
-      const response = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/messages`, messageData);
+      const response = await api.post(`/api/messages`, messageData);
       
       // Handle response
       if (response.data.error) {
+        setNewMessage(messageContent); // Restore message if error
         throw new Error(response.data.error);
       }
       
       // Refresh chat list to get updated titles
-      const chatsResponse = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/messages/chats`);
+      const chatsResponse = await api.get(`/api/messages/chats`);
       setChatSessions(chatsResponse.data);
-      
-      setNewMessage('');
       
       if (response.data.aiMessage) {
         setMessages(prevMessages => {
@@ -258,9 +270,9 @@ function Chat() {
         });
         
         // Update chat title with first message
-        if (chatSessions.find(chat => chat.id === activeChatId)?.title === 'New chat') {
-          const truncatedMessage = newMessage.slice(0, 30) + (newMessage.length > 30 ? '...' : '');
-          await handleUpdateChat(activeChatId, truncatedMessage);
+        if (chatSessions.find(chat => chat.id === currentChatId)?.title === 'New chat') {
+          const truncatedMessage = messageContent.slice(0, 30) + (messageContent.length > 30 ? '...' : '');
+          await handleUpdateChat(currentChatId, truncatedMessage);
         }
         
       } else {
@@ -268,6 +280,7 @@ function Chat() {
       }
     } catch (error) {
       console.error('Error:', error);
+      setNewMessage(messageContent); // Restore message on error
       setError(error.message || 'Failed to send message. Please try again.');
       if (error.response?.data?.userMessage) {
         setMessages(prevMessages => {
@@ -354,7 +367,7 @@ function Chat() {
                               width={32}
                               height={32}
                               className="w-full h-full object-cover"
-                              priority
+                              fetchpriority="high"
                             />
                           </div>
                         )}
@@ -365,21 +378,21 @@ function Chat() {
                               : 'bg-hf-blue text-white max-w-xl'
                           }`}
                         >
-                          <ChatMessageContent text={message.text} />
+                        <ChatMessageContent text={message.text} sentiment={message.sentiment} />
                           <small className={`block mt-1 text-xs ${message.isAiResponse ? 'text-text-medium' : 'text-blue-200'}`}>
                             {message.createdAt ? new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'No timestamp'}
                           </small>
                         </div>
                         {!message.isAiResponse && (
-                          <div className="w-8 h-8 rounded-full bg-hf-yellow text-text-dark flex items-center justify-center text-sm font-bold flex-shrink-0 overflow-hidden">
+                          <div className="w-6 h-6 rounded-full bg-hf-yellow text-text-dark flex items-center justify-center text-sm font-bold flex-shrink-0 overflow-hidden">
                             {userProfile?.profileImage ? (
                             <Image
                               src={userProfile.profileImage}
                               alt={userProfile.name}
-                              width={32}
-                              height={32}
+                              width={18}
+                              height={18}
                               className="w-full h-full object-cover"
-                              priority
+                              fetchpriority="high"
                             />
                             ) : (
                               <span>{userProfile?.name?.charAt(0)?.toUpperCase() || 'U'}</span>
@@ -399,7 +412,7 @@ function Chat() {
                         width={32}
                         height={32}
                         className="w-full h-full object-cover"
-                        priority
+                              fetchpriority="high"
                       />
                     </div>
                     <div className="p-3 rounded-lg"> 

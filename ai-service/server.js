@@ -4,6 +4,36 @@ const axios = require('axios');
 const { checkCommonResponse } = require('./commonResponses');
 require('dotenv').config();
 
+// Normalize prompt by cleaning and standardizing input
+const normalizePrompt = (input) => {
+  if (typeof input !== 'string') return '';
+  return input
+    .trim()
+    .replace(/\s+/g, ' ')  // Replace multiple spaces with single space
+    .replace(/['']/g, "'")  // Normalize smart quotes
+    .replace(/[""]/g, '"'); // Normalize smart double quotes
+};
+
+// Handle basic math expressions
+const handleMathExpression = (input) => {
+  if (typeof input !== 'string') return input;
+  
+  const mathPattern = /^(\d+)\s*([\+\-\*\/])\s*(\d+)$/;
+  const match = input.match(mathPattern);
+  
+  if (!match) return input;
+  
+  const [, num1, operator, num2] = match;
+  try {
+    // Use Function instead of eval for safer execution
+    const result = new Function('return ' + num1 + operator + num2)();
+    return `${input} = ${result}`;
+  } catch (error) {
+    console.error('Math expression evaluation error:', error);
+    return input;
+  }
+};
+
 const app = express();
 const PORT = process.env.PORT || 3002;
 
@@ -20,23 +50,63 @@ app.post('/api/chat', async (req, res) => {
   try {
     const { prompt, conversationHistory } = req.body;
 
-    // Normalize input prompt
-    const normalizePrompt = (input) => {
-      if (typeof input !== 'string') return '';
-      return input
+    // Detect question types and normalize input
+    const detectQuestionType = (input) => {
+      if (typeof input !== 'string') return { type: 'general', text: '' };
+
+      // Clean the input first
+      let text = input
         .replace(/<think>[\s\S]*?<\/think>/g, '')
         .replace(/\s+/g, ' ')
         .replace(/['"]/g, '')
-        .replace(/what\s+is\s+/i, '')
         .replace(/\s*\?\s*$/, '')
         .toLowerCase()
         .trim();
-    };
 
-    // Detect simple math expressions
-    const handleMathExpression = (input) => {
+      // Check for math expressions first
       const mathPattern = /^\d+\s*[\+\-\*\/]\s*\d+$/;
-      return mathPattern.test(input) ? input.replace(/\s+/g, '') : input;
+      if (mathPattern.test(text)) {
+        return {
+          type: 'math_expression',
+          text: text.replace(/\s+/g, '')
+        };
+      }
+
+      // Check for definition questions
+      if (text.match(/^(what|who)\s+(is|are)\s+/i) || 
+          text.match(/^define\s+/i)) {
+        return {
+          type: 'definition',
+          text: text.replace(/^(what|who)\s+(is|are)\s+/i, '')
+                   .replace(/^define\s+/i, '')
+        };
+      }
+
+      // Check for explanation requests
+      if (text.match(/^(explain|how does|how do)\s+/i) ||
+          text.match(/^(describe|tell me about)\s+/i)) {
+        return {
+          type: 'explanation', 
+          text: text.replace(/^(explain|how does|how do)\s+/i, '')
+                   .replace(/^(describe|tell me about)\s+/i, '')
+        };
+      }
+
+      // Check for example requests
+      if (text.match(/^(give|show|provide)\s+(me\s+)?(an\s+)?example(s)?\s+/i) ||
+          text.match(/^for\s+example/i)) {
+        return {
+          type: 'examples',
+          text: text.replace(/^(give|show|provide)\s+(me\s+)?(an\s+)?example(s)?\s+/i, '')
+                   .replace(/^for\s+example/i, '')
+        };
+      }
+
+      // Default to general type
+      return {
+        type: 'general',
+        text
+      };
     };
 
     const rawQuery = typeof prompt === 'string'
@@ -74,11 +144,11 @@ app.post('/api/chat', async (req, res) => {
 
 🗣️ Acknowledge the user's question or provide a brief context of the topic if needed. Ensure that your response feels like a natural conversation.
 
-💡 Explain the concept in simple terms, avoiding unnecessary jargon. Keep your explanation engaging and clear. Use analogies or examples when applicable, and break down difficult concepts into digestible parts.
+� Explain the concept in simple terms, avoiding unnecessary jargon. Keep your explanation engaging and clear. Use analogies or examples when applicable, and break down difficult concepts into digestible parts.
 
 🔍 Provide practical examples or scenarios to make the explanation more relatable. These can be code snippets, real-life analogies, or step-by-step breakdowns.
 
-💬 Encourage further questions or prompt the user to explore related concepts. Ensure the response feels interactive and that you're offering follow-up opportunities.
+�💬 Encourage further questions or prompt the user to explore related concepts. Ensure the response feels interactive and that you're offering follow-up opportunities.
 
 
 Formatting Guidelines:

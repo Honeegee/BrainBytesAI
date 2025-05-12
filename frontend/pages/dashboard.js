@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '../lib/api';
 import Layout from '../components/Layout';
 import withAuth from '../components/withAuth';
 
@@ -7,19 +7,30 @@ function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activityData, setActivityData] = useState(null);
+  const [isAuthChecked, setIsAuthChecked] = useState(false);
 
+  // First useEffect to check auth status
   useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const userId = localStorage.getItem('userId');
+        await api.get(`/api/users/${userId}`);
+        setIsAuthChecked(true);
+      } catch (error) {
+        console.error('Auth check failed:', error);
+      }
+    };
+    checkAuth();
+  }, []);
+
+  // Second useEffect to fetch data after auth is confirmed
+  useEffect(() => {
+    if (!isAuthChecked) return;
+
     const fetchActivity = async () => {
       try {
         const userId = localStorage.getItem('userId');
-        const token = localStorage.getItem('token');
-        
-        const response = await axios.get(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/users/${userId}/activity`,
-          {
-            headers: { Authorization: `Bearer ${token}` }
-          }
-        );
+        const response = await api.get(`/api/users/${userId}/activity`);
         
         setActivityData(response.data);
         setError(null);
@@ -32,7 +43,7 @@ function DashboardPage() {
     };
 
     fetchActivity();
-  }, []);
+  }, [isAuthChecked]);
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {

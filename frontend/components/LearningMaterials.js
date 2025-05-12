@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../lib/api';
 import LearningMaterialUpload from './LearningMaterialUpload';
 
 export default function LearningMaterials({ subject }) {
@@ -38,7 +38,7 @@ export default function LearningMaterials({ subject }) {
     if (!window.confirm('Are you sure you want to delete this material?')) return;
 
     try {
-      await axios.delete(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/materials/${materialId}`);
+      await api.delete(`/api/materials/${materialId}`);
       setRefreshKey(prev => prev + 1);
     } catch (error) {
       console.error('Error deleting material:', error);
@@ -48,8 +48,8 @@ export default function LearningMaterials({ subject }) {
 
   const handleUpdate = async (materialId, updatedData) => {
     try {
-      await axios.put(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/materials/${materialId}`,
+      await api.put(
+        `/api/materials/${materialId}`,
         updatedData
       );
       setShowEditForm(false);
@@ -63,8 +63,8 @@ export default function LearningMaterials({ subject }) {
 
   const handleDownload = async (material) => {
     try {
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/materials/download/${material._id}`,
+      const response = await api.get(
+        `/api/materials/download/${material._id}`,
         { responseType: 'blob' }
       );
       
@@ -93,7 +93,7 @@ export default function LearningMaterials({ subject }) {
   useEffect(() => {
     const fetchMaterials = async () => {
       try {
-        const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/materials/subjects/${subject}`, {
+        const response = await api.get(`/api/materials/subjects/${subject}`, {
           params: filters
         });
         setMaterials(response.data.materials || []);

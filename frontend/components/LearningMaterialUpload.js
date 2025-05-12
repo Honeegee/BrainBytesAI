@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import axios from 'axios';
+import api from '../lib/api';
 
 export default function LearningMaterialUpload({ subject, onSuccess }) {
   const [formData, setFormData] = useState({
@@ -69,13 +69,13 @@ export default function LearningMaterialUpload({ subject, onSuccess }) {
         formDataToSend.append('content', 'No file uploaded');
       }
 
-      await axios.post(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/materials`,
+      await api.post(
+        '/api/materials',
         formDataToSend,
         {
           headers: {
-            'Content-Type': 'multipart/form-data',
-          },
+            'Content-Type': 'multipart/form-data'
+          }
         }
       );
 

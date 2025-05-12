@@ -1,8 +1,23 @@
 const express = require('express');
 const router = express.Router();
 const axios = require('axios');
+const Sentiment = require('sentiment');
 const Message = require('../models/message');
 const LearningMaterial = require('../models/learningMaterial');
+const { authenticate } = require('../middleware/security');
+const mongoose = require('mongoose');
+
+const sentiment = new Sentiment();
+
+// Apply authentication middleware to all routes
+router.use(authenticate);
+
+// Helper function to get sentiment label from score
+const getSentimentLabel = (score) => {
+  if (score < -0.1) return 'negative';
+  if (score > 0.1) return 'positive';
+  return 'neutral';
+};
 
 // Update chat title
 router.put('/chats/:chatId/title', async (req, res) => {
@@ -30,13 +45,14 @@ router.put('/chats/:chatId/title', async (req, res) => {
   }
 });
 
-// Delete a chat and all its messages
+// Delete a chat and all its messages for the current user
 router.delete('/chats/:chatId', async (req, res) => {
   try {
     const { chatId } = req.params;
+    const userId = req.user._id;
 
-    // Delete all messages for this chat
-    await Message.deleteMany({ chatId });
+    // Delete all messages for this chat and user
+    await Message.deleteMany({ chatId, userId });
 
     res.json({ success: true });
   } catch (err) {
@@ -48,8 +64,11 @@ router.delete('/chats/:chatId', async (req, res) => {
 // Get all chat sessions
 router.get('/chats', async (req, res) => {
   try {
+    const userId = req.user._id; // Get userId from authenticated user
+
     // Delete any empty chats or chats with only "New chat" messages
     await Message.deleteMany({
+      userId,
       $or: [
         { chatId: null },  // Delete messages with null chatId
         { chatId: 'null' }, // Delete messages with 'null' string chatId
@@ -64,6 +83,12 @@ router.get('/chats', async (req, res) => {
     
     // Aggregate to get unique chatIds and their first messages
     const chats = await Message.aggregate([
+      // Match documents for this user first
+      {
+        $match: {
+          userId: mongoose.Types.ObjectId(userId)
+        }
+      },
       // Group by chatId to get first message and count of messages
       {
         $group: {
@@ -105,16 +130,43 @@ router.get('/chats', async (req, res) => {
   }
 });
 
-// Get messages with optional subject filter and required chatId
+// Get messages with enhanced subject filtering and pagination
 router.get('/', async (req, res) => {
   try {
-    const { subject, chatId } = req.query;
+    const { subject, chatId, page = 1, limit = 50 } = req.query;
+    const userId = req.user._id; // Get userId from authenticated user
+    
     if (!chatId) {
       return res.status(400).json({ error: 'chatId is required' });
     }
-    const query = { chatId, ...(subject ? { subject } : {}) };
-    const messages = await Message.find(query).sort({ createdAt: 1 });
-    res.json(messages);
+
+    // Build query with userId filter
+    const query = { chatId, userId };
+    if (subject && subject !== 'All Subjects') {
+      query.subject = subject;
+    }
+
+    // Get total count for pagination
+    const totalMessages = await Message.countDocuments(query);
+
+    // Execute paginated query
+    const messages = await Message.find(query)
+      .sort({ createdAt: 1 })
+      .skip((page - 1) * limit)
+      .limit(parseInt(limit));
+
+    // Get unique subjects for this chat and user
+    const uniqueSubjects = await Message.distinct('subject', { chatId, userId });
+
+    res.json({
+      messages,
+      pagination: {
+        total: totalMessages,
+        page: parseInt(page),
+        pages: Math.ceil(totalMessages / limit)
+      },
+      subjects: uniqueSubjects.filter(s => s) // Filter out empty subjects
+    });
   } catch (err) {
     console.error('Error fetching messages:', err);
     res.status(500).json({ error: 'Failed to fetch messages' });
@@ -135,13 +187,23 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'chatId is required' });
     }
 
-    // Create the user message
+    // Analyze sentiment and create the user message
+    const sentimentResult = sentiment.analyze(req.body.text);
+    const normalizedScore = sentimentResult.comparative; // Get normalized score (-1 to 1)
+    
+    const userId = req.user._id; // Get userId from authenticated user
+
     userMessage = new Message({
       text: req.body.text,
       subject: req.body.subject || '',
       chatId: req.body.chatId,
+      userId,
       isAiResponse: false,
-      createdAt: new Date()
+      createdAt: new Date(),
+      sentiment: {
+        score: normalizedScore,
+        label: getSentimentLabel(normalizedScore)
+      }
     });
 
     try {
@@ -166,7 +228,7 @@ router.post('/', async (req, res) => {
     }
 
     // Get previous messages for context
-    const previousMessages = await Message.find({ chatId: req.body.chatId })
+    const previousMessages = await Message.find({ chatId: req.body.chatId, userId })
       .sort({ createdAt: 1 })
       .limit(10);
 
@@ -207,13 +269,21 @@ router.post('/', async (req, res) => {
         throw new Error('Invalid response format from AI service');
       }
 
-      // Save AI response
+      // Analyze sentiment and save AI response
+      const aiSentimentResult = sentiment.analyze(openAiResponse.data.response);
+      const aiNormalizedScore = aiSentimentResult.comparative;
+
       aiMessage = new Message({
         text: openAiResponse.data.response,
         subject: req.body.subject || '',
         chatId: req.body.chatId,
+        userId,
         isAiResponse: true,
-        createdAt: new Date()
+        createdAt: new Date(),
+        sentiment: {
+          score: aiNormalizedScore,
+          label: getSentimentLabel(aiNormalizedScore)
+        }
       });
     } catch (error) {
       console.error('AI service error:', error);

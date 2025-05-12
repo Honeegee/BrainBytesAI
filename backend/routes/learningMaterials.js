@@ -2,14 +2,21 @@ const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
 const LearningMaterial = require('../models/learningMaterial');
-const upload = require('../middleware/fileUpload');
+const { materialUpload } = require('../middleware/fileUpload');
+const { authenticate } = require('../middleware/security');
 const fs = require('fs');
 const path = require('path');
+
+// Apply authentication to all routes
+router.use(authenticate);
 
 // Download a learning material
 router.get('/download/:id', async (req, res) => {
   try {
-    const material = await LearningMaterial.findById(req.params.id);
+    const material = await LearningMaterial.findOne({
+      _id: req.params.id,
+      userId: req.user._id
+    });
     if (!material) {
       return res.status(404).json({ error: 'Learning material not found' });
     }
@@ -38,13 +45,14 @@ router.get('/download/:id', async (req, res) => {
 });
 
 // Create a new learning material with file upload
-router.post('/', upload.single('file'), async (req, res) => {
+router.post('/', materialUpload.single('file'), async (req, res) => {
   try {
     // Parse tags if they exist
     const tags = req.body.tags ? JSON.parse(req.body.tags) : [];
 
     // Create learning material with properly processed data
     const learningMaterial = new LearningMaterial({
+      userId: req.user._id,
       subject: req.body.subject,
       topic: req.body.topic,
       resourceType: req.body.resourceType,
@@ -73,7 +81,9 @@ router.get('/', async (req, res) => {
       fields
     } = req.query;
 
-    const query = {};
+    const query = {
+      userId: req.user._id
+    };
     const options = {
       lean: true, // Return plain objects instead of Mongoose documents
       select: fields ? fields.split(',').join(' ') : '',
@@ -129,7 +139,10 @@ router.get('/subjects/:subject', async (req, res) => {
 
     const [materials, total] = await Promise.all([
       LearningMaterial.find(
-        { subject: req.params.subject },
+        { 
+          subject: req.params.subject,
+          userId: req.user._id
+        },
         fields,
         {
           lean: true,
@@ -175,14 +188,15 @@ router.post('/subjects', async (req, res) => {
       return res.status(400).json({ error: 'Subject name is required' });
     }
 
-    // Check if subject already exists
-    const existingSubjects = await LearningMaterial.distinct('subject');
+    // Check if subject already exists for this user
+    const existingSubjects = await LearningMaterial.distinct('subject', { userId: req.user._id });
     if (existingSubjects.includes(subject)) {
       return res.status(400).json({ error: 'Subject already exists' });
     }
 
     // Create a placeholder learning material to establish the subject
     const learningMaterial = new LearningMaterial({
+      userId: req.user._id,
       subject,
       topic: 'Introduction',
       content: `Welcome to ${subject}`,
@@ -204,8 +218,11 @@ router.delete('/subjects', async (req, res) => {
     if (!subject) {
       return res.status(400).json({ error: 'Subject is required' });
     }
-    // Delete all materials for this subject
-    await LearningMaterial.deleteMany({ subject });
+    // Delete all materials for this subject that belong to the user
+    await LearningMaterial.deleteMany({ 
+      subject,
+      userId: req.user._id
+    });
     res.json({ message: 'Subject deleted successfully' });
   } catch (error) {
     console.error('Error deleting subject:', error);
@@ -216,7 +233,7 @@ router.delete('/subjects', async (req, res) => {
 // Get distinct subjects (cached response)
 router.get('/subjects', async (req, res) => {
   try {
-    const subjects = await LearningMaterial.distinct('subject');
+    const subjects = await LearningMaterial.distinct('subject', { userId: req.user._id });
     res.json(subjects);
   } catch (error) {
     console.error('Error in subject creation:', error);
@@ -232,7 +249,10 @@ router.get('/:id', async (req, res) => {
   try {
     const fields = req.query.fields ? req.query.fields.split(',').join(' ') : '';
     const learningMaterial = await LearningMaterial
-      .findById(req.params.id)
+      .findOne({
+        _id: req.params.id,
+        userId: req.user._id
+      })
       .select(fields)
       .lean();
 
@@ -251,8 +271,11 @@ router.get('/:id', async (req, res) => {
 // Update a learning material
 router.put('/:id', async (req, res) => {
   try {
-    const learningMaterial = await LearningMaterial.findByIdAndUpdate(
-      req.params.id,
+    const learningMaterial = await LearningMaterial.findOneAndUpdate(
+      {
+        _id: req.params.id,
+        userId: req.user._id
+      },
       { ...req.body, updatedAt: new Date() },
       { 
         new: true, 
@@ -276,7 +299,10 @@ router.put('/:id', async (req, res) => {
 // Delete a learning material
 router.delete('/:id', async (req, res) => {
   try {
-    const learningMaterial = await LearningMaterial.findByIdAndDelete(req.params.id);
+    const learningMaterial = await LearningMaterial.findOneAndDelete({
+      _id: req.params.id,
+      userId: req.user._id
+    });
     if (!learningMaterial) {
       return res.status(404).json({ error: 'Learning material not found' });
     }

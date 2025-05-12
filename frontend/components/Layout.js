@@ -1,8 +1,27 @@
 import Head from 'next/head'
 import Link from 'next/link'
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
+import axios from 'axios';
 
 export default function Layout({ children, darkMode = false }) {
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    try {
+      await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/logout`);
+      localStorage.removeItem('token');
+      localStorage.removeItem('userId');
+      router.push('/login');
+    } catch (error) {
+      console.error('Logout failed:', error);
+      // Still clear client-side state even if backend logout fails
+      localStorage.removeItem('token');
+      localStorage.removeItem('userId');
+      router.push('/login');
+    }
+  };
+
   const [isClient, setIsClient] = useState(false);
   const [currentPath, setCurrentPath] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -65,6 +84,12 @@ export default function Layout({ children, darkMode = false }) {
                 <Link href="/profile" className={`text-sm ${darkMode ? 'text-text-light hover:text-hf-blue' : 'text-gray-900 hover:text-hf-blue'}`}>
                   Profile
                 </Link>
+                <button 
+                  onClick={handleLogout}
+                  className={`text-sm ${darkMode ? 'text-text-light hover:text-hf-blue' : 'text-gray-900 hover:text-hf-blue'}`}
+                >
+                  Logout
+                </button>
               </>
             )}
           </div>
@@ -84,6 +109,15 @@ export default function Layout({ children, darkMode = false }) {
             <Link href="/profile" className={`block px-4 py-2 text-sm ${darkMode ? 'text-text-light hover:bg-bg-dark-secondary' : 'text-gray-900 hover:bg-gray-100'}`} onClick={() => setIsMobileMenuOpen(false)}>
               Profile
             </Link>
+            <button 
+              onClick={() => {
+                setIsMobileMenuOpen(false);
+                handleLogout();
+              }}
+              className={`block w-full text-left px-4 py-2 text-sm ${darkMode ? 'text-text-light hover:bg-bg-dark-secondary' : 'text-gray-900 hover:bg-gray-100'}`}
+            >
+              Logout
+            </button>
           </div>
         )}
       </header>
@@ -103,8 +137,8 @@ export default function Layout({ children, darkMode = false }) {
                 <div className="hidden sm:block absolute -top-10 right-0 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300 bg-sky-500/10 backdrop-blur-lg px-3 py-2 rounded-xl border border-sky-500/20 text-sky-200 text-sm whitespace-nowrap after:content-[''] after:absolute after:bottom-[-8px] after:right-6 after:border-8 after:border-transparent after:border-t-sky-500/20">
                   Hi! Click to chat with me!
                 </div>
-                <div className="relative w-18 h-28 group">
-                  <video src="/wave.mp4" autoPlay loop muted playsInline className="w-full h-full object-cover rounded-full bg-sky-500/10 backdrop-blur-lg border border-sky-500/20 transition-all duration-500 transform group-hover:scale-110 group-hover:border-sky-500/60 filter group-hover:brightness-110">
+                <div className="relative w-14 h-20 group"> {/* Reduced size */}
+                  <video src="/wave.mp4" autoPlay loop muted playsInline className="w-16 h-20 object-cover rounded-full bg-sky-500/10 backdrop-blur-lg border border-sky-500/20 transition-all duration-500 transform group-hover:scale-110 group-hover:border-sky-500/60 filter group-hover:brightness-110"> {/* Reduced size */}
                   </video>
                   <div className="absolute inset-0 rounded-full pointer-events-none bg-gradient-to-br from-transparent via-transparent to-sky-900/10"></div>
                 </div>

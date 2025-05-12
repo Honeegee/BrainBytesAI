@@ -2,19 +2,38 @@ import { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import LearningMaterials from '../components/LearningMaterials';
 import LearningMaterialUpload from '../components/LearningMaterialUpload';
-import axios from 'axios';
+import api from '../lib/api';
+import withAuth from '../components/withAuth';
 
-export default function LearningPage() {
+function LearningPage() {
   const [subjects, setSubjects] = useState([]);
   const [selectedSubject, setSelectedSubject] = useState(null);
   const [newSubjectName, setNewSubjectName] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isAuthChecked, setIsAuthChecked] = useState(false);
 
+  // First useEffect to check auth status
   useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const userId = localStorage.getItem('userId');
+        await api.get(`/api/users/${userId}`);
+        setIsAuthChecked(true);
+      } catch (error) {
+        console.error('Auth check failed:', error);
+      }
+    };
+    checkAuth();
+  }, []);
+
+  // Second useEffect to fetch subjects after auth is confirmed
+  useEffect(() => {
+    if (!isAuthChecked) return;
+
     const fetchSubjects = async () => {
       try {
-        const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/materials/subjects`);
+        const response = await api.get('/api/materials/subjects');
         setSubjects(response.data);
       } catch (error) {
         console.error('Error fetching subjects:', error);
@@ -24,17 +43,17 @@ export default function LearningPage() {
       }
     };
     fetchSubjects();
-  }, []);
+  }, [isAuthChecked]);
 
   const handleCreateSubject = async (e) => {
     e.preventDefault();
     if (!newSubjectName.trim()) return;
 
     try {
-      await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/materials/subjects`, {
+      await api.post('/api/materials/subjects', {
         subject: newSubjectName.trim()
       });
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/materials/subjects`);
+      const response = await api.get('/api/materials/subjects');
       setSubjects(response.data);
       setNewSubjectName('');
     } catch (error) {
@@ -113,11 +132,11 @@ export default function LearningPage() {
                           e.stopPropagation();
                           if (window.confirm(`Are you sure you want to delete ${subject} and all its materials?`)) {
                             try {
-                              axios.delete(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/materials/subjects`, {
+                              api.delete('/api/materials/subjects', {
                                 data: { subject }
                               })
                                 .then(() => {
-                                  axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/materials/subjects`)
+                              api.get('/api/materials/subjects')
                                     .then(response => setSubjects(response.data))
                                     .catch(error => {
                                       console.error('Error fetching subjects:', error);
@@ -174,3 +193,5 @@ export default function LearningPage() {
     </Layout>
   );
 }
+
+export default withAuth(LearningPage);

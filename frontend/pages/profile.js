@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../lib/api';
 import Layout from '../components/Layout';
 import withAuth from '../components/withAuth';
 
@@ -11,26 +11,36 @@ function Profile() {
   });
   const [availableSubjects, setAvailableSubjects] = useState([]);
   const [message, setMessage] = useState('');
+  const [isAuthChecked, setIsAuthChecked] = useState(false);
 
+  // First useEffect to check auth status
   useEffect(() => {
-    // Fetch user profile and available subjects
+    const checkAuth = async () => {
+      try {
+        const userId = localStorage.getItem('userId');
+        await api.get(`/api/users/${userId}`);
+        setIsAuthChecked(true);
+      } catch (error) {
+        console.error('Auth check failed:', error);
+      }
+    };
+    checkAuth();
+  }, []);
+
+  // Second useEffect to fetch data after auth is confirmed
+  useEffect(() => {
+    if (!isAuthChecked) return;
+
     const fetchData = async () => {
       try {
-        const token = localStorage.getItem('token');
         const userId = localStorage.getItem('userId');
         
         // Fetch user profile
-        const profileResponse = await axios.get(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/users/${userId}`,
-          {
-            headers: { Authorization: `Bearer ${token}` }
-          }
-        );
+        const profileResponse = await api.get(`/api/users/${userId}`);
         setProfile(profileResponse.data);
 
         // Fetch available subjects
-        const subjectsResponse = await axios.get(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/materials/subjects`
+        const subjectsResponse = await api.get('/api/materials/subjects'
         );
         setAvailableSubjects(subjectsResponse.data);
       } catch (error) {
@@ -40,7 +50,7 @@ function Profile() {
     };
 
     fetchData();
-  }, []);
+  }, [isAuthChecked]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -62,9 +72,7 @@ function Profile() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem('token');
       const userId = localStorage.getItem('userId');
-      
       const formData = new FormData();
       formData.append('name', profile.name);
       formData.append('email', profile.email);
@@ -77,13 +85,12 @@ function Profile() {
         formData.append('avatar', profile.avatarFile);
       }
 
-      const response = await axios.put(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/users/${userId}`,
+      const response = await api.put(
+        `/api/users/${userId}`,
         formData,
         {
           headers: {
-            'Content-Type': 'multipart/form-data',
-            Authorization: `Bearer ${token}`
+            'Content-Type': 'multipart/form-data'
           }
         }
       );
