@@ -184,17 +184,27 @@ describe('Authentication API', () => {
   // Test logout endpoint
   describe('POST /api/auth/logout', () => {
     test('should log out a user successfully', async () => {
-      // Mock req.logout
-      const mockLogout = jest.fn().mockImplementation((callback) => callback());
-      testApp.use('/api/auth/test-logout', (req, res, next) => {
+      // Create a new app and set up mock for logout
+      const logoutApp = express();
+      logoutApp.use(express.json());
+      
+      // Create a mock logout function
+      const mockLogout = jest.fn((callback) => callback());
+      
+      // Apply mock middleware *before* mounting the router
+      logoutApp.use((req, res, next) => {
         req.logout = mockLogout;
         next();
       });
-      testApp.use('/api/auth/test-logout', authRouter);
       
-      const response = await request(testApp)
-        .post('/api/auth/test-logout');
+      // Use the auth router
+      logoutApp.use('/api/auth', authRouter);
       
+      // Test the logout endpoint
+      const response = await request(logoutApp)
+        .post('/api/auth/logout');
+      
+      // Verify the mock was called and the response is correct
       expect(mockLogout).toHaveBeenCalled();
       expect(response.statusCode).toBe(200);
       expect(response.body).toHaveProperty('status', 'success');

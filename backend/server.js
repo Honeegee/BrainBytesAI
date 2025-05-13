@@ -28,7 +28,8 @@ const uploadDir = path.join(__dirname, 'public', 'uploads', 'avatars');
 const mongoConfig = {
   useNewUrlParser: true,
   useUnifiedTopology: true,
-  useFindAndModify: false
+  useFindAndModify: false,
+  useCreateIndex: true // Use createIndex instead of ensureIndex
 };
 
 // Performance optimizations for MongoDB

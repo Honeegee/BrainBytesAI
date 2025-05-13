@@ -2,6 +2,8 @@
 const mongoose = require('mongoose');
 const { MongoMemoryServer } = require('mongodb-memory-server');
 
+mongoose.set('useCreateIndex', true); // Use createIndex instead of ensureIndex
+
 // Singleton pattern for MongoDB connection management
 class MongooseTestConnection {
   constructor() {
