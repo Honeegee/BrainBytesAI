@@ -82,23 +82,30 @@ app.use(passport.session());
 // Serve static files from public directory
 app.use('/uploads', express.static('public/uploads'));
 
-// Connect to MongoDB with optimized settings
-mongoose.connect(process.env.MONGODB_URI, mongoConfig)
-  .then(() => {
-    console.log('Connected to MongoDB');
-  }).catch(err => {
-    console.error('Failed to connect to MongoDB:', err);
-    process.exit(1); // Exit if DB connection fails
+// Detect if we're in a test environment
+const isTestEnvironment = process.env.NODE_ENV === 'test';
+
+// Connect to MongoDB with optimized settings - skip if in test environment
+if (!isTestEnvironment) {
+  mongoose.connect(process.env.MONGODB_URI, mongoConfig)
+    .then(() => {
+      console.log('Connected to MongoDB');
+    }).catch(err => {
+      console.error('Failed to connect to MongoDB:', err);
+      process.exit(1); // Exit if DB connection fails
+    });
+}
+
+// Handle MongoDB connection events - skip if in test environment
+if (!isTestEnvironment) {
+  mongoose.connection.on('error', err => {
+    console.error('MongoDB connection error:', err);
   });
 
-// Handle MongoDB connection events
-mongoose.connection.on('error', err => {
-  console.error('MongoDB connection error:', err);
-});
-
-mongoose.connection.on('disconnected', () => {
-  console.log('MongoDB disconnected. Attempting to reconnect...');
-});
+  mongoose.connection.on('disconnected', () => {
+    console.log('MongoDB disconnected. Attempting to reconnect...');
+  });
+}
 
 // API routes configuration
 const apiRoutes = {
