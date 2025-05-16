@@ -28,7 +28,6 @@ services:
       - NODE_ENV=development
     volumes:
       - ./frontend:/usr/src/app
-      - /usr/src/app/node_modules
     networks:
       - app-network
     depends_on:

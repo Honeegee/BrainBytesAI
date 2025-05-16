@@ -6,6 +6,10 @@ import Layout from '../components/Layout';
 import ChatHistory from '../components/ChatHistory';
 import withAuth from '../components/withAuth';
 
+// Import react-toastify
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
 function Chat() {
   const router = useRouter();
   const [messages, setMessages] = useState([]);
@@ -30,13 +34,9 @@ function Chat() {
 
   const handleDeleteChat = async (chatId) => {
     try {
-      // Delete chat from database
       await axios.delete(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/messages/chats/${chatId}`);
-      
-      // Update local state
       setChatSessions(prevSessions => prevSessions.filter(chat => chat.id !== chatId));
       
-      // If active chat was deleted, switch to another chat
       if (activeChatId === chatId) {
         const remainingChats = chatSessions.filter(chat => chat.id !== chatId);
         if (remainingChats.length > 0) {
@@ -46,47 +46,48 @@ function Chat() {
           setMessages([]);
         }
       }
+
+      toast.success('Chat deleted successfully');
     } catch (error) {
       console.error('Error deleting chat:', error);
       setError('Failed to delete chat');
+      toast.error('Failed to delete chat');
     }
   };
 
   const handleUpdateChat = async (chatId, newTitle) => {
     try {
-      // Update title in database
       await axios.put(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/messages/chats/${chatId}/title`, {
         title: newTitle
       });
       
-      // Update local state
       setChatSessions(prevSessions =>
         prevSessions.map(chat =>
           chat.id === chatId ? { ...chat, title: newTitle } : chat
         )
       );
+
+      toast.success('Chat title updated');
     } catch (error) {
       console.error('Error updating chat title:', error);
       setError('Failed to update chat title');
+      toast.error('Failed to update chat title');
     }
   };
 
   useEffect(() => {
-    // Handle chat ID from URL
     const { id } = router.query;
     if (id && chatSessions.find(chat => chat.id === id)) {
       setActiveChatId(id);
     }
   }, [router.query, chatSessions]);
 
-  // Load chats from database on initial mount
   useEffect(() => {
     const loadChats = async () => {
       try {
         const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/messages/chats`);
         if (response.data && response.data.length > 0) {
           setChatSessions(response.data);
-          // If no active chat is set, set the first one as active
           if (!activeChatId && response.data.length > 0) {
             setActiveChatId(response.data[0].id);
           }
@@ -94,6 +95,7 @@ function Chat() {
       } catch (error) {
         console.error('Error loading chat history:', error);
         setError('Failed to load chat history');
+        toast.error('Failed to load chat history');
       }
     };
 
@@ -109,35 +111,34 @@ function Chat() {
         if (mounted) setMessages(response.data);
       } catch (error) {
         console.error('Error fetching messages:', error);
-        if (mounted) setError('Failed to load messages. Please try again.');
+        if (mounted) {
+          setError('Failed to load messages. Please try again.');
+          toast.error('Failed to load messages.');
+        }
       }
     };
 
     const fetchInitialData = async () => {
       try {
-        // Fetch subjects
         const subjectsResponse = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/materials/subjects`);
         if (mounted) setSubjects(subjectsResponse.data);
 
-        // Fetch initial messages
         if (activeChatId) {
           await fetchMessages(activeChatId);
         }
 
-        // Fetch user profile if available
         const userId = localStorage.getItem('userId');
         if (!userId) {
           router.replace('/login');
           return;
         }
-        
+
         try {
           const profileResponse = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/users/${userId}`);
           if (mounted) setUserProfile(profileResponse.data);
         } catch (error) {
           console.error('Error fetching user profile:', error);
           if (error.response?.status === 400 || error.response?.status === 404) {
-            // Clear invalid auth data and redirect to login
             localStorage.removeItem('token');
             localStorage.removeItem('userId');
             router.replace('/login');
@@ -150,6 +151,7 @@ function Chat() {
         if (mounted) {
           setLoading(false);
           setError('Failed to load initial data. Please try refreshing the page.');
+          toast.error('Failed to load initial data');
         }
       }
     };
@@ -172,6 +174,7 @@ function Chat() {
         .catch(error => {
           console.error('Error loading chat messages:', error);
           setError('Failed to load chat messages');
+          toast.error('Failed to load chat messages');
           setLoading(false);
         });
     }
@@ -188,13 +191,11 @@ function Chat() {
       
       const tempId = Date.now();
       const isNewChat = !chatSessions.some(chat => chat.id === activeChatId);
-      
-      // Ensure we have a valid chatId
+
       if (!activeChatId) {
         throw new Error('No active chat selected');
       }
 
-      // Immediately show user message
       const userMessagePreview = {
         _id: tempId,
         text: newMessage,
@@ -205,7 +206,6 @@ function Chat() {
       
       setMessages(prevMessages => [...prevMessages, userMessagePreview]);
       
-      // Prepare message data with explicit validation
       const messageData = {
         text: newMessage.trim(),
         subject: selectedSubject || '',
@@ -213,44 +213,36 @@ function Chat() {
         isFirstMessage: isNewChat
       };
 
-      console.log('Sending message with data:', messageData); // Debug log
-
-      // Send message to backend
       const response = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/messages`, messageData);
       
-      // Handle response
       if (response.data.error) {
         throw new Error(response.data.error);
       }
       
-      // Refresh chat list to get updated titles
       const chatsResponse = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/messages/chats`);
       setChatSessions(chatsResponse.data);
       
       setNewMessage('');
       
       if (response.data.aiMessage) {
-        setMessages(prevMessages => {
-          // Keep the optimistic user message, just add AI response
-          return [...prevMessages, response.data.aiMessage];
-        });
+        setMessages(prevMessages => [...prevMessages, response.data.aiMessage]);
         
-        // Update chat title with first message
         if (chatSessions.find(chat => chat.id === activeChatId)?.title === 'New chat') {
           const truncatedMessage = newMessage.slice(0, 30) + (newMessage.length > 30 ? '...' : '');
           await handleUpdateChat(activeChatId, truncatedMessage);
         }
         
+        toast.success('Message sent successfully');
       } else {
         throw new Error('Incomplete response from server');
       }
     } catch (error) {
       console.error('Error:', error);
       setError(error.message || 'Failed to send message. Please try again.');
+      toast.error(error.message || 'Failed to send message');
+      
       if (error.response?.data?.userMessage) {
-        setMessages(prevMessages => {
-          return [...prevMessages, error.response.data.userMessage];
-        });
+        setMessages(prevMessages => [...prevMessages, error.response.data.userMessage]);
       }
     } finally {
       setLoading(false);
@@ -264,187 +256,116 @@ function Chat() {
         <ChatHistory 
           chats={chatSessions}
           onNewChat={async () => {
-            // First clear everything to start fresh immediately
             setMessages([]);
             setSelectedSubject('');
             setNewMessage('');
             setError('');
-            
-            // Remove any stale "New chat" entries
             const cleanedSessions = chatSessions.filter(chat => chat.title !== 'New chat');
-            
-            // Generate new chat ID
             const chatId = Date.now().toString();
-            
-            // Update URL
             router.push('/chat?id=' + chatId, undefined, { shallow: true });
-            
-            // Add new temporary chat entry
-            setChatSessions([{
-              id: chatId,
-              title: 'New chat',
-              createdAt: new Date().toISOString()
-            }, ...cleanedSessions]);
-            
             setActiveChatId(chatId);
+            setChatSessions([{ id: chatId, title: 'New chat' }, ...cleanedSessions]);
           }}
-          activeChatId={activeChatId}
           onDeleteChat={handleDeleteChat}
           onUpdateChat={handleUpdateChat}
+          onSelectChat={id => {
+            router.push('/chat?id=' + id, undefined, { shallow: true });
+            setActiveChatId(id);
+            setError('');
+          }}
+          activeChatId={activeChatId}
         />
-        <div className="flex-1 flex flex-col">
-        <div className="flex-1 overflow-y-auto p-4">
+        
+        <main className="flex-1 flex flex-col bg-gray-800 overflow-hidden">
+          <div className="flex-1 overflow-auto p-6 flex flex-col gap-4">
+            {loading && <div className="text-center text-white">Loading...</div>}
+
+            {!loading && messages.length === 0 && (
+              <div className="text-center text-white mt-6">
+                No messages yet. Start chatting!
+              </div>
+            )}
+
+            <div className="flex flex-col gap-4">
+              {messages.map((message) => (
+                <div
+                  key={message._id}
+                  className={`flex items-start gap-4 ${
+                    message.isAiResponse ? 'flex-row-reverse' : 'flex-row'
+                  }`}
+                >
+                  <div className="w-8 h-8 relative rounded-full overflow-hidden bg-gray-900">
+                    <Image
+                      fill
+                      alt={message.isAiResponse ? 'Assistant' : 'User'}
+                      src={
+                        message.isAiResponse
+                          ? '/images/assistant_avatar.png'
+                          : userProfile?.avatar || '/images/default_avatar.png'
+                      }
+                      style={{ objectFit: 'contain' }}
+                    />
+                  </div>
+                  <p className="text-white whitespace-pre-wrap">{message.text}</p>
+                </div>
+              ))}
+              {isTyping && (
+                <div className="flex items-start gap-4 flex-row-reverse">
+                  <div className="w-8 h-8 relative rounded-full overflow-hidden bg-gray-900">
+                    <Image
+                      fill
+                      alt="Assistant"
+                      src="/images/assistant_avatar.png"
+                      style={{ objectFit: 'contain' }}
+                    />
+                  </div>
+                  <p className="text-white">Typing...</p>
+                </div>
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+          </div>
+
+          <form onSubmit={handleSubmit} className="p-4 bg-gray-900 flex gap-4">
+            <select
+              value={selectedSubject}
+              onChange={(e) => setSelectedSubject(e.target.value)}
+              className="bg-gray-700 text-white p-2 rounded"
+            >
+              <option value="">Select Subject</option>
+              {subjects.map(subject => (
+                <option key={subject._id} value={subject.name}>
+                  {subject.name}
+                </option>
+              ))}
+            </select>
+            <input
+              type="text"
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              className="flex-1 p-2 rounded bg-gray-700 text-white"
+              placeholder="Type your message"
+              disabled={loading}
+            />
+            <button
+              type="submit"
+              className="bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-50"
+              disabled={loading || !newMessage.trim()}
+            >
+              Send
+            </button>
+          </form>
+
           {error && (
-            <div className="bg-red-900 bg-opacity-50 text-red-200 p-3 rounded-md mb-4 text-center border border-red-700 text-sm">
+            <div className="text-red-500 text-center p-2">
               {error}
             </div>
           )}
-          <div className="max-w-4xl mx-auto space-y-4 px-4">
-            {userProfile && (
-              <div className="bg-hf-blue bg-opacity-20 p-3 rounded-md mb-4">
-                <p className="text-blue-300 text-sm">
-                  Welcome back, {userProfile.name}!
-                  {selectedSubject && ` Currently discussing: ${selectedSubject}`}
-                </p>
-              </div>
-            )}
+        </main>
 
-            {loading && !messages.length ? (
-              <p className="text-text-medium text-center">Loading messages...</p>
-            ) : (
-              <>
-                {messages.length === 0 && !loading && (
-                  <p className="text-text-medium text-center">No messages yet. Start the conversation!</p>
-                )}
-                <ul className="space-y-4 mb-8">
-                  {messages
-                    .filter(message => message && typeof message === 'object')
-                    .map((message) => (
-                      <li
-                        key={message._id}
-                        className={`flex gap-3 ${message.isAiResponse ? 'justify-start' : 'justify-end'}`}
-                      >
-                        {message.isAiResponse && (
-                          <div className="w-8 h-8 rounded-full bg-bg-dark flex items-center justify-center overflow-hidden flex-shrink-0">
-                            <Image
-                              src="/logo.png"
-                              alt="BrainBytes AI"
-                              width={32}
-                              height={32}
-                              className="w-full h-full object-cover"
-                              priority
-                            />
-                          </div>
-                        )}
-                        <div
-                          className={`p-3 rounded-lg max-w-xl shadow-sm ${
-                            message.isAiResponse
-                              ? 'bg-bg-dark-secondary border border-border-dark text-text-light'
-                              : 'bg-hf-blue text-white'
-                          }`}
-                        >
-                          <p className="text-sm break-words whitespace-pre-wrap">
-                            {message.text || 'No message content'}
-                          </p>
-                          <small className={`block mt-1 text-xs ${message.isAiResponse ? 'text-text-medium' : 'text-blue-200'}`}>
-                            {message.createdAt ? new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'No timestamp'}
-                          </small>
-                        </div>
-                        {!message.isAiResponse && (
-                          <div className="w-8 h-8 rounded-full bg-hf-yellow text-text-dark flex items-center justify-center text-sm font-bold flex-shrink-0 overflow-hidden">
-                            {userProfile?.profileImage ? (
-                            <Image
-                              src={userProfile.profileImage}
-                              alt={userProfile.name}
-                              width={32}
-                              height={32}
-                              className="w-full h-full object-cover"
-                              priority
-                            />
-                            ) : (
-                              <span>{userProfile?.name?.charAt(0)?.toUpperCase() || 'U'}</span>
-                            )}
-                          </div>
-                        )}
-                      </li>
-                    ))}
-                </ul>
-                <div ref={messagesEndRef} />
-                {isTyping && (
-                  <div className="flex items-center gap-3 mb-8">
-                    <div className="w-8 h-8 rounded-full bg-bg-dark flex items-center justify-center overflow-hidden flex-shrink-0">
-                      <Image
-                        src="/logo.png"
-                        alt="BrainBytes AI"
-                        width={32}
-                        height={32}
-                        className="w-full h-full object-cover"
-                        priority
-                      />
-                    </div>
-                    <div className="p-3 rounded-lg max-w-xl shadow-sm bg-bg-dark-secondary border border-border-dark">
-                      <div className="flex gap-2">
-                        <div className="w-2 h-2 bg-text-medium rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                        <div className="w-2 h-2 bg-text-medium rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                        <div className="w-2 h-2 bg-text-medium rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-        </div>
-
-        <div className="sticky bottom-0 z-10">
-          <form onSubmit={handleSubmit} className="max-w-4xl mx-auto px-2 py-2">
-            <div className="flex flex-col gap-2">
-              <div className="relative">
-                <textarea
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  placeholder="Message BrainBytes..."
-                  className="input bg-bg-dark-secondary border border-border-dark text-text-light flex-1 resize-none text-base py-3 px-4 rounded-xl focus:ring-hf-blue focus:border-hf-blue placeholder-text-medium pr-12"
-                  rows="3"
-                  disabled={loading}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault(); 
-                      handleSubmit(e);    
-                    }
-                  }}
-                />
-                <button
-                  type="submit"
-                  disabled={loading || !newMessage.trim()}
-                  className={`absolute right-3 bottom-3 bg-hf-blue hover:bg-blue-700 text-white p-2 rounded-full transition-colors ${
-                    (loading || !newMessage.trim()) ? 'opacity-50 cursor-not-allowed' : ''
-                  }`}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="22" y1="2" x2="11" y2="13"></line>
-                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-                  </svg>
-                </button>
-                <div className="absolute bottom-4 left-0 px-4">
-                  <select
-                    value={selectedSubject}
-                    onChange={(e) => setSelectedSubject(e.target.value)}
-                    className="bg-bg-dark-secondary border border-border-dark text-text-light text-xs focus:ring-hf-blue focus:border-hf-blue h-8 pl-3 pr-6 py-1 rounded-full w-30"
-                  >
-                    <option value="" className="text-text-medium">All Subjects</option>
-                    {subjects.map(subject => (
-                      <option key={subject} value={subject} className="text-text-light bg-bg-dark">{subject}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            </div>
-          </form>
-        </div>
+        <ToastContainer position="top-right" autoClose={3000} />
       </div>
-    </div>
-  </Layout>
+    </Layout>
   );
 }
 
