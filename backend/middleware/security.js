@@ -1,6 +1,10 @@
 const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
 const validator = require('validator');
+const jwt = require('jsonwebtoken');
+const passport = require('passport');
+const { Strategy: JwtStrategy, ExtractJwt } = require('passport-jwt');
+const UserProfile = require('../models/userProfile');
 
 // Rate limiting for auth routes
 const authLimiter = rateLimit({
@@ -72,9 +76,70 @@ const securityHeaders = helmet({
   crossOriginOpenerPolicy: false
 });
 
+// Passport configuration
+const initializePassport = (passport) => {
+  // Session serialization
+  passport.serializeUser((user, done) => {
+    done(null, user.id);
+  });
+
+  passport.deserializeUser(async (id, done) => {
+    try {
+      const user = await UserProfile.findById(id);
+      done(null, user);
+    } catch (err) {
+      done(err);
+    }
+  });
+
+  // JWT Strategy for token-based auth
+  const jwtStrategy = new JwtStrategy(
+    {
+      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      secretOrKey: process.env.JWT_SECRET
+    },
+    async (payload, done) => {
+      try {
+        const user = await UserProfile.findById(payload.userId);
+        if (!user) {
+          return done(null, false);
+        }
+        return done(null, user);
+      } catch (error) {
+        return done(error, false);
+      }
+    }
+  );
+
+  passport.use(jwtStrategy);
+
+};
+
+// Authentication middleware - supports both session and JWT
+const authenticate = (req, res, next) => {
+  // Try JWT first
+  passport.authenticate('jwt', { session: false }, (err, user, info) => {
+    if (err) {
+      return next(err);
+    }
+    if (user) {
+      req.user = user;
+      return next();
+    }
+    // If no JWT, fall back to session
+    if (req.isAuthenticated()) {
+      return next();
+    }
+    // No authentication found
+    res.status(401).json({ error: 'Authentication required' });
+  })(req, res, next);
+};
+
 module.exports = {
   authLimiter,
   validateAuthInput,
   securityHeaders,
-  validatePassword
+  validatePassword,
+  initializePassport,
+  authenticate
 };

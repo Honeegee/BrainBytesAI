@@ -10,6 +10,14 @@ services:
       - "3002:3002"
     env_file:
       - ai-service/.env
+    environment:
+      - NODE_OPTIONS=--max_old_space_size=2048
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 1G
     volumes:
       - ./ai-service:/usr/src/app
       - /usr/src/app/node_modules
@@ -26,6 +34,13 @@ services:
       - "3001:3000"
     environment:
       - NODE_ENV=development
+      - NODE_OPTIONS=--max_old_space_size=6144
+    deploy:
+      resources:
+        limits:
+          memory: 8G
+        reservations:
+          memory: 4G
     volumes:
       - ./frontend:/usr/src/app
     networks:
@@ -41,6 +56,14 @@ services:
       - "3000:3000"
     env_file:
       - backend/.env
+    environment:
+      - NODE_OPTIONS=--max_old_space_size=2048
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 1G
     volumes:
       - ./backend:/usr/src/app
       - /usr/src/app/node_modules
@@ -56,6 +79,12 @@ services:
     image: mongo:4.4
     ports:
       - "27017:27017"
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 1G
     volumes:
       - mongo-data:/data/db
     networks:

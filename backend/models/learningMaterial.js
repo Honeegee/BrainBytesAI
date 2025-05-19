@@ -1,6 +1,12 @@
 const mongoose = require('mongoose');
 
 const learningMaterialSchema = new mongoose.Schema({
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+    index: true // Add index for efficient user-based queries
+  },
   subject: {
     type: String,
     required: true,

@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
+const passport = require('passport');
 const Auth = require('../models/auth');
 const UserProfile = require('../models/userProfile');
 const { authLimiter, validateAuthInput } = require('../middleware/security');
@@ -50,14 +51,6 @@ router.post('/register', validateAuthInput, async (req, res) => {
         algorithm: 'HS256'
       }
     );
-
-    // Set secure cookie with token
-    res.cookie('token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: rememberMe ? 30 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000 // 30 days if remember me, else 24 hours
-    });
 
     res.status(201).json({
       token,
@@ -123,16 +116,8 @@ router.post('/login', authLimiter, validateAuthInput, async (req, res) => {
       }
     );
 
-    // Set secure cookie with token
-    res.cookie('token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: rememberMe ? 30 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000 // 30 days if remember me, else 24 hours
-    });
-
     res.json({
-      token, // Include token in response for local storage
+      token,
       status: 'success',
       message: 'Login successful',
       data: {
@@ -154,15 +139,19 @@ router.post('/login', authLimiter, validateAuthInput, async (req, res) => {
 
 // Logout user
 router.post('/logout', (req, res) => {
-  res.clearCookie('token', {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict'
-  });
-  
-  res.json({
-    status: 'success',
-    message: 'Logged out successfully'
+  req.logout((err) => {
+    if (err) {
+      console.error('Logout error:', err);
+      return res.status(500).json({
+        status: 'error',
+        message: 'Failed to logout'
+      });
+    }
+    
+    res.json({
+      status: 'success',
+      message: 'Logged out successfully'
+    });
   });
 });
 

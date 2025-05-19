@@ -7,11 +7,16 @@ module.exports = {
     extend: {
       animation: {
         'fadeIn': 'fadeIn 0.2s ease-in-out',
+        'expand': 'expand 0.2s ease-out',
       },
       keyframes: {
         fadeIn: {
           '0%': { opacity: '0', transform: 'scale(0.95)' },
           '100%': { opacity: '1', transform: 'scale(1)' },
+        },
+        expand: {
+          '0%': { opacity: '0', height: '0', padding: '0' },
+          '100%': { opacity: '1', height: 'auto', padding: '0.75rem' },
         },
       },
       colors: {

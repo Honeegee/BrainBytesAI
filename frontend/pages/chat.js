@@ -1,14 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import Image from 'next/image';
-import axios from 'axios';
+import api from '../lib/api';
 import Layout from '../components/Layout';
 import ChatHistory from '../components/ChatHistory';
 import withAuth from '../components/withAuth';
-
-// Import react-toastify
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import ChatMessageContent from '../components/ChatMessageContent'; 
 
 function Chat() {
   const router = useRouter();
@@ -19,6 +16,7 @@ function Chat() {
   const [subjects, setSubjects] = useState([]);
   const [selectedSubject, setSelectedSubject] = useState('');
   const [userProfile, setUserProfile] = useState(null);
+  const [refreshSubjectsKey, setRefreshSubjectsKey] = useState(0);
   const [error, setError] = useState('');
   const [chatSessions, setChatSessions] = useState([]);
   const [activeChatId, setActiveChatId] = useState(null);
@@ -28,13 +26,13 @@ function Chat() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+
 
   const handleDeleteChat = async (chatId) => {
     try {
-      await axios.delete(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/messages/chats/${chatId}`);
+      await api.delete(`/api/messages/chats/${chatId}`);
+      
+      // Update local state
       setChatSessions(prevSessions => prevSessions.filter(chat => chat.id !== chatId));
       
       if (activeChatId === chatId) {
@@ -57,7 +55,8 @@ function Chat() {
 
   const handleUpdateChat = async (chatId, newTitle) => {
     try {
-      await axios.put(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/messages/chats/${chatId}/title`, {
+      // Update title in database
+      await api.put(`/api/messages/chats/${chatId}/title`, {
         title: newTitle
       });
       
@@ -82,10 +81,11 @@ function Chat() {
     }
   }, [router.query, chatSessions]);
 
+  // Load chats from database
   useEffect(() => {
     const loadChats = async () => {
       try {
-        const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/messages/chats`);
+        const response = await api.get(`/api/messages/chats`);
         if (response.data && response.data.length > 0) {
           setChatSessions(response.data);
           if (!activeChatId && response.data.length > 0) {
@@ -99,50 +99,60 @@ function Chat() {
       }
     };
 
-    loadChats();
-  }, [activeChatId]);
+    // Only load chats if we're not already loading
+    if (!loading) {
+      loadChats();
+    }
+  }, [activeChatId, loading, router]);
 
   useEffect(() => {
     let mounted = true;
 
     const fetchMessages = async (chatId) => {
       try {
-        const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/messages?chatId=${chatId}`);
-        if (mounted) setMessages(response.data);
+        const response = await api.get(`/api/messages?chatId=${chatId}${selectedSubject ? `&subject=${selectedSubject}` : ''}`);
+        if (mounted) {
+          setMessages(response.data.messages);
+        }
       } catch (error) {
         console.error('Error fetching messages:', error);
         if (mounted) {
           setError('Failed to load messages. Please try again.');
-          toast.error('Failed to load messages.');
         }
+      }
+    };
+
+    const fetchSubjects = async () => {
+      try {
+        const subjectsResponse = await api.get(`/api/materials/subjects`);
+        if (mounted) {
+          setSubjects(subjectsResponse.data);
+          // If selected subject no longer exists, reset it
+          if (selectedSubject && !subjectsResponse.data.includes(selectedSubject)) {
+            setSelectedSubject('');
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching subjects:', error);
       }
     };
 
     const fetchInitialData = async () => {
       try {
-        const subjectsResponse = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/materials/subjects`);
-        if (mounted) setSubjects(subjectsResponse.data);
+        await fetchSubjects();
 
         if (activeChatId) {
           await fetchMessages(activeChatId);
         }
 
-        const userId = localStorage.getItem('userId');
-        if (!userId) {
-          router.replace('/login');
-          return;
-        }
-
         try {
-          const profileResponse = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/users/${userId}`);
-          if (mounted) setUserProfile(profileResponse.data);
+          const userId = localStorage.getItem('userId');
+          if (userId) {
+            const profileResponse = await api.get(`/api/users/${userId}`);
+            if (mounted) setUserProfile(profileResponse.data);
+          }
         } catch (error) {
           console.error('Error fetching user profile:', error);
-          if (error.response?.status === 400 || error.response?.status === 404) {
-            localStorage.removeItem('token');
-            localStorage.removeItem('userId');
-            router.replace('/login');
-          }
         }
 
         if (mounted) setLoading(false);
@@ -161,47 +171,73 @@ function Chat() {
     return () => {
       mounted = false;
     };
+  }, [refreshSubjectsKey]);
+
+  // Refresh subjects list every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setRefreshSubjectsKey(prev => prev + 1);
+    }, 30000);
+
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
-    if (activeChatId) {
-      setLoading(true);
-      axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/messages?chatId=${activeChatId}`)
-        .then(response => {
-          setMessages(response.data);
-          setLoading(false);
-        })
-        .catch(error => {
+    const loadMessages = async () => {
+      if (activeChatId) {
+        setLoading(true);
+        try {
+          const response = await api.get(`/api/messages?chatId=${activeChatId}${selectedSubject ? `&subject=${selectedSubject}` : ''}`);
+          setMessages(response.data.messages);
+        } catch (error) {
           console.error('Error loading chat messages:', error);
           setError('Failed to load chat messages');
-          toast.error('Failed to load chat messages');
+        } finally {
           setLoading(false);
-        });
-    }
-  }, [activeChatId]);
+        }
+      }
+    };
+
+    loadMessages();
+  }, [activeChatId, selectedSubject]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!newMessage.trim() || !activeChatId) return;
+    if (!newMessage.trim()) return;
     
     try {
       setLoading(true);
       setError('');
       setIsTyping(true);
       
-      const tempId = Date.now();
-      const isNewChat = !chatSessions.some(chat => chat.id === activeChatId);
-
-      if (!activeChatId) {
-        throw new Error('No active chat selected');
+      // Store message content before clearing
+      const messageContent = newMessage.trim();
+      setNewMessage('');
+      
+      let currentChatId = activeChatId;
+      
+      // If no active chat, create one
+      if (!currentChatId) {
+        currentChatId = Date.now().toString();
+        // Update chat sessions first
+        setChatSessions(prev => [{
+          id: currentChatId,
+          title: 'New chat',
+          createdAt: new Date().toISOString()
+        }, ...prev]);
+        setActiveChatId(currentChatId);
+        router.push('/chat?id=' + currentChatId, undefined, { shallow: true });
       }
+      
+      const tempId = Date.now();
+      const isNewChat = !chatSessions.some(chat => chat.id === currentChatId);
 
       const userMessagePreview = {
         _id: tempId,
         text: newMessage,
         isAiResponse: false,
         createdAt: new Date().toISOString(),
-        chatId: activeChatId
+        chatId: currentChatId
       };
       
       setMessages(prevMessages => [...prevMessages, userMessagePreview]);
@@ -209,27 +245,31 @@ function Chat() {
       const messageData = {
         text: newMessage.trim(),
         subject: selectedSubject || '',
-        chatId: activeChatId,
+        chatId: currentChatId,
         isFirstMessage: isNewChat
       };
 
-      const response = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/messages`, messageData);
+      console.log('Sending message with data:', messageData); // Debug log
+
+      // Send message to backend
+      const response = await api.post(`/api/messages`, messageData);
       
       if (response.data.error) {
+        setNewMessage(messageContent); // Restore message if error
         throw new Error(response.data.error);
       }
       
-      const chatsResponse = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/messages/chats`);
+      // Refresh chat list to get updated titles
+      const chatsResponse = await api.get(`/api/messages/chats`);
       setChatSessions(chatsResponse.data);
-      
-      setNewMessage('');
       
       if (response.data.aiMessage) {
         setMessages(prevMessages => [...prevMessages, response.data.aiMessage]);
         
-        if (chatSessions.find(chat => chat.id === activeChatId)?.title === 'New chat') {
-          const truncatedMessage = newMessage.slice(0, 30) + (newMessage.length > 30 ? '...' : '');
-          await handleUpdateChat(activeChatId, truncatedMessage);
+        // Update chat title with first message
+        if (chatSessions.find(chat => chat.id === currentChatId)?.title === 'New chat') {
+          const truncatedMessage = messageContent.slice(0, 30) + (messageContent.length > 30 ? '...' : '');
+          await handleUpdateChat(currentChatId, truncatedMessage);
         }
         
         toast.success('Message sent successfully');
@@ -238,6 +278,7 @@ function Chat() {
       }
     } catch (error) {
       console.error('Error:', error);
+      setNewMessage(messageContent); // Restore message on error
       setError(error.message || 'Failed to send message. Please try again.');
       toast.error(error.message || 'Failed to send message');
       
@@ -268,102 +309,163 @@ function Chat() {
           }}
           onDeleteChat={handleDeleteChat}
           onUpdateChat={handleUpdateChat}
-          onSelectChat={id => {
-            router.push('/chat?id=' + id, undefined, { shallow: true });
-            setActiveChatId(id);
-            setError('');
-          }}
-          activeChatId={activeChatId}
         />
-        
-        <main className="flex-1 flex flex-col bg-gray-800 overflow-hidden">
-          <div className="flex-1 overflow-auto p-6 flex flex-col gap-4">
-            {loading && <div className="text-center text-white">Loading...</div>}
-
-            {!loading && messages.length === 0 && (
-              <div className="text-center text-white mt-6">
-                No messages yet. Start chatting!
-              </div>
-            )}
-
-            <div className="flex flex-col gap-4">
-              {messages.map((message) => (
-                <div
-                  key={message._id}
-                  className={`flex items-start gap-4 ${
-                    message.isAiResponse ? 'flex-row-reverse' : 'flex-row'
-                  }`}
-                >
-                  <div className="w-8 h-8 relative rounded-full overflow-hidden bg-gray-900">
-                    <Image
-                      fill
-                      alt={message.isAiResponse ? 'Assistant' : 'User'}
-                      src={
-                        message.isAiResponse
-                          ? '/images/assistant_avatar.png'
-                          : userProfile?.avatar || '/images/default_avatar.png'
-                      }
-                      style={{ objectFit: 'contain' }}
-                    />
-                  </div>
-                  <p className="text-white whitespace-pre-wrap">{message.text}</p>
-                </div>
-              ))}
-              {isTyping && (
-                <div className="flex items-start gap-4 flex-row-reverse">
-                  <div className="w-8 h-8 relative rounded-full overflow-hidden bg-gray-900">
-                    <Image
-                      fill
-                      alt="Assistant"
-                      src="/images/assistant_avatar.png"
-                      style={{ objectFit: 'contain' }}
-                    />
-                  </div>
-                  <p className="text-white">Typing...</p>
+        <div className="flex-1 flex flex-col">
+          <div className="flex-1 overflow-y-auto p-4">
+            <div className="max-w-4xl mx-auto space-y-4">
+              {error && (
+                <div className="bg-red-900 bg-opacity-50 text-red-200 p-3 rounded-md text-center border border-red-700 text-sm">
+                  {error}
                 </div>
               )}
-              <div ref={messagesEndRef} />
+              {userProfile && (
+                <div className="bg-hf-blue bg-opacity-20 p-3 rounded-md">
+                  <p className="text-blue-300 text-sm">
+                    Welcome back, {userProfile.name}!
+                    {selectedSubject && ` Currently discussing: ${selectedSubject}`}
+                  </p>
+                </div>
+              )}
+
+              {loading && !messages.length ? (
+                <p className="text-text-medium text-center">Loading messages...</p>
+              ) : (
+              <>
+                {messages.length === 0 && !loading && (
+                  <p className="text-text-medium text-center">No messages yet. Start the conversation!</p>
+                )}
+                <ul className="space-y-4 mb-8">
+                  {messages
+                    .filter(message => message && typeof message === 'object')
+                    .map((message) => (
+                      <li
+                        key={message._id}
+                        className={`flex gap-3 ${message.isAiResponse ? 'justify-start' : 'justify-end'}`}
+                      >
+                        {message.isAiResponse && (
+                          <div className="w-8 h-8 rounded-full bg-bg-dark flex items-center justify-center overflow-hidden flex-shrink-0">
+                            <Image
+                              src="/logo.png"
+                              alt="BrainBytes AI"
+                              width={32}
+                              height={32}
+                              className="w-full h-full object-cover"
+                              fetchpriority="high"
+                            />
+                          </div>
+                        )}
+                        <div
+                          className={`p-3 rounded-lg ${
+                            message.isAiResponse
+                              ? 'text-text-light' 
+                              : 'bg-hf-blue text-white max-w-xl'
+                          }`}
+                        >
+                        <ChatMessageContent text={message.text} sentiment={message.sentiment} />
+                          <small className={`block mt-1 text-xs ${message.isAiResponse ? 'text-text-medium' : 'text-blue-200'}`}>
+                            {message.createdAt ? new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'No timestamp'}
+                          </small>
+                        </div>
+                        {!message.isAiResponse && (
+                          <div className="w-6 h-6 rounded-full bg-hf-yellow text-text-dark flex items-center justify-center text-sm font-bold flex-shrink-0 overflow-hidden">
+                            {userProfile?.profileImage ? (
+                            <Image
+                              src={userProfile.profileImage}
+                              alt={userProfile.name}
+                              width={18}
+                              height={18}
+                              className="w-full h-full object-cover"
+                              fetchpriority="high"
+                            />
+                            ) : (
+                              <span>{userProfile?.name?.charAt(0)?.toUpperCase() || 'U'}</span>
+                            )}
+                          </div>
+                        )}
+                      </li>
+                    ))}
+                </ul>
+                <div ref={messagesEndRef} />
+                {isTyping && (
+                  <div className="flex items-center gap-3 mb-8">
+                    <div className="w-8 h-8 rounded-full bg-bg-dark flex items-center justify-center overflow-hidden flex-shrink-0">
+                      <Image
+                        src="/logo.png"
+                        alt="BrainBytes AI"
+                        width={32}
+                        height={32}
+                        className="w-full h-full object-cover"
+                              fetchpriority="high"
+                      />
+                    </div>
+                    <div className="p-3 rounded-lg"> 
+                      <div className="flex gap-2">
+                        <div className="w-2 h-2 bg-text-medium rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                        <div className="w-2 h-2 bg-text-medium rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                        <div className="w-2 h-2 bg-text-medium rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="p-4 bg-gray-900 flex gap-4">
-            <select
-              value={selectedSubject}
-              onChange={(e) => setSelectedSubject(e.target.value)}
-              className="bg-gray-700 text-white p-2 rounded"
-            >
-              <option value="">Select Subject</option>
-              {subjects.map(subject => (
-                <option key={subject._id} value={subject.name}>
-                  {subject.name}
-                </option>
-              ))}
-            </select>
-            <input
-              type="text"
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              className="flex-1 p-2 rounded bg-gray-700 text-white"
-              placeholder="Type your message"
-              disabled={loading}
-            />
-            <button
-              type="submit"
-              className="bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-50"
-              disabled={loading || !newMessage.trim()}
-            >
-              Send
-            </button>
-          </form>
 
-          {error && (
-            <div className="text-red-500 text-center p-2">
-              {error}
-            </div>
-          )}
-        </main>
+          <div className="sticky bottom-0 z-10">
+            <form onSubmit={handleSubmit} className="max-w-4xl mx-auto px-2 py-2">
+              {/* Main container for the input area, now flex-col */}
+              <div className="flex flex-col gap-2 bg-bg-dark-secondary border border-border-dark rounded-xl p-2">
+                {/* Row for textarea */}
+                <div className="relative flex items-end">
+                  <textarea
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    placeholder="Message BrainBytes..."
+                    className="input bg-transparent border-none text-text-light flex-1 resize-none text-base py-2 px-2 focus:ring-0 focus:border-none placeholder-text-medium"
+                    rows="1"
+                    disabled={loading}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSubmit(e);
+                      }
+                    }}
+                    style={{ minHeight: '40px' }} // Ensure textarea has some min height
+                  />
+                </div>
+                {/* Row for Filter and Send Button */}
+                <div className="flex items-center justify-between gap-2 pt-1">
+                  <select
+                    value={selectedSubject}
+                    onChange={(e) => setSelectedSubject(e.target.value)}
+                                       className="bg-bg-dark-secondary border border-border-dark text-text-light text-xs focus:ring-hf-blue focus:border-hf-blue h-8 pl-3 pr-6 py-1 rounded-full w-30"
 
-        <ToastContainer position="top-right" autoClose={3000} />
+                    title="Filter by subject" 
+                  >
+                    <option value="" className="text-text-medium">All Subjects</option>
+                    {subjects.map(subject => (
+                      <option key={subject} value={subject} className="text-text-light bg-bg-dark">{subject}</option>
+                    ))}
+                  </select>
+                  <button
+                    type="submit"
+                    disabled={loading || !newMessage.trim()}
+                    className={`bg-hf-blue hover:bg-blue-700 text-white p-2 rounded-full transition-colors flex-shrink-0 ${
+                      (loading || !newMessage.trim()) ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="22" y1="2" x2="11" y2="13"></line>
+                      <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
       </div>
     </Layout>
   );

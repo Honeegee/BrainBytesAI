@@ -1,0 +1,59 @@
+const { MongoMemoryServer } = require('mongodb-memory-server');
+const mongoose = require('mongoose');
+const jwt = require('jsonwebtoken');
+
+let mongoServer;
+
+// Set up MongoDB Memory Server before all tests
+beforeAll(async () => {
+  // Set test environment variables
+  process.env.JWT_SECRET = 'test-jwt-secret';
+  process.env.NODE_ENV = 'test';
+
+  // Start MongoDB Memory Server
+  mongoServer = await MongoMemoryServer.create();
+  const mongoUri = mongoServer.getUri();
+  
+  // Connect to in-memory database
+  await mongoose.connect(mongoUri, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    useFindAndModify: false
+  });
+});
+
+// Clear all test data after each test
+afterEach(async () => {
+  if (mongoose.connection.readyState !== 0) {
+    const collections = mongoose.connection.collections;
+    for (const key in collections) {
+      await collections[key].deleteMany({});
+    }
+  }
+});
+
+// Close MongoDB Memory Server and mongoose connection after all tests
+afterAll(async () => {
+  await mongoose.disconnect();
+  await mongoServer.stop();
+});
+
+// Helper function to generate test JWT token
+const generateTestToken = (userId, email) => {
+  return jwt.sign(
+    { 
+      userId, 
+      email,
+      iat: Math.floor(Date.now() / 1000)
+    },
+    process.env.JWT_SECRET,
+    { 
+      expiresIn: '1h',
+      algorithm: 'HS256'
+    }
+  );
+};
+
+module.exports = {
+  generateTestToken
+};
