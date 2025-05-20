@@ -62,6 +62,17 @@ If you encounter connection issues with MongoDB during tests:
 2. Check that the container name matches what's expected in the tests
 3. Verify the MongoDB connection URI in your .env file
 
+If the POST /api/messages test fails:
+
+1. Check that the axios mock is correctly implemented
+2. Verify that the AI service URL in routes/messages.js matches the environment
+3. For local testing, you may need to modify the URL from 'http://ai-service:3002/api/chat' to match your local setup
+
+For any other test failures, check the error message and stack trace carefully. Most issues are related to either:
+- Missing or incorrect environment variables
+- Container connectivity issues
+- Mock implementations that don't match the actual service behavior
+
 ## Adding More Tests
 
 To add more API tests:

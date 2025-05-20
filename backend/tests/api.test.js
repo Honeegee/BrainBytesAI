@@ -15,8 +15,14 @@ const messagesRouter = require('../routes/messages');
 const usersRouter = require('../routes/users');
 const { securityHeaders, authenticate } = require('../middleware/security');
 
-// Mock authentication for tests
-jest.mock('../middleware/security', () => ({
+// Mock dependencies
+jest.mock('axios', () => ({
+    post: jest.fn(() => Promise.resolve({
+      data: { response: 'AI response text' }
+    }))
+  }));
+  
+  jest.mock('../middleware/security', () => ({
   securityHeaders: (req, res, next) => next(),
   authenticate: (req, res, next) => {
     req.user = {
@@ -118,14 +124,6 @@ describe('API Endpoints', () => {
     
     // Test creating a message
     test('POST /api/messages should create a new message', async () => {
-      // Mock the AI service response
-      jest.spyOn(global, 'fetch').mockImplementation(() => 
-        Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve({ response: 'AI response text' })
-        })
-      );
-      
       const messageData = {
         text: 'Hello AI',
         chatId: testChatId,
@@ -144,7 +142,10 @@ describe('API Endpoints', () => {
       expect(res.body.userMessage).toHaveProperty('text', 'Hello AI');
       expect(res.body.userMessage).toHaveProperty('chatId', testChatId);
       
-      global.fetch.mockRestore();
+      // Verify AI message
+      expect(res.body).toHaveProperty('aiMessage');
+      expect(res.body.aiMessage).toHaveProperty('text', 'AI response text');
+      expect(res.body.aiMessage).toHaveProperty('isAiResponse', true);
     });
 
     // Test fetching chat history
