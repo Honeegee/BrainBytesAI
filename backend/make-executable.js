@@ -3,7 +3,9 @@ const path = require('path');
 
 const scripts = [
   'run-auth-tests.sh',
-  'run-basic-test.sh'
+  'run-basic-test.sh',
+  'run-api-tests.sh',
+  'make-script-executable.sh'
 ];
 
 scripts.forEach(script => {
