@@ -202,13 +202,12 @@ function Chat() {
     e.preventDefault();
     if (!newMessage.trim()) return;
     
+    const messageContent = newMessage.trim();
+    
     try {
       setLoading(true);
       setError('');
       setIsTyping(true);
-      
-      // Store message content before clearing
-      const messageContent = newMessage.trim();
       setNewMessage('');
       
       let currentChatId = activeChatId;
@@ -232,7 +231,7 @@ function Chat() {
       // Immediately show user message
       const userMessagePreview = {
         _id: tempId,
-        text: newMessage,
+        text: messageContent,
         isAiResponse: false,
         createdAt: new Date().toISOString(),
         chatId: currentChatId
@@ -242,7 +241,7 @@ function Chat() {
       
       // Prepare message data with explicit validation
       const messageData = {
-        text: newMessage.trim(),
+        text: messageContent,
         subject: selectedSubject || '',
         chatId: currentChatId,
         isFirstMessage: isNewChat
