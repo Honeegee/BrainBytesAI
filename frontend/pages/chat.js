@@ -35,7 +35,6 @@ function Chat() {
       // Update local state
       setChatSessions(prevSessions => prevSessions.filter(chat => chat.id !== chatId));
       
-      // If active chat was deleted, switch to another chat
       if (activeChatId === chatId) {
         const remainingChats = chatSessions.filter(chat => chat.id !== chatId);
         if (remainingChats.length > 0) {
@@ -45,9 +44,12 @@ function Chat() {
           setMessages([]);
         }
       }
+
+      toast.success('Chat deleted successfully');
     } catch (error) {
       console.error('Error deleting chat:', error);
       setError('Failed to delete chat');
+      toast.error('Failed to delete chat');
     }
   };
 
@@ -58,20 +60,21 @@ function Chat() {
         title: newTitle
       });
       
-      // Update local state
       setChatSessions(prevSessions =>
         prevSessions.map(chat =>
           chat.id === chatId ? { ...chat, title: newTitle } : chat
         )
       );
+
+      toast.success('Chat title updated');
     } catch (error) {
       console.error('Error updating chat title:', error);
       setError('Failed to update chat title');
+      toast.error('Failed to update chat title');
     }
   };
 
   useEffect(() => {
-    // Handle chat ID from URL
     const { id } = router.query;
     if (id && chatSessions.find(chat => chat.id === id)) {
       setActiveChatId(id);
@@ -85,7 +88,6 @@ function Chat() {
         const response = await api.get(`/api/messages/chats`);
         if (response.data && response.data.length > 0) {
           setChatSessions(response.data);
-          // If no active chat is set, set the first one as active
           if (!activeChatId && response.data.length > 0) {
             setActiveChatId(response.data[0].id);
           }
@@ -93,6 +95,7 @@ function Chat() {
       } catch (error) {
         console.error('Error loading chat history:', error);
         setError('Failed to load chat history');
+        toast.error('Failed to load chat history');
       }
     };
 
@@ -138,7 +141,6 @@ function Chat() {
       try {
         await fetchSubjects();
 
-        // Fetch initial messages
         if (activeChatId) {
           await fetchMessages(activeChatId);
         }
@@ -159,6 +161,7 @@ function Chat() {
         if (mounted) {
           setLoading(false);
           setError('Failed to load initial data. Please try refreshing the page.');
+          toast.error('Failed to load initial data');
         }
       }
     };
@@ -228,7 +231,6 @@ function Chat() {
       const tempId = Date.now();
       const isNewChat = !chatSessions.some(chat => chat.id === currentChatId);
 
-      // Immediately show user message
       const userMessagePreview = {
         _id: tempId,
         text: messageContent,
@@ -239,7 +241,6 @@ function Chat() {
       
       setMessages(prevMessages => [...prevMessages, userMessagePreview]);
       
-      // Prepare message data with explicit validation
       const messageData = {
         text: messageContent,
         subject: selectedSubject || '',
@@ -252,7 +253,6 @@ function Chat() {
       // Send message to backend
       const response = await api.post(`/api/messages`, messageData);
       
-      // Handle response
       if (response.data.error) {
         setNewMessage(messageContent); // Restore message if error
         throw new Error(response.data.error);
@@ -263,10 +263,7 @@ function Chat() {
       setChatSessions(chatsResponse.data);
       
       if (response.data.aiMessage) {
-        setMessages(prevMessages => {
-          // Keep the optimistic user message, just add AI response
-          return [...prevMessages, response.data.aiMessage];
-        });
+        setMessages(prevMessages => [...prevMessages, response.data.aiMessage]);
         
         // Update chat title with first message
         if (chatSessions.find(chat => chat.id === currentChatId)?.title === 'New chat') {
@@ -274,6 +271,7 @@ function Chat() {
           await handleUpdateChat(currentChatId, truncatedMessage);
         }
         
+        toast.success('Message sent successfully');
       } else {
         throw new Error('Incomplete response from server');
       }
@@ -281,10 +279,10 @@ function Chat() {
       console.error('Error:', error);
       setNewMessage(messageContent); // Restore message on error
       setError(error.message || 'Failed to send message. Please try again.');
+      toast.error(error.message || 'Failed to send message');
+      
       if (error.response?.data?.userMessage) {
-        setMessages(prevMessages => {
-          return [...prevMessages, error.response.data.userMessage];
-        });
+        setMessages(prevMessages => [...prevMessages, error.response.data.userMessage]);
       }
     } finally {
       setLoading(false);
@@ -298,31 +296,16 @@ function Chat() {
         <ChatHistory 
           chats={chatSessions}
           onNewChat={async () => {
-            // First clear everything to start fresh immediately
             setMessages([]);
             setSelectedSubject('');
             setNewMessage('');
             setError('');
-            
-            // Remove any stale "New chat" entries
             const cleanedSessions = chatSessions.filter(chat => chat.title !== 'New chat');
-            
-            // Generate new chat ID
             const chatId = Date.now().toString();
-            
-            // Update URL
             router.push('/chat?id=' + chatId, undefined, { shallow: true });
-            
-            // Add new temporary chat entry
-            setChatSessions([{
-              id: chatId,
-              title: 'New chat',
-              createdAt: new Date().toISOString()
-            }, ...cleanedSessions]);
-            
             setActiveChatId(chatId);
+            setChatSessions([{ id: chatId, title: 'New chat' }, ...cleanedSessions]);
           }}
-          activeChatId={activeChatId}
           onDeleteChat={handleDeleteChat}
           onUpdateChat={handleUpdateChat}
         />
