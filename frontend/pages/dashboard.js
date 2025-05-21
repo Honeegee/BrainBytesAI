@@ -15,9 +15,9 @@ function DashboardPage() {
       try {
         const userId = localStorage.getItem('userId');
         await api.get(`/api/users/${userId}`);
-        setIsAuthChecked(true);
+        setIsAuthChecked(true); // Auth confirmed, proceed to fetch data
       } catch (error) {
-        console.error('Auth check failed:', error);
+        console.error('Auth check failed:', error); // Handle or redirect if needed
       }
     };
     checkAuth();
@@ -32,19 +32,20 @@ function DashboardPage() {
         const userId = localStorage.getItem('userId');
         const response = await api.get(`/api/users/${userId}/activity`);
         
-        setActivityData(response.data);
+        setActivityData(response.data); // Save activity and stats data to state
         setError(null);
       } catch (err) {
         console.error('Error fetching activity data:', err);
-        setError('Failed to load dashboard data');
+        setError('Failed to load dashboard data'); // Display error to user
       } finally {
-        setLoading(false);
+        setLoading(false); // Loading complete (success or fail)
       }
     };
 
     fetchActivity();
   }, [isAuthChecked]);
 
+  // Format a date string into readable format (e.g., "Jan 1, 12:00 PM")
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       month: 'short',
