@@ -130,10 +130,10 @@ router.get('/chats', async (req, res) => {
   }
 });
 
-// Get messages with enhanced subject filtering and pagination
+// Get messages with enhanced filtering and pagination
 router.get('/', async (req, res) => {
   try {
-    const { subject, chatId, page = 1, limit = 50 } = req.query;
+    const { subject, chatId, sentiment, messageType, page = 1, limit = 50 } = req.query;
     const userId = req.user._id; // Get userId from authenticated user
     
     if (!chatId) {
@@ -142,8 +142,20 @@ router.get('/', async (req, res) => {
 
     // Build query with userId filter
     const query = { chatId, userId };
-    if (subject && subject !== 'All Subjects') {
+    
+    // Apply subject filter
+    if (subject && subject !== 'All Subjects' && subject !== '') {
       query.subject = subject;
+    }
+    
+    // Apply sentiment filter
+    if (sentiment && sentiment !== '') {
+      query['sentiment.label'] = sentiment.toLowerCase();
+    }
+    
+    // Apply message type filter
+    if (messageType && messageType !== '') {
+      query.isAiResponse = messageType === 'ai';
     }
 
     // Get total count for pagination

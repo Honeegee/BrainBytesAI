@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import axios from 'axios';
+import { Toaster } from 'react-hot-toast';
 
 export default function Layout({ children, darkMode = false }) {
   const router = useRouter();
@@ -37,6 +38,12 @@ export default function Layout({ children, darkMode = false }) {
   
   return (
     <div className={`flex flex-col min-h-screen ${darkMode ? 'bg-gradient-to-t from-[#080c14] to-[#0f172a] text-text-light' : 'bg-white text-gray-900'}`}>
+      <Toaster position="top-right" toastOptions={{
+        style: {
+          background: darkMode ? '#1e293b' : '#ffffff',
+          color: darkMode ? '#e2e8f0' : '#1e293b',
+        },
+      }} />
       <Head>
         <title>BrainBytes AI Tutoring</title>
         <meta name="description" content="AI-powered tutoring platform" />
