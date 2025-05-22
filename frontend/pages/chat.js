@@ -45,7 +45,7 @@ function Chat() {
         }
       }
 
-      toast.success('Chat deleted successfully');
+      toast.success('Chat successfully deleted');
     } catch (error) {
       console.error('Error deleting chat:', error);
       setError('Failed to delete chat');
@@ -66,7 +66,7 @@ function Chat() {
         )
       );
 
-      toast.success('Chat title updated');
+      toast.success('Chat title updated!');
     } catch (error) {
       console.error('Error updating chat title:', error);
       setError('Failed to update chat title');
@@ -271,7 +271,7 @@ function Chat() {
           await handleUpdateChat(currentChatId, truncatedMessage);
         }
         
-        toast.success('Message sent successfully');
+        toast.success('Message sent');
       } else {
         throw new Error('Incomplete response from server');
       }
