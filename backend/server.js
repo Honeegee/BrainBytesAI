@@ -123,6 +123,10 @@ app.get('/', (req, res) => {
     endpoints: apiRoutes
   });
 });
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.status(200).send('OK');
+});
 
 // Routes
 app.use(apiRoutes.auth, authRouter);
@@ -165,5 +169,6 @@ const startServer = async () => {
     process.exit(1);
   }
 };
+
 
 startServer();

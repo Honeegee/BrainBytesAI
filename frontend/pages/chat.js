@@ -6,6 +6,7 @@ import Layout from '../components/Layout';
 import ChatHistory from '../components/ChatHistory';
 import withAuth from '../components/withAuth';
 import ChatMessageContent from '../components/ChatMessageContent'; 
+import { toast } from 'react-hot-toast';
 
 function Chat() {
   const router = useRouter();
