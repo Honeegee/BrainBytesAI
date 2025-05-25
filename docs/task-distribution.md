@@ -13,7 +13,6 @@ This document outlines the primary responsibilities for each team member. Collab
 
 | Team Member | Docker Installed | Git Installed | VS Code Installed | Can Run Hello World Container |
 |-------------|-----------------|---------------|-------------------|------------------------------|
-| Felicity Diana Sario |Has issues with myCamu|
 | Honey Grace Denolan | ✓ | ✓ | ✓ | ✓ |
 | Rhico Abueme | ✓ | ✓ | ✓ | ✓ |
 | Zyra Joy Dongon | ✓ | ✓ | ✓ | ✓ |

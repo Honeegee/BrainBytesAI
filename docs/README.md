@@ -22,6 +22,24 @@ BrainBytes is an innovative AI-powered tutoring platform designed to provide acc
 - **DevOps**: GitHub Actions, Oracle Cloud Free Tier
 - **Monitoring**: Prometheus & Grafana
 
+## Architecture
+
+![System Architecture](architecture.png)
+
+The architecture follows a microservices pattern with three main components:
+- **Frontend Service**: Next.js React application handling user interface
+- **Backend Service**: Node.js API server managing data and authentication
+- **AI Service**: Dedicated service for AI-powered tutoring capabilities
+
+## Development Environment Setup Verification
+
+| Team Member | Docker Installed | Git Installed | VS Code Installed | Can Run Hello World Container |
+|-------------|-----------------|---------------|-------------------|------------------------------|
+| Honey Grace Denolan | ✓ | ✓ | ✓ | ✓ |
+| Rhico Abueme | ✓ | ✓ | ✓ | ✓ |
+| Zyra Joy Dongon | ✓ | ✓ | ✓ | ✓ |
+| Adam Raymond Belda | ✓ | ✓ | ✓ | ✓ |
+
 ## Quick Start
 
 ### Prerequisites
@@ -35,7 +53,6 @@ BrainBytes is an innovative AI-powered tutoring platform designed to provide acc
 1. Clone the repository:
    ```bash
    git clone https://github.com/Honeegee/BrainBytesAI.git
-   cd brainbytes-multi-container
    ```
 
 2. Set up environment variables (see [Setup Guide](SETUP.md))
@@ -57,17 +74,11 @@ BrainBytes is an innovative AI-powered tutoring platform designed to provide acc
 - [Database Schema](DATABASE.md)
 - [AI Integration](AI_INTEGRATION.md)
 
-## Team
 
-- **Felicity Diana Sario** - Team Lead
-- **Honey Grace Denolan** - Backend Developer
-- **Rhico Abueme** - Frontend Developer
-- **Zyra Joy Dongon** - DevOps Engineer
-- **Adam Raymond Belda** - Team Member
 
 ## Contributing
 
-1. Fork the repository
+1. Clone the repository
 2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
 3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
 4. Push to the branch (`git push origin feature/AmazingFeature`)
@@ -75,8 +86,7 @@ BrainBytes is an innovative AI-powered tutoring platform designed to provide acc
 
 ## License
 
-[Specify License]
 
 ## Contact
 
-Project Link: [https://github.com/your-organization/brainbytes](https://github.com/your-organization/brainbytes)
+Project Link: [https://github.com/Honeegee/brainbytes](https://github.com/Honeegee/brainbytes)
