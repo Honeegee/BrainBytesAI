@@ -8,8 +8,12 @@
     "dev": "nodemon server.js",
     "debug": "node --inspect server.js",
     "test": "jest --verbose",
+    "test:coverage": "jest --coverage --verbose",
+    "test:quick": "jest --passWithNoTests --silent",
     "test:auth": "NODE_ENV=test jest tests/auth --verbose",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "lint": "eslint . --ext .js,.ts",
+    "lint:fix": "eslint . --ext .js,.ts --fix"
   },
   "dependencies": {
     "axios": "^1.6.7",
@@ -34,6 +38,7 @@
     "validator": "^13.11.0"
   },
   "devDependencies": {
+    "eslint": "^8.57.0",
     "jest": "^29.7.0",
     "mongodb-memory-server": "^9.5.0",
     "nodemon": "^3.0.1",
