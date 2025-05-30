@@ -34,21 +34,21 @@ services:
       - "3001:3000"
     environment:
       - NODE_ENV=development
-      - NODE_OPTIONS=--max_old_space_size=6144
+      - NODE_OPTIONS=--max_old_space_size=1024  
     deploy:
       resources:
         limits:
-          memory: 8G
+          memory: 1G  
         reservations:
-          memory: 4G
+          memory: 512M  
     volumes:
       - ./frontend:/usr/src/app
-      - /usr/src/app/node_modules
+      - /usr/src/app/node_modules 
     networks:
       - app-network
     depends_on:
       - backend
-    restart: always
+    restart: unless-stopped  
 
   # Backend API container
   backend:
@@ -58,13 +58,13 @@ services:
     env_file:
       - backend/.env
     environment:
-      - NODE_OPTIONS=--max_old_space_size=2048
+      - NODE_OPTIONS=--max_old_space_size=1024  
     deploy:
       resources:
         limits:
-          memory: 2G
+          memory: 1G  
         reservations:
-          memory: 1G
+          memory: 512M  
     volumes:
       - ./backend:/usr/src/app
       - /usr/src/app/node_modules
@@ -78,14 +78,17 @@ services:
   # MongoDB container
   mongo:
     image: mongo:4.4
+   
     ports:
-      - "27017:27017"
+     - "27017:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=brainbytes
     deploy:
       resources:
         limits:
-          memory: 2G
+          memory: 1G 
         reservations:
-          memory: 1G
+          memory: 512M  
     volumes:
       - mongo-data:/data/db
     networks:
