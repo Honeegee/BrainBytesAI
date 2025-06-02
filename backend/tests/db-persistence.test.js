@@ -44,7 +44,9 @@ describe('Database Persistence Tests', () => {
   // Skip all tests if SKIP_DOCKER_TESTS is set
   if (process.env.SKIP_DOCKER_TESTS) {
     test.skip('Skipping all Docker-dependent tests', () => {
-      console.log('SKIP_DOCKER_TESTS is set, skipping database persistence tests');
+      console.log(
+        'SKIP_DOCKER_TESTS is set, skipping database persistence tests'
+      );
     });
     return;
   }
