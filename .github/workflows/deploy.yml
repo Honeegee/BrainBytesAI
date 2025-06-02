@@ -1,7 +1,10 @@
 name: Deploy to Environments
 
 on:
-  push:
+  workflow_run:
+    workflows: ["CI/CD Pipeline"]
+    types:
+      - completed
     branches:
       - main
       - development
@@ -26,11 +29,35 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
+  # Check if CI/CD passed (only for workflow_run trigger)
+  check-ci-cd:
+    name: Check CI/CD Status
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    if: github.event_name == 'workflow_run'
+    outputs:
+      should_proceed: ${{ steps.check.outputs.should_proceed }}
+    
+    steps:
+      - name: Check CI/CD workflow result
+        id: check
+        run: |
+          if [[ "${{ github.event.workflow_run.conclusion }}" == "success" ]]; then
+            echo "should_proceed=true" >> $GITHUB_OUTPUT
+            echo "✅ CI/CD pipeline passed, proceeding with deployment"
+          else
+            echo "should_proceed=false" >> $GITHUB_OUTPUT
+            echo "❌ CI/CD pipeline failed, skipping deployment"
+            exit 1
+          fi
+
   # Determine deployment environment and settings
   setup:
     name: Setup Deployment
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    needs: [check-ci-cd]
+    if: always() && (github.event_name == 'workflow_dispatch' || needs.check-ci-cd.outputs.should_proceed == 'true')
     outputs:
       environment: ${{ steps.determine-env.outputs.environment }}
       deploy_url: ${{ steps.determine-env.outputs.deploy_url }}
