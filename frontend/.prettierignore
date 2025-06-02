@@ -77,3 +77,8 @@ node_modules/
 
 # DynamoDB Local files
 .dynamodb/
+
+# Generated files
+eslint-report.json
+test-results.xml
+*.json.lock
