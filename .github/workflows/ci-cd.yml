@@ -224,7 +224,7 @@ jobs:
           echo "Checking frontend..."
           curl -f http://localhost:3001 || echo "Frontend not ready"
 
-      - name: Run Simple E2E tests with Playwright
+      - name: Run E2E tests with Playwright
         working-directory: ./e2e-tests
         run: |
           # Create a simple health check test
