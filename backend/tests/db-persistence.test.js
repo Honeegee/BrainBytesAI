@@ -41,6 +41,14 @@ async function restartMongoContainer() {
 }
 
 describe('Database Persistence Tests', () => {
+  // Skip all tests if SKIP_DOCKER_TESTS is set
+  if (process.env.SKIP_DOCKER_TESTS) {
+    test.skip('Skipping all Docker-dependent tests', () => {
+      console.log('SKIP_DOCKER_TESTS is set, skipping database persistence tests');
+    });
+    return;
+  }
+
   // Unique test data identifiers
   const testId = `test-${Date.now()}`;
   const testUserId = '6123456789abcdef12345678'; // Must match a user ID in your DB or create one
@@ -66,12 +74,6 @@ describe('Database Persistence Tests', () => {
   });
 
   test('Data should persist across MongoDB container restarts', async () => {
-    // Skip test if not running in Docker environment
-    if (process.env.SKIP_DOCKER_TESTS) {
-      console.log('Skipping Docker-dependent test');
-      return;
-    }
-
     // Step 1: Create test data
     const testMessage = new Message({
       text: `Persistence test message ${testId}`,
@@ -124,12 +126,6 @@ describe('Database Persistence Tests', () => {
   });
 
   test('MongoDB should handle multiple records with persistence', async () => {
-    // Skip test if not running in Docker environment
-    if (process.env.SKIP_DOCKER_TESTS) {
-      console.log('Skipping Docker-dependent test');
-      return;
-    }
-
     // Create multiple test messages
     const chatId = `test-chat-multi-${testId}`;
     const messageCount = 5;
