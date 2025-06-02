@@ -71,9 +71,10 @@ services:
     environment:
       - NODE_ENV=staging
       - NODE_OPTIONS=--max_old_space_size=1024
-      - DATABASE_URL=${STAGING_DATABASE_URL}
-      - JWT_SECRET=${STAGING_JWT_SECRET}
-      - SESSION_SECRET=${STAGING_SESSION_SECRET}
+      - DATABASE_URL=${STAGING_DATABASE_URL:-mongodb://mongo:27017/brainbytes_staging}
+      - MONGODB_URI=${STAGING_DATABASE_URL:-mongodb://mongo:27017/brainbytes_staging}
+      - JWT_SECRET=${STAGING_JWT_SECRET:-staging_jwt_secret_default_12345}
+      - SESSION_SECRET=${STAGING_SESSION_SECRET:-staging_session_secret_default_12345}
     deploy:
       resources:
         limits:
