@@ -18,7 +18,7 @@ const normalizePrompt = (input) => {
 const handleMathExpression = (input) => {
   if (typeof input !== 'string') {return input;}
   
-  const mathPattern = /^(\d+)\s*([\+\-\*\/])\s*(\d+)$/;
+  const mathPattern = /^(\d+)\s*([+\-*/])\s*(\d+)$/;
   const match = input.match(mathPattern);
   
   if (!match) {return input;}
@@ -64,7 +64,7 @@ app.post('/api/chat', async (req, res) => {
         .trim();
 
       // Check for math expressions first
-      const mathPattern = /^\d+\s*[\+\-\*\/]\s*\d+$/;
+      const mathPattern = /^\d+\s*[+\-*/]\s*\d+$/;
       if (mathPattern.test(text)) {
         return {
           type: 'math_expression',
