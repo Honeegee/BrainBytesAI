@@ -5,49 +5,51 @@ const learningMaterialSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true,
-    index: true // Add index for efficient user-based queries
+    index: true, // Add index for efficient user-based queries
   },
   subject: {
     type: String,
     required: true,
-    trim: true
+    trim: true,
   },
   topic: {
     type: String,
     required: true,
-    trim: true
+    trim: true,
   },
   content: {
     type: String,
-    required: true
+    required: true,
   },
   resourceType: {
     type: String,
     enum: ['definition', 'explanation', 'example', 'practice'],
-    required: true
+    required: true,
   },
   difficulty: {
     type: String,
     enum: ['beginner', 'intermediate', 'advanced'],
-    default: 'intermediate'
+    default: 'intermediate',
   },
-  tags: [{
-    type: String,
-    trim: true
-  }],
+  tags: [
+    {
+      type: String,
+      trim: true,
+    },
+  ],
   createdAt: {
     type: Date,
     default: Date.now,
-    index: true // Add index for efficient sorting
+    index: true, // Add index for efficient sorting
   },
   updatedAt: {
     type: Date,
-    default: Date.now
-  }
+    default: Date.now,
+  },
 });
 
 // Update the updatedAt timestamp before saving
-learningMaterialSchema.pre('save', function(next) {
+learningMaterialSchema.pre('save', function (next) {
   this.updatedAt = new Date();
   next();
 });
@@ -58,7 +60,7 @@ learningMaterialSchema.index({ tags: 1 });
 learningMaterialSchema.index({ resourceType: 1, difficulty: 1 });
 
 // Add index hints for common queries
-learningMaterialSchema.statics.findBySubject = function(subject) {
+learningMaterialSchema.statics.findBySubject = function (subject) {
   return this.find({ subject }).hint({ subject: 1, topic: 1 });
 };
 

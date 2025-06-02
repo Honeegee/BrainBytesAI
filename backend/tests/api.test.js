@@ -17,12 +17,14 @@ const { securityHeaders, authenticate } = require('../middleware/security');
 
 // Mock dependencies
 jest.mock('axios', () => ({
-    post: jest.fn(() => Promise.resolve({
-      data: { response: 'AI response text' }
-    }))
-  }));
-  
-  jest.mock('../middleware/security', () => ({
+  post: jest.fn(() =>
+    Promise.resolve({
+      data: { response: 'AI response text' },
+    })
+  ),
+}));
+
+jest.mock('../middleware/security', () => ({
   securityHeaders: (req, res, next) => next(),
   authenticate: (req, res, next) => {
     req.user = {
@@ -31,7 +33,7 @@ jest.mock('axios', () => ({
     };
     next();
   },
-  initializePassport: jest.fn()
+  initializePassport: jest.fn(),
 }));
 
 // Basic middleware
@@ -46,10 +48,11 @@ app.get('/', (req, res) => {
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
-  res.json({ 
+  res.json({
     status: 'ok',
     timestamp: new Date(),
-    mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
+    mongodb:
+      mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
   });
 });
 
@@ -68,7 +71,7 @@ const testUser = {
   _id: '6123456789abcdef12345678',
   email: 'test@example.com',
   name: 'Test User',
-  passwordHash: 'test-hash'
+  passwordHash: 'test-hash',
 };
 
 // Setup and teardown
@@ -76,13 +79,13 @@ beforeAll(async () => {
   // Start an in-memory MongoDB server
   mongoServer = await MongoMemoryServer.create();
   const mongoUri = mongoServer.getUri();
-  
+
   // Connect to the in-memory database
   await mongoose.connect(mongoUri, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
     useFindAndModify: false,
-    useCreateIndex: true
+    useCreateIndex: true,
   });
 
   // Create test user
@@ -121,27 +124,25 @@ describe('API Endpoints', () => {
   // Chat endpoints tests
   describe('Chat Endpoints', () => {
     const testChatId = 'test-chat-123';
-    
+
     // Test creating a message
     test('POST /api/messages should create a new message', async () => {
       const messageData = {
         text: 'Hello AI',
         chatId: testChatId,
-        subject: 'General'
+        subject: 'General',
       };
-      
+
       // We'll need to handle the AI response part differently, mocking the external service
       // For now, this test may fail but it demonstrates the approach
-      const res = await request(app)
-        .post('/api/messages')
-        .send(messageData);
-      
+      const res = await request(app).post('/api/messages').send(messageData);
+
       // Even if the AI part fails, the endpoint should create the user message
       expect(res.statusCode).toBe(201);
       expect(res.body).toHaveProperty('userMessage');
       expect(res.body.userMessage).toHaveProperty('text', 'Hello AI');
       expect(res.body.userMessage).toHaveProperty('chatId', testChatId);
-      
+
       // Verify AI message
       expect(res.body).toHaveProperty('aiMessage');
       expect(res.body.aiMessage).toHaveProperty('text', 'AI response text');
@@ -156,24 +157,24 @@ describe('API Endpoints', () => {
           text: 'First message',
           chatId: testChatId,
           userId: testUser._id,
-          isAiResponse: false
+          isAiResponse: false,
         },
         {
           text: 'AI response',
           chatId: testChatId,
           userId: testUser._id,
-          isAiResponse: true
-        }
+          isAiResponse: true,
+        },
       ]);
-      
+
       const res = await request(app).get('/api/messages/chats');
-      
+
       expect(res.statusCode).toBe(200);
       expect(Array.isArray(res.body)).toBe(true);
       expect(res.body.length).toBeGreaterThan(0);
       expect(res.body[0]).toHaveProperty('id', testChatId);
     });
-    
+
     // Test fetching messages for a specific chat
     test('GET /api/messages should return messages for a chat', async () => {
       // Create some test messages
@@ -182,26 +183,26 @@ describe('API Endpoints', () => {
           text: 'Message 1',
           chatId: testChatId,
           userId: testUser._id,
-          isAiResponse: false
+          isAiResponse: false,
         },
         {
           text: 'AI response 1',
           chatId: testChatId,
           userId: testUser._id,
-          isAiResponse: true
-        }
+          isAiResponse: true,
+        },
       ]);
-      
+
       const res = await request(app)
         .get('/api/messages')
         .query({ chatId: testChatId });
-      
+
       expect(res.statusCode).toBe(200);
       expect(res.body).toHaveProperty('messages');
       expect(Array.isArray(res.body.messages)).toBe(true);
       expect(res.body.messages.length).toBe(2);
     });
-    
+
     // Test deleting a chat
     test('DELETE /api/messages/chats/:chatId should delete all messages in a chat', async () => {
       // Create some test messages
@@ -210,22 +211,23 @@ describe('API Endpoints', () => {
           text: 'Delete me',
           chatId: testChatId,
           userId: testUser._id,
-          isAiResponse: false
+          isAiResponse: false,
         },
         {
           text: 'Delete me too',
           chatId: testChatId,
           userId: testUser._id,
-          isAiResponse: true
-        }
+          isAiResponse: true,
+        },
       ]);
-      
-      const res = await request(app)
-        .delete(`/api/messages/chats/${testChatId}`);
-      
+
+      const res = await request(app).delete(
+        `/api/messages/chats/${testChatId}`
+      );
+
       expect(res.statusCode).toBe(200);
       expect(res.body).toHaveProperty('success', true);
-      
+
       // Verify the messages are gone
       const count = await Message.countDocuments({ chatId: testChatId });
       expect(count).toBe(0);
