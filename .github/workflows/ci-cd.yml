@@ -1,21 +1,48 @@
 name: CI/CD Pipeline
 
 on:
-  push:
-    branches: [ main, development ]
-  pull_request:
-    branches: [ main, development ]
+  workflow_run:
+    workflows: ["Code Quality & Security"]
+    types:
+      - completed
+    branches:
+      - main
+      - development
   workflow_dispatch:
 
 env:
   NODE_VERSION_MATRIX: '[18, 20, 22]'
 
 jobs:
+  # Check if Code Quality passed (only for workflow_run trigger)
+  check-code-quality:
+    name: Check Code Quality Status
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    if: github.event_name == 'workflow_run'
+    outputs:
+      should_proceed: ${{ steps.check.outputs.should_proceed }}
+    
+    steps:
+      - name: Check Code Quality workflow result
+        id: check
+        run: |
+          if [[ "${{ github.event.workflow_run.conclusion }}" == "success" ]]; then
+            echo "should_proceed=true" >> $GITHUB_OUTPUT
+            echo "✅ Code Quality checks passed, proceeding with CI/CD"
+          else
+            echo "should_proceed=false" >> $GITHUB_OUTPUT
+            echo "❌ Code Quality checks failed, skipping CI/CD"
+            exit 1
+          fi
+
   # Job 1: Setup and Basic Dependency Install
   setup:
     name: Setup Dependencies
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    needs: [check-code-quality]
+    if: always() && (github.event_name == 'workflow_dispatch' || needs.check-code-quality.outputs.should_proceed == 'true')
     
     steps:
       - name: Checkout code
