@@ -69,6 +69,9 @@ jobs:
     timeout-minutes: 30
     needs: setup
     if: needs.setup.outputs.should_deploy == 'true'
+    permissions:
+      contents: read
+      packages: write
     
     strategy:
       matrix:
