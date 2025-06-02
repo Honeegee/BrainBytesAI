@@ -7,7 +7,7 @@ module.exports = {
     '!**/node_modules/**',
     '!**/tests/**',
     '!**/coverage/**',
-    '!jest.config.js'
+    '!jest.config.js',
   ],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html', 'json'],
@@ -20,18 +20,18 @@ module.exports = {
     },
   },
   testTimeout: 30000,
-  testMatch: [
-    '<rootDir>/tests/**/*.test.js',
-    '<rootDir>/**/*.test.js',
-  ],
+  testMatch: ['<rootDir>/tests/**/*.test.js', '<rootDir>/**/*.test.js'],
   reporters: [
     'default',
-    ['jest-junit', {
-      outputDirectory: 'test-results',
-      outputName: 'junit.xml',
-      classNameTemplate: '{classname}',
-      titleTemplate: '{title}',
-    }],
+    [
+      'jest-junit',
+      {
+        outputDirectory: 'test-results',
+        outputName: 'junit.xml',
+        classNameTemplate: '{classname}',
+        titleTemplate: '{title}',
+      },
+    ],
   ],
   verbose: true,
 };
