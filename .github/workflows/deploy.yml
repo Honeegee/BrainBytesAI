@@ -71,7 +71,7 @@ jobs:
             environment="${{ github.event.inputs.environment }}"
           elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
             environment="production"
-          elif [[ "${{ github.ref }}" == "refs/heads/develop" ]]; then
+          elif [[ "${{ github.ref }}" == "refs/heads/development" ]]; then
             environment="staging"
           else
             environment="staging"
@@ -188,11 +188,11 @@ jobs:
         run: |
           # Set up environment variables for docker-compose
           export STAGING_DATABASE_URL="${{ secrets.STAGING_DATABASE_URL || 'mongodb://mongo:27017/brainbytes_staging' }}"
-          export STAGING_JWT_SECRET="${{ secrets.STAGING_JWT_SECRET || 'staging_jwt_secret_default' }}"
-          export STAGING_SESSION_SECRET="${{ secrets.STAGING_SESSION_SECRET || 'staging_session_secret_default' }}"
-          export STAGING_MONGO_USER="${{ secrets.STAGING_MONGO_USER || 'staginguser' }}"
-          export STAGING_MONGO_PASSWORD="${{ secrets.STAGING_MONGO_PASSWORD || 'stagingpass' }}"
-          export STAGING_AI_API_KEY="${{ secrets.STAGING_AI_API_KEY || 'staging_ai_key_placeholder' }}"
+          export STAGING_JWT_SECRET="${{ secrets.STAGING_JWT_SECRET || 'staging_jwt_secret_default_12345' }}"
+          export STAGING_SESSION_SECRET="${{ secrets.STAGING_SESSION_SECRET || 'staging_session_secret_default_12345' }}"
+          export STAGING_MONGO_USER="${{ secrets.STAGING_MONGO_USER || '' }}"
+          export STAGING_MONGO_PASSWORD="${{ secrets.STAGING_MONGO_PASSWORD || '' }}"
+          export STAGING_AI_API_KEY="${{ secrets.STAGING_AI_API_KEY || 'test_api_key_placeholder' }}"
           export GITHUB_REF_NAME="${{ github.ref_name }}"
           
           # Create staging environment variables file
@@ -206,6 +206,7 @@ jobs:
           EOF
           
           echo "Environment variables set up for staging deployment"
+          echo "Branch: $GITHUB_REF_NAME"
 
       - name: Deploy to staging server
         run: |
@@ -252,11 +253,15 @@ jobs:
             echo "⚠️  Using default docker-compose.yml for staging"
           fi
           
+          # Set image tag for staging deployment
+          export IMAGE_TAG=\${GITHUB_REF_NAME:-development}
+          echo "Using image tag: \$IMAGE_TAG"
+          
           # Try to pull latest images, fallback to building if pull fails
           echo "📦 Attempting to pull latest Docker images..."
           if ! $DOCKER_COMPOSE_CMD -f \$COMPOSE_FILE pull; then
             echo "⚠️  Pull failed, building images locally..."
-            $DOCKER_COMPOSE_CMD -f \$COMPOSE_FILE build
+            $DOCKER_COMPOSE_CMD -f \$COMPOSE_FILE build --no-cache
           fi
           
           # Stop existing services
@@ -267,13 +272,25 @@ jobs:
           echo "🟢 Starting new services..."
           $DOCKER_COMPOSE_CMD -f \$COMPOSE_FILE up -d --build
           
-          # Wait for services to be ready
+          # Wait for services to be ready with better health checking
           echo "⏳ Waiting for services to be ready..."
-          sleep 30
+          sleep 45
           
-          # Check service status
+          # Check service status with retries
           echo "🔍 Checking service status..."
           $DOCKER_COMPOSE_CMD -f \$COMPOSE_FILE ps
+          
+          # Wait for health checks to pass
+          echo "🔍 Waiting for health checks..."
+          for i in {1..6}; do
+            if $DOCKER_COMPOSE_CMD -f \$COMPOSE_FILE ps | grep -q "unhealthy"; then
+              echo "⏳ Health checks still running, waiting... (attempt \$i/6)"
+              sleep 15
+            else
+              echo "✅ Health checks passed or containers are healthy"
+              break
+            fi
+          done
           
           echo "✅ Staging deployment completed!"
           EOF
