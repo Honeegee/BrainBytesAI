@@ -152,10 +152,10 @@ jobs:
         env:
           MONGO_INITDB_DATABASE: brainbytes
         options: >-
-          --health-cmd mongosh
+          --health-cmd "echo 'db.runCommand(\"ping\").ok' | mongo localhost:27017/test --quiet"
           --health-interval 10s
           --health-timeout 5s
-          --health-retries 5
+          --health-retries 10
 
     steps:
       - name: Checkout code
