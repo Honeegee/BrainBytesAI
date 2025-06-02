@@ -10,7 +10,7 @@ function markdownToHtml(text) {
 
   const lines = text.split('\n');
   let html = '';
-  let listContext = []; // Track list context with more metadata
+  const listContext = []; // Track list context with more metadata
   let inCodeBlock = false;
   let codeContent = '';
   let codeLanguage = '';
@@ -291,7 +291,7 @@ function markdownToHtml(text) {
     // We have a definition list item
     const term = termMatch[1].trim();
     let description = '';
-    let descriptionLines = [];
+    const descriptionLines = [];
     
     // Collect all indented lines for the description
     let i = currentIndex + 1;
@@ -654,7 +654,7 @@ const ThemedMarkdownContent = ({ text, theme = 'dark', config = {} }) => {
   const htmlContent = useMemo(() => {
     // We could extend markdownToHtml to accept theme parameters
     // For now, we'll use basic string replacement on the output
-    let html = markdownToHtml(text || 'No content');
+    const html = markdownToHtml(text || 'No content');
     
     // Apply theme-specific class replacements if needed
     // This is a simplified approach - a more robust solution would modify markdownToHtml
