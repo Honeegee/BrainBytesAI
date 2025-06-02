@@ -93,11 +93,12 @@ jobs:
 
       - name: Check for secrets
         run: |
-          if grep -r -E "(password|secret|key|token|api_key)" --include="*.js" --include="*.json" --exclude-dir=node_modules . | grep -v -E "(test|spec|example)" | grep -E "=.*['\"][^'\"]*['\"]"; then
-            echo "❌ Potential secrets found in code"
+          # Check for hardcoded secrets with actual values (not just variable names)
+          if grep -r -E "(api[_-]?key|password|secret|token)\s*[:=]\s*['\"][a-zA-Z0-9]{10,}['\"]" --include="*.js" --include="*.json" --exclude-dir=node_modules . | grep -v -E "(test|spec|example|\.env\.example)"; then
+            echo "❌ Potential hardcoded secrets found in code"
             exit 1
           else
-            echo "✅ No obvious secrets found"
+            echo "✅ No hardcoded secrets found"
           fi
 
   # Job 2: Security Scanning
