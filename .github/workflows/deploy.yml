@@ -23,6 +23,11 @@ on:
         required: false
         default: false
         type: boolean
+      rollback:
+        description: 'Perform rollback instead of deployment'
+        required: false
+        default: false
+        type: boolean
 
 env:
   REGISTRY: ghcr.io
@@ -62,11 +67,22 @@ jobs:
       environment: ${{ steps.determine-env.outputs.environment }}
       deploy_url: ${{ steps.determine-env.outputs.deploy_url }}
       should_deploy: ${{ steps.determine-env.outputs.should_deploy }}
+      should_rollback: ${{ steps.determine-env.outputs.should_rollback }}
     
     steps:
       - name: Determine environment
         id: determine-env
         run: |
+          # Check if this is a rollback operation
+          if [[ "${{ github.event.inputs.rollback }}" == "true" ]]; then
+            echo "should_rollback=true" >> $GITHUB_OUTPUT
+            echo "should_deploy=false" >> $GITHUB_OUTPUT
+            echo "🔄 Manual rollback requested"
+          else
+            echo "should_rollback=false" >> $GITHUB_OUTPUT
+            echo "should_deploy=true" >> $GITHUB_OUTPUT
+          fi
+          
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             environment="${{ github.event.inputs.environment }}"
           elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
@@ -78,7 +94,6 @@ jobs:
           fi
           
           echo "environment=$environment" >> $GITHUB_OUTPUT
-          echo "should_deploy=true" >> $GITHUB_OUTPUT
           
           # Set deployment URLs based on environment
           if [[ "$environment" == "production" ]]; then
@@ -87,7 +102,196 @@ jobs:
             echo "deploy_url=https://staging.brainbytes.app" >> $GITHUB_OUTPUT
           fi
           
-          echo "Deploying to: $environment"
+          if [[ "${{ github.event.inputs.rollback }}" == "true" ]]; then
+            echo "🔄 Manual rollback to: $environment"
+          else
+            echo "🚀 Deploying to: $environment"
+          fi
+
+  # Manual rollback job (primarily for production, available for all environments)
+  manual-rollback:
+    name: Manual Rollback
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: setup
+    if: needs.setup.outputs.should_rollback == 'true'
+    environment:
+      name: ${{ needs.setup.outputs.environment }}
+      url: ${{ needs.setup.outputs.deploy_url }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Execute manual rollback
+        run: |
+          environment="${{ needs.setup.outputs.environment }}"
+          echo "🔄 Executing manual rollback for $environment..."
+          echo "👤 Initiated by: ${{ github.actor }}"
+          echo "📝 Reason: Manual rollback requested via workflow dispatch"
+          
+          # Check if Docker Compose is available
+          if command -v docker-compose &> /dev/null; then
+            DOCKER_COMPOSE_CMD="docker-compose"
+          elif docker compose version &> /dev/null; then
+            DOCKER_COMPOSE_CMD="docker compose"
+          else
+            echo "📦 Installing Docker Compose v2..."
+            sudo curl -L "https://github.com/docker/compose/releases/download/v2.24.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+            sudo chmod +x /usr/local/bin/docker-compose
+            DOCKER_COMPOSE_CMD="docker-compose"
+          fi
+          
+          # Determine compose file
+          if [[ "$environment" == "production" ]]; then
+            if [ -f "docker-compose.production.yml" ]; then
+              COMPOSE_FILE="docker-compose.production.yml"
+            else
+              COMPOSE_FILE="docker-compose.yml"
+            fi
+            STABLE_TAG="stable"
+          else
+            if [ -f "docker-compose.staging.yml" ]; then
+              COMPOSE_FILE="docker-compose.staging.yml"
+            else
+              COMPOSE_FILE="docker-compose.yml"
+            fi
+            STABLE_TAG="staging-stable"
+          fi
+          
+          echo "Using compose file: $COMPOSE_FILE"
+          echo "Using stable tag: $STABLE_TAG"
+          
+          # Stop current deployment
+          echo "🛑 Stopping current deployment..."
+          $DOCKER_COMPOSE_CMD -f $COMPOSE_FILE down || true
+          
+          # Pull stable images
+          echo "📦 Pulling stable images..."
+          export IMAGE_TAG="$STABLE_TAG"
+          $DOCKER_COMPOSE_CMD -f $COMPOSE_FILE pull || echo "⚠️ Could not pull stable images, using local cache"
+          
+          # Start rollback deployment
+          echo "🟢 Starting rollback deployment..."
+          $DOCKER_COMPOSE_CMD -f $COMPOSE_FILE up -d
+          
+          # Wait for services to stabilize
+          echo "⏳ Waiting for services to stabilize..."
+          sleep 60
+          
+          echo "✅ Manual rollback completed"
+
+      - name: Verify manual rollback
+        run: |
+          environment="${{ needs.setup.outputs.environment }}"
+          echo "🔍 Verifying manual rollback for $environment..."
+          
+          if [[ "$environment" == "production" ]]; then
+            BASE_URL="https://brainbytes.app"
+            API_URL="https://api.brainbytes.app"
+          else
+            BASE_URL="http://localhost:3001"
+            API_URL="http://localhost:3000"
+          fi
+          
+          # Comprehensive health check
+          max_attempts=12
+          backend_healthy=false
+          frontend_healthy=false
+          
+          # Backend health check
+          for i in $(seq 1 $max_attempts); do
+            echo "Backend health check attempt $i/$max_attempts..."
+            if curl -f "$API_URL/health" > /dev/null 2>&1; then
+              echo "✅ Backend is healthy after rollback"
+              backend_healthy=true
+              break
+            else
+              echo "⏳ Backend not ready yet..."
+              sleep 10
+            fi
+          done
+          
+          # Frontend health check
+          if [ "$backend_healthy" = true ]; then
+            for i in $(seq 1 $max_attempts); do
+              echo "Frontend health check attempt $i/$max_attempts..."
+              if curl -f "$BASE_URL" > /dev/null 2>&1; then
+                echo "✅ Frontend is healthy after rollback"
+                frontend_healthy=true
+                break
+              else
+                echo "⏳ Frontend not ready yet..."
+                sleep 10
+              fi
+            done
+          fi
+          
+          # Set rollback status
+          if [ "$backend_healthy" = true ] && [ "$frontend_healthy" = true ]; then
+            echo "🎉 Manual rollback verification successful!"
+            echo "ROLLBACK_STATUS=success" >> $GITHUB_ENV
+          else
+            echo "💥 Manual rollback verification failed!"
+            echo "ROLLBACK_STATUS=failed" >> $GITHUB_ENV
+            exit 1
+          fi
+
+      - name: Create rollback report
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const environment = '${{ needs.setup.outputs.environment }}';
+            const rollbackStatus = process.env.ROLLBACK_STATUS || 'failed';
+            const actor = '${{ github.actor }}';
+            
+            // Create an issue to document the rollback
+            const issueBody = `## 🔄 Manual Rollback Report
+            
+            **Environment:** ${environment}
+            **Initiated By:** ${actor}
+            **Date:** ${new Date().toISOString()}
+            **Status:** ${rollbackStatus === 'success' ? '✅ Successful' : '❌ Failed'}
+            
+            ### Details
+            - **Trigger:** Manual rollback requested via workflow dispatch
+            - **Commit:** ${context.sha}
+            - **Workflow Run:** [${context.runId}](${context.payload.repository.html_url}/actions/runs/${context.runId})
+            
+            ### Actions Taken
+            - Stopped current deployment containers
+            - Pulled and deployed stable image versions (tag: ${environment === 'production' ? 'stable' : 'staging-stable'})
+            - Verified service health endpoints
+            
+            ${rollbackStatus === 'success'
+              ? '### ✅ Rollback Successful\nAll services are healthy and responding correctly.'
+              : '### ❌ Rollback Failed\nSome services failed health checks. Manual intervention required.'}
+            
+            ### Next Steps
+            ${rollbackStatus === 'success'
+              ? '- Monitor system stability\n- Investigate root cause of original issue\n- Plan proper fix deployment'
+              : '- Investigate rollback failure\n- Check service logs\n- Consider manual recovery procedures'}
+            
+            ---
+            *This issue was automatically created by the deployment workflow.*`;
+            
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🔄 Manual Rollback ${rollbackStatus === 'success' ? 'Completed' : 'Failed'} - ${environment}`,
+              body: issueBody,
+              labels: ['deployment', 'rollback', environment, rollbackStatus === 'success' ? 'resolved' : 'critical']
+            });
+            
+            console.log(`Rollback report created for ${environment} rollback`);
 
   # Build and push Docker images
   build-images:
@@ -605,29 +809,251 @@ jobs:
           chmod +x production-tests.sh
           ./production-tests.sh
 
-  # Rollback capability
-  rollback:
-    name: Rollback Deployment
+  # Development failure handling (staging/dev environments)
+  dev-failure-handling:
+    name: Development Failure Cleanup
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    if: failure() && (needs.deploy-staging.result == 'failure' || needs.deploy-production.result == 'failure')
+    if: failure() && needs.deploy-staging.result == 'failure' && needs.setup.outputs.environment != 'production'
     needs: [setup, deploy-staging, deploy-production]
     
     steps:
-      - name: Rollback deployment
+      - name: Development failure cleanup
         run: |
           environment="${{ needs.setup.outputs.environment }}"
-          echo "🔄 Rolling back $environment deployment..."
+          echo "💥 Development deployment failed for $environment"
+          echo "🔧 This is expected in development - using 'fail fast' approach"
+          echo ""
+          echo "📋 Recommended actions for development failures:"
+          echo "  1. Check the deployment logs above for specific errors"
+          echo "  2. Fix the issues in your code"
+          echo "  3. Push a new commit to trigger another deployment"
+          echo "  4. No rollback needed - development should fail fast and fix forward"
+          echo ""
+          echo "💡 Why no rollback in development:"
+          echo "  - Faster iteration and debugging"
+          echo "  - Immediate feedback on what's broken"
+          echo "  - Encourages fixing issues rather than hiding them"
+          echo "  - Rollback complexity isn't worth it for non-production environments"
+          echo ""
+          echo "🚀 Ready for your next commit!"
+
+      - name: Create development failure comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const environment = '${{ needs.setup.outputs.environment }}';
+            
+            await github.rest.repos.createCommitComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              commit_sha: context.sha,
+              body: `💥 **Development Deployment Failed** - \`${environment}\`
+              
+              This deployment failed, but that's okay! Development environments use a "fail fast" approach:
+              
+              ✅ **What this means:**
+              - No automatic rollback (by design)
+              - Immediate feedback on issues
+              - Encourages fixing problems quickly
+              
+              🔧 **Next steps:**
+              1. Check the [workflow logs](${context.payload.repository.html_url}/actions/runs/${context.runId}) for details
+              2. Fix the issues in your code
+              3. Push a new commit to try again
+              
+              💡 **Why no rollback in development?**
+              - Faster iteration and learning
+              - Immediate visibility into what's broken
+              - Simpler workflow for rapid development
+              
+              Keep coding! 🚀`
+            });
+
+  # Rollback capability (Production only - Development environments use "fail fast" approach)
+  rollback:
+    name: Rollback Deployment
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: failure() && needs.deploy-production.result == 'failure' && needs.setup.outputs.environment == 'production'
+    needs: [setup, deploy-staging, deploy-production]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Perform rollback
+        run: |
+          environment="${{ needs.setup.outputs.environment }}"
+          echo "🔄 Starting rollback for $environment deployment..."
+          
+          # Check if Docker Compose is available
+          if command -v docker-compose &> /dev/null; then
+            DOCKER_COMPOSE_CMD="docker-compose"
+          elif docker compose version &> /dev/null; then
+            DOCKER_COMPOSE_CMD="docker compose"
+          else
+            echo "📦 Installing Docker Compose v2..."
+            sudo curl -L "https://github.com/docker/compose/releases/download/v2.24.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+            sudo chmod +x /usr/local/bin/docker-compose
+            DOCKER_COMPOSE_CMD="docker-compose"
+          fi
           
           if [[ "$environment" == "production" ]]; then
-            echo "🔄 Rolling back production to blue environment..."
-            # Switch back to blue environment
-            echo "✅ Rolled back to previous production version"
+            echo "🔄 Rolling back production deployment..."
+            
+            # Use production compose file
+            if [ -f "docker-compose.production.yml" ]; then
+              COMPOSE_FILE="docker-compose.production.yml"
+            else
+              COMPOSE_FILE="docker-compose.yml"
+            fi
+            
+            # Stop current failed deployment
+            echo "🛑 Stopping failed deployment..."
+            $DOCKER_COMPOSE_CMD -f $COMPOSE_FILE down || true
+            
+            # Pull previous stable images (using 'stable' tag or previous commit)
+            echo "📦 Pulling previous stable images..."
+            # In a real scenario, you'd maintain stable image tags
+            export IMAGE_TAG="stable"
+            $DOCKER_COMPOSE_CMD -f $COMPOSE_FILE pull || echo "⚠️ Could not pull stable images, using local cache"
+            
+            # Start with stable images
+            echo "🟢 Starting rollback deployment..."
+            $DOCKER_COMPOSE_CMD -f $COMPOSE_FILE up -d
+            
+            # Wait for services to stabilize
+            echo "⏳ Waiting for rollback services to stabilize..."
+            sleep 60
+            
           else
             echo "🔄 Rolling back staging deployment..."
-            # Rollback staging
-            echo "✅ Rolled back staging deployment"
+            
+            # Use staging compose file
+            if [ -f "docker-compose.staging.yml" ]; then
+              COMPOSE_FILE="docker-compose.staging.yml"
+            else
+              COMPOSE_FILE="docker-compose.yml"
+            fi
+            
+            # Stop current failed deployment
+            echo "🛑 Stopping failed deployment..."
+            $DOCKER_COMPOSE_CMD -f $COMPOSE_FILE down || true
+            
+            # Pull previous stable staging images
+            echo "📦 Rolling back to previous staging version..."
+            export IMAGE_TAG="staging-stable"
+            $DOCKER_COMPOSE_CMD -f $COMPOSE_FILE pull || echo "⚠️ Could not pull stable staging images"
+            
+            # Start rollback deployment
+            echo "🟢 Starting staging rollback..."
+            $DOCKER_COMPOSE_CMD -f $COMPOSE_FILE up -d
+            
+            # Wait for services to stabilize
+            echo "⏳ Waiting for staging rollback to complete..."
+            sleep 45
           fi
+          
+          echo "✅ Rollback deployment initiated"
+
+      - name: Verify rollback health
+        run: |
+          environment="${{ needs.setup.outputs.environment }}"
+          echo "🔍 Verifying rollback health for $environment..."
+          
+          if [[ "$environment" == "production" ]]; then
+            BASE_URL="https://brainbytes.app"
+            API_URL="https://api.brainbytes.app"
+          else
+            BASE_URL="http://localhost:3001"
+            API_URL="http://localhost:3000"
+          fi
+          
+          # Health check with retries
+          max_attempts=10
+          for i in $(seq 1 $max_attempts); do
+            echo "Health check attempt $i/$max_attempts..."
+            
+            if curl -f "$API_URL/health" > /dev/null 2>&1; then
+              echo "✅ Backend health check passed"
+              backend_healthy=true
+              break
+            else
+              echo "⏳ Backend not ready yet..."
+              sleep 10
+              if [ $i -eq $max_attempts ]; then
+                echo "❌ Backend rollback health check failed"
+                backend_healthy=false
+              fi
+            fi
+          done
+          
+          # Check frontend if backend is healthy
+          if [ "$backend_healthy" = true ]; then
+            for i in $(seq 1 $max_attempts); do
+              echo "Frontend health check attempt $i/$max_attempts..."
+              
+              if curl -f "$BASE_URL" > /dev/null 2>&1; then
+                echo "✅ Frontend health check passed"
+                frontend_healthy=true
+                break
+              else
+                echo "⏳ Frontend not ready yet..."
+                sleep 10
+                if [ $i -eq $max_attempts ]; then
+                  echo "❌ Frontend rollback health check failed"
+                  frontend_healthy=false
+                fi
+              fi
+            done
+          fi
+          
+          # Overall rollback status
+          if [ "$backend_healthy" = true ] && [ "$frontend_healthy" = true ]; then
+            echo "🎉 Rollback completed successfully!"
+            echo "ROLLBACK_STATUS=success" >> $GITHUB_ENV
+          else
+            echo "💥 Rollback verification failed!"
+            echo "ROLLBACK_STATUS=failed" >> $GITHUB_ENV
+            exit 1
+          fi
+
+      - name: Update rollback status
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const environment = '${{ needs.setup.outputs.environment }}';
+            const rollbackStatus = process.env.ROLLBACK_STATUS || 'failed';
+            
+            // Create a comment on the commit about the rollback
+            await github.rest.repos.createCommitComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              commit_sha: context.sha,
+              body: `🔄 **Rollback ${rollbackStatus === 'success' ? 'Completed' : 'Failed'}**
+              
+              Environment: ${environment}
+              Trigger: Deployment failure detected
+              Status: ${rollbackStatus === 'success' ? '✅ Successful' : '❌ Failed'}
+              Time: ${new Date().toISOString()}
+              
+              ${rollbackStatus === 'success'
+                ? 'Previous stable version has been restored and verified.'
+                : 'Rollback verification failed. Manual intervention required.'}
+              
+              [View Workflow Run](${context.payload.repository.html_url}/actions/runs/${context.runId})`
+            });
+            
+            console.log(`Rollback status updated: ${rollbackStatus}`);
 
   # Post-deployment notifications
   notify-deployment:
@@ -682,52 +1108,57 @@ jobs:
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
-      - name: Update deployment status
+      - name: Create deployment summary
         uses: actions/github-script@v7
         with:
           script: |
             const environment = '${{ steps.status.outputs.environment }}';
             const status = '${{ steps.status.outputs.status }}';
             const deployUrl = '${{ needs.setup.outputs.deploy_url }}';
+            const emoji = status === 'success' ? '🚀' : '💥';
+            const statusText = status === 'success' ? 'Successful' : 'Failed';
             
-            // Only update deployment status if we have a valid deployment ID
-            const deploymentId = context.payload.deployment?.id;
+            // Create a commit comment with deployment status (this only requires basic permissions)
+            const commentBody = `${emoji} **Deployment ${statusText}** - \`${environment}\`
             
-            if (deploymentId) {
-              console.log(`Updating deployment status for deployment ID: ${deploymentId}`);
-              await github.rest.repos.createDeploymentStatus({
+            **Environment:** ${environment}
+            **Status:** ${statusText}
+            **URL:** ${deployUrl}
+            **Commit:** ${context.sha.substring(0, 7)}
+            **Workflow:** [View Run](${context.payload.repository.html_url}/actions/runs/${context.runId})
+            **Triggered by:** ${context.actor}
+            **Time:** ${new Date().toISOString()}
+            
+            ${status === 'success'
+              ? `✅ **Deployment completed successfully!**\n\n🔗 **Access your deployment:** [${deployUrl}](${deployUrl})`
+              : `❌ **Deployment failed!**\n\n🔍 **Next steps:**\n- Check the workflow logs for details\n- Fix the issues and push a new commit\n- ${environment === 'production' ? 'Automatic rollback should have been initiated' : 'Development environments use "fail fast" - no rollback needed'}`}
+            
+            ---
+            *Deployment summary generated by GitHub Actions*`;
+            
+            try {
+              await github.rest.repos.createCommitComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                deployment_id: deploymentId,
-                state: status === 'success' ? 'success' : 'failure',
-                environment: environment,
-                environment_url: deployUrl,
-                description: `Deployment to ${environment} ${status}`
+                commit_sha: context.sha,
+                body: commentBody
               });
-            } else {
-              console.log('No deployment ID found in context payload. Creating a new deployment record...');
-              
-              // Create a deployment record first
-              const deployment = await github.rest.repos.createDeployment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                ref: context.sha,
-                environment: environment,
-                description: `Deploy ${context.sha.substring(0, 7)} to ${environment}`,
-                auto_merge: false,
-                required_contexts: []
-              });
-              
-              // Now create the deployment status
-              await github.rest.repos.createDeploymentStatus({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                deployment_id: deployment.data.id,
-                state: status === 'success' ? 'success' : 'failure',
-                environment: environment,
-                environment_url: deployUrl,
-                description: `Deployment to ${environment} ${status}`
-              });
-              
-              console.log(`Created deployment ${deployment.data.id} and updated status to ${status}`);
+              console.log(`✅ Deployment summary created for ${environment} deployment (${status})`);
+            } catch (error) {
+              console.log(`⚠️ Could not create commit comment: ${error.message}`);
+              // Don't fail the workflow if we can't create a comment
             }
+            
+            // Log deployment summary to workflow output
+            console.log(`
+            ====================================
+            DEPLOYMENT SUMMARY
+            ====================================
+            Environment: ${environment}
+            Status: ${statusText}
+            URL: ${deployUrl}
+            Commit: ${context.sha.substring(0, 7)}
+            Actor: ${context.actor}
+            Time: ${new Date().toISOString()}
+            ====================================
+            `);
