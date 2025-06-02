@@ -118,11 +118,18 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Generate lowercase image name
+        id: image-name
+        run: |
+          IMAGE_NAME_LOWER=$(echo "${{ env.IMAGE_NAME }}" | tr '[:upper:]' '[:lower:]')
+          echo "image_name_lower=$IMAGE_NAME_LOWER" >> $GITHUB_OUTPUT
+          echo "full_image_name=${{ env.REGISTRY }}/$IMAGE_NAME_LOWER/${{ matrix.service }}" >> $GITHUB_OUTPUT
+
       - name: Extract metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.service }}
+          images: ${{ steps.image-name.outputs.full_image_name }}
           tags: |
             type=ref,event=branch
             type=ref,event=pr
