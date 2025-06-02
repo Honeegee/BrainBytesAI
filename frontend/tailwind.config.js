@@ -1,13 +1,13 @@
 module.exports = {
   content: [
-    "./pages/**/*.{js,ts,jsx,tsx}",
-    "./components/**/*.{js,ts,jsx,tsx}",
+    './pages/**/*.{js,ts,jsx,tsx}',
+    './components/**/*.{js,ts,jsx,tsx}',
   ],
   theme: {
     extend: {
       animation: {
-        'fadeIn': 'fadeIn 0.2s ease-in-out',
-        'expand': 'expand 0.2s ease-out',
+        fadeIn: 'fadeIn 0.2s ease-in-out',
+        expand: 'expand 0.2s ease-out',
       },
       keyframes: {
         fadeIn: {
@@ -61,29 +61,29 @@ module.exports = {
         },
         'hf-yellow': '#FFD21E',
         'hf-gray-light': '#F3F4F6',
-        'hf-gray-medium': '#D1D5DB', 
-        'hf-gray-dark': '#4B5563',   
-        'hf-blue': '#3B82F6',       
+        'hf-gray-medium': '#D1D5DB',
+        'hf-gray-dark': '#4B5563',
+        'hf-blue': '#3B82F6',
         // Dark Theme Colors
-        'bg-darkest': '#1a202c',    
-        'bg-dark': '#0F172A',       
-        'bg-dark-secondary': '#121C2D', 
-        'border-dark': '#334155',   
-        'text-light': '#F1F5F9',    
-        'text-medium': '#94A3B8',   
-        'text-dark': '#0F172A',     
+        'bg-darkest': '#1a202c',
+        'bg-dark': '#0F172A',
+        'bg-dark-secondary': '#121C2D',
+        'border-dark': '#334155',
+        'text-light': '#F1F5F9',
+        'text-medium': '#94A3B8',
+        'text-dark': '#0F172A',
       },
       spacing: {
-        '18': '4.5rem',
-        '112': '28rem',
-        '128': '32rem',
+        18: '4.5rem',
+        112: '28rem',
+        128: '32rem',
       },
       borderRadius: {
-        'xl': '1rem',
+        xl: '1rem',
         '2xl': '1.5rem',
       },
       fontSize: {
-        'xxs': '0.625rem',
+        xxs: '0.625rem',
       },
       boxShadow: {
         'inner-lg': 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.06)',
@@ -91,4 +91,4 @@ module.exports = {
     },
   },
   plugins: [],
-}
+};
