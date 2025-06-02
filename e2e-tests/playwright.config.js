@@ -50,10 +50,10 @@ module.exports = defineConfig({
 
   /* Configure projects for major browsers */
   projects: [
-    // Setup project
+    // Setup project - only runs when not skipped
     {
       name: 'setup',
-      testMatch: /.*\.setup\.js/,
+      testMatch: process.env.SKIP_AUTH_SETUP === 'true' ? /^$/ : /.*\.setup\.js/,
       use: {
         baseURL: process.env.BASE_URL || 'http://localhost:3001',
       },
@@ -62,16 +62,25 @@ module.exports = defineConfig({
     // Health check tests (no auth required)
     {
       name: 'health-check',
-      testMatch: /.*health-check\.spec\.js|.*auth-mock\.spec\.js/,
+      testMatch: /.*health-check\.spec\.js|.*simple-health.*\.spec\.js/,
       use: {
         ...devices['Desktop Chrome'],
         baseURL: process.env.BASE_URL || 'http://localhost:3000'
       },
+      dependencies: [], // No dependencies on setup
+      metadata: {
+        description: 'Basic health checks that can run without backend services'
+      }
     },
     
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: {
+        ...devices['Desktop Chrome'],
+        extraHTTPHeaders: {
+          'X-Test-Environment': 'true'
+        }
+      },
       dependencies: process.env.SKIP_AUTH_SETUP ? [] : ['setup'],
     },
 

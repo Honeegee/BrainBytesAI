@@ -1,26 +1,84 @@
-<testsuites id="" name="" tests="3" failures="0" skipped="0" errors="0" time="2.9194850000000003">
-<testsuite name="auth-mock.spec.js" timestamp="2025-06-02T06:56:10.211Z" hostname="health-check" tests="3" failures="0" skipped="0" time="5.847" errors="0">
-<testcase name="Authentication Flow (Mock) › login form validation and submission" classname="auth-mock.spec.js" time="1.983">
+<testsuites id="" name="" tests="10" failures="0" skipped="8" errors="0" time="6.169815000000001">
+<testsuite name="health-check.spec.js" timestamp="2025-06-02T07:53:30.928Z" hostname="health-check" tests="7" failures="0" skipped="7" time="31.211" errors="0">
+<testcase name="Health Check Tests › application loads successfully" classname="health-check.spec.js" time="4.557">
+<properties>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Health Check Tests › login page is accessible" classname="health-check.spec.js" time="4.484">
+<properties>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Health Check Tests › signup page is accessible" classname="health-check.spec.js" time="4.457">
+<properties>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Health Check Tests › navigation between pages works" classname="health-check.spec.js" time="4.484">
+<properties>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Health Check Tests › application responds to basic interactions" classname="health-check.spec.js" time="4.459">
+<properties>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Health Check Tests › error handling - invalid route" classname="health-check.spec.js" time="4.391">
+<properties>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Health Check Tests › responsive design basics" classname="health-check.spec.js" time="4.379">
+<properties>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="simple-health-check.spec.js" timestamp="2025-06-02T07:53:30.928Z" hostname="health-check" tests="3" failures="0" skipped="1" time="4.491" errors="0">
+<testcase name="Simple Health Check › server connectivity check" classname="simple-health-check.spec.js" time="4.278">
+<properties>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Simple Health Check › configuration validation" classname="simple-health-check.spec.js" time="0.007">
 <system-out>
-<![CDATA[✅ Login form validation and submission working correctly
+<![CDATA[📋 Test Configuration:
+   Base URL: http://localhost:3000
+   Environment: development
+   Skip WebServer: true 
+✅ Configuration is valid
 ]]>
 </system-out>
 </testcase>
-<testcase name="Authentication Flow (Mock) › login form handles invalid credentials" classname="auth-mock.spec.js" time="1.981">
+<testcase name="Simple Health Check › playwright installation check" classname="simple-health-check.spec.js" time="0.206">
 <system-out>
-<![CDATA[✅ Login form properly handles invalid credentials
-]]>
-</system-out>
-</testcase>
-<testcase name="Authentication Flow (Mock) › auth setup process simulation" classname="auth-mock.spec.js" time="1.883">
-<system-out>
-<![CDATA[🔐 Simulating authentication setup process...
-📝 User registration: SUCCESS
-🌐 Login page: LOADED
-📋 Form filling: SUCCESS
-✅ Authentication: SUCCESS
-💾 Auth state saved: playwright/.auth/user.json
-🎉 Authentication setup completed successfully!
+<![CDATA[✅ Playwright is working correctly
 ]]>
 </system-out>
 </testcase>
