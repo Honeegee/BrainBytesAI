@@ -191,24 +191,45 @@ jobs:
           npx playwright install --with-deps
 
       - name: Start services
+        env:
+          # Backend environment variables
+          PORT: 3000
+          MONGODB_URI: mongodb://localhost:27017/brainbytes
+          FRONTEND_URL: http://localhost:3001
+          JWT_SECRET: test_jwt_secret_key
+          NODE_ENV: test
+          RATE_LIMIT_WINDOW: 15
+          RATE_LIMIT_MAX: 100
+          COOKIE_SECURE: false
+          SESSION_SECRET: test_session_secret_key
+          # Frontend environment variables
+          NEXT_PUBLIC_BACKEND_URL: http://localhost:3000
+          # AI Service environment variables
+          GROQ_API_KEY: test_key_placeholder
         run: |
           # Start backend
-          cd backend && npm start &
+          (cd backend && npm start) &
           BACKEND_PID=$!
           echo "BACKEND_PID=$BACKEND_PID" >> $GITHUB_ENV
           
           # Start AI service
-          cd ../ai-service && npm start &
+          (cd ai-service && npm start) &
           AI_SERVICE_PID=$!
           echo "AI_SERVICE_PID=$AI_SERVICE_PID" >> $GITHUB_ENV
           
           # Start frontend
-          cd ../frontend && npm run build && npm start &
+          (cd frontend && npm run build && npm start) &
           FRONTEND_PID=$!
           echo "FRONTEND_PID=$FRONTEND_PID" >> $GITHUB_ENV
           
           # Wait for services to be ready
           sleep 30
+          
+          # Check if services are running
+          echo "Checking backend health..."
+          curl -f http://localhost:3001/api/health || echo "Backend not ready"
+          echo "Checking frontend..."
+          curl -f http://localhost:3000 || echo "Frontend not ready"
 
       - name: Run E2E tests
         working-directory: ./e2e-tests
@@ -250,24 +271,39 @@ jobs:
       - name: Install dependencies
         run: |
           npm install -g artillery
-          cd frontend && npm ci
-          cd ../backend && npm ci
-          cd ../ai-service && npm ci
+          (cd frontend && npm ci)
+          (cd backend && npm ci)
+          (cd ai-service && npm ci)
 
       - name: Start services for performance testing
+        env:
+          # Backend environment variables
+          PORT: 3000
+          MONGODB_URI: mongodb://localhost:27017/brainbytes
+          FRONTEND_URL: http://localhost:3001
+          JWT_SECRET: test_jwt_secret_key
+          NODE_ENV: test
+          RATE_LIMIT_WINDOW: 15
+          RATE_LIMIT_MAX: 100
+          COOKIE_SECURE: false
+          SESSION_SECRET: test_session_secret_key
+          # Frontend environment variables
+          NEXT_PUBLIC_BACKEND_URL: http://localhost:3000
+          # AI Service environment variables
+          GROQ_API_KEY: test_key_placeholder
         run: |
           # Start backend
-          cd backend && npm start &
+          (cd backend && npm start) &
           BACKEND_PID=$!
           echo "BACKEND_PID=$BACKEND_PID" >> $GITHUB_ENV
           
           # Start AI service
-          cd ../ai-service && npm start &
+          (cd ai-service && npm start) &
           AI_SERVICE_PID=$!
           echo "AI_SERVICE_PID=$AI_SERVICE_PID" >> $GITHUB_ENV
           
           # Start frontend
-          cd ../frontend && npm run build && npm start &
+          (cd frontend && npm run build && npm start) &
           FRONTEND_PID=$!
           echo "FRONTEND_PID=$FRONTEND_PID" >> $GITHUB_ENV
           
