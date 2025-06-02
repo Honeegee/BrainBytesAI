@@ -1,0 +1,11 @@
+config:
+  target: 'http://localhost:3000'
+  phases:
+    - duration: 5
+      arrivalRate: 1
+
+scenarios:
+  - name: "Quick Health Check Test"
+    flow:
+      - get:
+          url: "/"

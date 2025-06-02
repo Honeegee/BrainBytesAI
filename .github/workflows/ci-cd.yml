@@ -330,20 +330,7 @@ jobs:
 
       - name: Run performance tests
         run: |
-          # Create basic artillery config
-          cat > performance-test.yml << EOF
-          config:
-            target: 'http://localhost:3000'
-            phases:
-              - duration: 60
-                arrivalRate: 10
-          scenarios:
-            - name: "API Load Test"
-              requests:
-                - get:
-                    url: "/health"
-          EOF
-          
+          # Use the existing performance test configuration
           artillery run performance-test.yml --output performance-report.json
 
       - name: Generate performance report
