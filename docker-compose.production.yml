@@ -1,5 +1,3 @@
-version: '3.8'
-
 networks:
   app-network:
     driver: bridge
@@ -7,7 +5,7 @@ networks:
 services:
   # AI Service container
   ai-service:
-    image: ghcr.io/${GITHUB_REPOSITORY}/ai-service:latest
+    image: ghcr.io/honeegee/brainbytesai/ai-service:latest
     ports:
       - "3002:3002"
     environment:
@@ -41,7 +39,7 @@ services:
 
   # Frontend container
   frontend:
-    image: ghcr.io/${GITHUB_REPOSITORY}/frontend:latest
+    image: ghcr.io/honeegee/brainbytesai/frontend:latest
     ports:
       - "3001:3000"
     environment:
@@ -78,7 +76,7 @@ services:
 
   # Backend API container
   backend:
-    image: ghcr.io/${GITHUB_REPOSITORY}/backend:latest
+    image: ghcr.io/honeegee/brainbytesai/backend:latest
     ports:
       - "3000:3000"
     environment:
