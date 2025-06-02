@@ -69,6 +69,7 @@ If the POST /api/messages test fails:
 3. For local testing, you may need to modify the URL from 'http://ai-service:3002/api/chat' to match your local setup
 
 For any other test failures, check the error message and stack trace carefully. Most issues are related to either:
+
 - Missing or incorrect environment variables
 - Container connectivity issues
 - Mock implementations that don't match the actual service behavior
@@ -76,9 +77,11 @@ For any other test failures, check the error message and stack trace carefully. 
 ## Adding More Tests
 
 To add more API tests:
+
 1. Add new test cases to api.test.js
 2. Follow the existing patterns for request and response validation
 
 To add more database tests:
+
 1. Add new test cases to db-persistence.test.js
 2. Create unique test data for each test to avoid conflicts

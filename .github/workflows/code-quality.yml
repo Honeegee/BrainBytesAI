@@ -1,0 +1,333 @@
+name: Code Quality & Security
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # Run security scan daily at 2 AM UTC
+    - cron: '0 2 * * *'
+
+jobs:
+  # ESLint and Prettier checks
+  lint-and-format:
+    name: Lint & Format Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    strategy:
+      matrix:
+        service: [frontend, backend, ai-service]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Install dependencies
+        working-directory: ./${{ matrix.service }}
+        run: npm ci
+
+      - name: Run ESLint
+        working-directory: ./${{ matrix.service }}
+        run: |
+          npm run lint -- --format=json --output-file=eslint-report.json || true
+          npm run lint
+
+      - name: Run Prettier check
+        working-directory: ./${{ matrix.service }}
+        run: npm run format:check
+
+      - name: Upload ESLint report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: eslint-report-${{ matrix.service }}
+          path: ./${{ matrix.service }}/eslint-report.json
+          retention-days: 7
+
+  # Dependency vulnerability scanning
+  security-scan:
+    name: Security Vulnerability Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          cd frontend && npm ci
+          cd ../backend && npm ci
+          cd ../ai-service && npm ci
+
+      - name: Run npm audit
+        run: |
+          echo "# Security Audit Report" > security-report.md
+          echo "Generated on: $(date)" >> security-report.md
+          echo "" >> security-report.md
+          
+          echo "## Frontend Vulnerabilities" >> security-report.md
+          cd frontend
+          npm audit --audit-level=moderate --json > ../frontend-audit.json || echo "Audit completed with findings"
+          npm audit --audit-level=moderate >> ../security-report.md || echo "Frontend audit completed"
+          
+          echo "" >> ../security-report.md
+          echo "## Backend Vulnerabilities" >> ../security-report.md
+          cd ../backend
+          npm audit --audit-level=moderate --json > ../backend-audit.json || echo "Audit completed with findings"
+          npm audit --audit-level=moderate >> ../security-report.md || echo "Backend audit completed"
+          
+          echo "" >> ../security-report.md
+          echo "## AI Service Vulnerabilities" >> ../security-report.md
+          cd ../ai-service
+          npm audit --audit-level=moderate --json > ../ai-service-audit.json || echo "Audit completed with findings"
+          npm audit --audit-level=moderate >> ../security-report.md || echo "AI Service audit completed"
+
+      - name: Check for high/critical vulnerabilities
+        run: |
+          # Check if any high or critical vulnerabilities exist
+          high_vulns=$(cat *-audit.json | jq '.vulnerabilities | to_entries | map(select(.value.severity == "high" or .value.severity == "critical")) | length' | paste -sd+ | bc)
+          
+          if [ "$high_vulns" -gt 0 ]; then
+            echo "❌ Found $high_vulns high/critical vulnerabilities"
+            echo "SECURITY_ISSUES=true" >> $GITHUB_ENV
+          else
+            echo "✅ No high/critical vulnerabilities found"
+            echo "SECURITY_ISSUES=false" >> $GITHUB_ENV
+          fi
+
+      - name: Upload security artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-scan-results
+          path: |
+            security-report.md
+            *-audit.json
+          retention-days: 30
+
+      - name: Comment PR with security findings
+        if: github.event_name == 'pull_request' && env.SECURITY_ISSUES == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('security-report.md', 'utf8');
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## 🔒 Security Scan Results\n\n${report}\n\nPlease review and address any high/critical vulnerabilities before merging.`
+            });
+
+  # Code complexity and maintainability analysis
+  code-analysis:
+    name: Code Analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for better analysis
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install analysis tools
+        run: |
+          npm install -g jscpd complexity-report eslint
+
+      - name: Check for code duplication
+        run: |
+          echo "# Code Duplication Report" > code-analysis-report.md
+          echo "Generated on: $(date)" >> code-analysis-report.md
+          echo "" >> code-analysis-report.md
+          
+          jscpd --threshold 3 --reporters json,markdown --output ./duplication-report frontend/ backend/ ai-service/ || true
+          
+          if [ -f "./duplication-report/jscpd-report.json" ]; then
+            duplications=$(cat ./duplication-report/jscpd-report.json | jq '.statistics.total.duplications')
+            echo "Found $duplications code duplications" >> code-analysis-report.md
+          fi
+
+      - name: Check file sizes
+        run: |
+          echo "" >> code-analysis-report.md
+          echo "## Large Files (>1KB)" >> code-analysis-report.md
+          find . -name "*.js" -not -path "./node_modules/*" -not -path "./.git/*" -size +1k -exec ls -lh {} \; | awk '{print $9, $5}' >> code-analysis-report.md
+
+      - name: Check for TODO/FIXME comments
+        run: |
+          echo "" >> code-analysis-report.md
+          echo "## TODO/FIXME Comments" >> code-analysis-report.md
+          grep -r -n "TODO\|FIXME\|HACK\|XXX" --include="*.js" frontend/ backend/ ai-service/ >> code-analysis-report.md || echo "No TODO/FIXME comments found" >> code-analysis-report.md
+
+      - name: Upload code analysis report
+        uses: actions/upload-artifact@v4
+        with:
+          name: code-analysis-report
+          path: |
+            code-analysis-report.md
+            duplication-report/
+          retention-days: 7
+
+  # Secrets and sensitive data scanning
+  secrets-scan:
+    name: Secrets Scanning
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run TruffleHog OSS
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: main
+          head: HEAD
+          extra_args: --debug --only-verified
+
+      - name: Manual secrets check
+        run: |
+          echo "# Manual Secrets Scan" > secrets-report.md
+          echo "Generated on: $(date)" >> secrets-report.md
+          echo "" >> secrets-report.md
+          
+          # Check for potential API keys, passwords, tokens
+          echo "## Potential Secrets Found:" >> secrets-report.md
+          
+          # Search for common secret patterns
+          if grep -r -i -E "(api[_-]?key|password|secret|token|auth)" --include="*.js" --include="*.json" --exclude-dir=node_modules . | grep -v -E "(test|spec|example|\.env\.example)" | grep -E "=.*['\"][^'\"]*['\"]"; then
+            echo "⚠️ Potential secrets found in code files" >> secrets-report.md
+            grep -r -i -E "(api[_-]?key|password|secret|token|auth)" --include="*.js" --include="*.json" --exclude-dir=node_modules . | grep -v -E "(test|spec|example|\.env\.example)" | grep -E "=.*['\"][^'\"]*['\"]" >> secrets-report.md
+          else
+            echo "✅ No obvious secrets found in code files" >> secrets-report.md
+          fi
+          
+          # Check for hardcoded URLs that might contain secrets
+          echo "" >> secrets-report.md
+          echo "## URLs Check:" >> secrets-report.md
+          if grep -r -E "https?://[^/]*:[^@]*@" --include="*.js" --exclude-dir=node_modules .; then
+            echo "⚠️ URLs with credentials found" >> secrets-report.md
+          else
+            echo "✅ No URLs with embedded credentials found" >> secrets-report.md
+          fi
+
+      - name: Upload secrets scan report
+        uses: actions/upload-artifact@v4
+        with:
+          name: secrets-scan-report
+          path: secrets-report.md
+          retention-days: 30
+
+  # Generate combined quality report
+  quality-summary:
+    name: Quality Summary
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: [lint-and-format, security-scan, code-analysis, secrets-scan]
+    if: always()
+    
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Generate quality summary
+        run: |
+          echo "# Code Quality Summary Report" > quality-summary.md
+          echo "Generated on: $(date)" >> quality-summary.md
+          echo "" >> quality-summary.md
+          
+          # Check linting results
+          echo "## Linting Results" >> quality-summary.md
+          if [ -d "eslint-report-frontend" ] && [ -d "eslint-report-backend" ] && [ -d "eslint-report-ai-service" ]; then
+            echo "✅ ESLint checks completed for all services" >> quality-summary.md
+          else
+            echo "❌ ESLint checks failed for some services" >> quality-summary.md
+          fi
+          
+          # Check security results
+          echo "" >> quality-summary.md
+          echo "## Security Scan Results" >> quality-summary.md
+          if [ -d "security-scan-results" ]; then
+            echo "✅ Security scan completed" >> quality-summary.md
+            if grep -q "high\|critical" security-scan-results/security-report.md; then
+              echo "⚠️ High/Critical vulnerabilities found - review required" >> quality-summary.md
+            else
+              echo "✅ No critical vulnerabilities found" >> quality-summary.md
+            fi
+          else
+            echo "❌ Security scan failed" >> quality-summary.md
+          fi
+          
+          # Check code analysis
+          echo "" >> quality-summary.md
+          echo "## Code Analysis Results" >> quality-summary.md
+          if [ -d "code-analysis-report" ]; then
+            echo "✅ Code analysis completed" >> quality-summary.md
+          else
+            echo "❌ Code analysis failed" >> quality-summary.md
+          fi
+          
+          # Check secrets scan
+          echo "" >> quality-summary.md
+          echo "## Secrets Scan Results" >> quality-summary.md
+          if [ -d "secrets-scan-report" ]; then
+            echo "✅ Secrets scan completed" >> quality-summary.md
+          else
+            echo "❌ Secrets scan failed" >> quality-summary.md
+          fi
+
+      - name: Upload quality summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: quality-summary-report
+          path: quality-summary.md
+          retention-days: 30
+
+      - name: Comment PR with quality summary
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const summary = fs.readFileSync('quality-summary.md', 'utf8');
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## 📊 Code Quality Summary\n\n${summary}`
+            });

@@ -7,21 +7,21 @@ const authSchema = new mongoose.Schema({
     required: true,
     unique: true,
     trim: true,
-    lowercase: true
+    lowercase: true,
   },
   password: {
     type: String,
-    required: true
+    required: true,
   },
   userProfile: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'UserProfile',
-    required: true
-  }
+    required: true,
+  },
 });
 
 // Hash password before saving
-authSchema.pre('save', async function(next) {
+authSchema.pre('save', async function (next) {
   if (this.isModified('password')) {
     this.password = await bcrypt.hash(this.password, 10);
   }
@@ -29,7 +29,7 @@ authSchema.pre('save', async function(next) {
 });
 
 // Method to compare password
-authSchema.methods.comparePassword = async function(candidatePassword) {
+authSchema.methods.comparePassword = async function (candidatePassword) {
   return bcrypt.compare(candidatePassword, this.password);
 };
 

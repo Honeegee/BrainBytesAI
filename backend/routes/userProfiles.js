@@ -8,43 +8,48 @@ const LearningMaterial = require('../models/learningMaterial');
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
-  destination: function(req, file, cb) {
+  destination: function (req, file, cb) {
     cb(null, 'public/uploads/avatars');
   },
-  filename: function(req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-  }
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    cb(
+      null,
+      file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname)
+    );
+  },
 });
 
-const upload = multer({ 
+const upload = multer({
   storage: storage,
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
-  fileFilter: function(req, file, cb) {
+  fileFilter: function (req, file, cb) {
     const filetypes = /jpeg|jpg|png|gif/;
     const mimetype = filetypes.test(file.mimetype);
-    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-    
+    const extname = filetypes.test(
+      path.extname(file.originalname).toLowerCase()
+    );
+
     if (mimetype && extname) {
       return cb(null, true);
     }
     cb(new Error('Only image files (jpeg, jpg, png, gif) are allowed'));
-  }
+  },
 }).single('avatar');
 
 // Create a new user profile
 router.post('/', (req, res) => {
-  upload(req, res, async (err) => {
+  upload(req, res, async err => {
     if (err) {
       return res.status(400).json({ error: err.message });
     }
 
     try {
       const profileData = { ...req.body };
-      
+
       // Handle preferredSubjects array
       const subjects = [];
-      for (let key in req.body) {
+      for (const key in req.body) {
         if (key.startsWith('preferredSubjects[')) {
           subjects.push(req.body[key]);
         }
@@ -84,7 +89,7 @@ router.get('/:id', async (req, res) => {
     if (!req.params.id || req.params.id === 'undefined') {
       return res.status(400).json({ error: 'Invalid user ID provided' });
     }
-    
+
     const userProfile = await UserProfile.findById(req.params.id);
     if (!userProfile) {
       return res.status(404).json({ error: 'User profile not found' });
@@ -100,17 +105,17 @@ router.get('/:id', async (req, res) => {
 
 // Update a user profile
 router.put('/:id', (req, res) => {
-  upload(req, res, async (err) => {
+  upload(req, res, async err => {
     if (err) {
       return res.status(400).json({ error: err.message });
     }
 
     try {
       const updateData = { ...req.body };
-      
+
       // Handle preferredSubjects array
       const subjects = [];
-      for (let key in req.body) {
+      for (const key in req.body) {
         if (key.startsWith('preferredSubjects[')) {
           subjects.push(req.body[key]);
         }
@@ -130,7 +135,7 @@ router.put('/:id', (req, res) => {
         updateData,
         { new: true, runValidators: true }
       );
-      
+
       if (!userProfile) {
         return res.status(404).json({ error: 'User profile not found' });
       }
@@ -167,12 +172,14 @@ router.get('/:id/activity', async (req, res) => {
     // Get subjects engaged with and message counts
     const messageStats = await Message.aggregate([
       { $match: { userId } },
-      { $group: {
-        _id: '$subject',
-        count: { $sum: 1 },
-        lastInteraction: { $max: '$createdAt' }
-      }},
-      { $sort: { lastInteraction: -1 }}
+      {
+        $group: {
+          _id: '$subject',
+          count: { $sum: 1 },
+          lastInteraction: { $max: '$createdAt' },
+        },
+      },
+      { $sort: { lastInteraction: -1 } },
     ]);
 
     // Get recently viewed learning materials
@@ -185,22 +192,25 @@ router.get('/:id/activity', async (req, res) => {
       subject: stat._id || 'General',
       interactions: stat.count,
       lastInteraction: stat.lastInteraction,
-      level: calculateLevel(stat.count)
+      level: calculateLevel(stat.count),
     }));
 
     res.json({
       recentActivity: {
         messages: recentMessages,
-        materials: recentMaterials
+        materials: recentMaterials,
       },
       progress: progress,
       stats: {
         totalInteractions: progress.reduce((sum, p) => sum + p.interactions, 0),
         activeSubjects: progress.length,
-        mostActiveSubject: progress.length > 0 ? 
-          progress.reduce((a, b) => a.interactions > b.interactions ? a : b).subject : 
-          null
-      }
+        mostActiveSubject:
+          progress.length > 0
+            ? progress.reduce((a, b) =>
+                a.interactions > b.interactions ? a : b
+              ).subject
+            : null,
+      },
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -209,9 +219,15 @@ router.get('/:id/activity', async (req, res) => {
 
 // Helper function to calculate level based on interactions
 function calculateLevel(interactions) {
-  if (interactions < 10) return 'Beginner';
-  if (interactions < 25) return 'Intermediate';
-  if (interactions < 50) return 'Advanced';
+  if (interactions < 10) {
+    return 'Beginner';
+  }
+  if (interactions < 25) {
+    return 'Intermediate';
+  }
+  if (interactions < 50) {
+    return 'Advanced';
+  }
   return 'Expert';
 }
 

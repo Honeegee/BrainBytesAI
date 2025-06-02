@@ -37,6 +37,7 @@ node make-executable.js
 ```
 
 This script will:
+
 1. Check if Jest and other testing dependencies are installed
 2. Install them if necessary
 3. Run the authentication tests

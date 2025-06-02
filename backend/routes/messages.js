@@ -13,9 +13,13 @@ const sentiment = new Sentiment();
 router.use(authenticate);
 
 // Helper function to get sentiment label from score
-const getSentimentLabel = (score) => {
-  if (score < -0.1) return 'negative';
-  if (score > 0.1) return 'positive';
+const getSentimentLabel = score => {
+  if (score < -0.1) {
+    return 'negative';
+  }
+  if (score > 0.1) {
+    return 'positive';
+  }
   return 'neutral';
 };
 
@@ -30,7 +34,9 @@ router.put('/chats/:chatId/title', async (req, res) => {
     }
 
     // Update the first message of the chat to set its title
-    const firstMessage = await Message.findOne({ chatId }).sort({ createdAt: 1 });
+    const firstMessage = await Message.findOne({ chatId }).sort({
+      createdAt: 1,
+    });
     if (!firstMessage) {
       return res.status(404).json({ error: 'Chat not found' });
     }
@@ -70,59 +76,58 @@ router.get('/chats', async (req, res) => {
     await Message.deleteMany({
       userId,
       $or: [
-        { chatId: null },  // Delete messages with null chatId
+        { chatId: null }, // Delete messages with null chatId
         { chatId: 'null' }, // Delete messages with 'null' string chatId
         {
-          $and: [
-            { text: 'New chat' },
-            { isAiResponse: false }
-          ]
-        }
-      ]
+          $and: [{ text: 'New chat' }, { isAiResponse: false }],
+        },
+      ],
     });
-    
+
     // Aggregate to get unique chatIds and their first messages
     const chats = await Message.aggregate([
       // Match documents for this user first
       {
         $match: {
-          userId: mongoose.Types.ObjectId(userId)
-        }
+          userId: mongoose.Types.ObjectId(userId),
+        },
       },
       // Group by chatId to get first message and count of messages
       {
         $group: {
-          _id: "$chatId",
-          firstMessage: { $first: "$text" },
+          _id: '$chatId',
+          firstMessage: { $first: '$text' },
           messageCount: { $sum: 1 },
-          createdAt: { $first: "$createdAt" }
-        }
+          createdAt: { $first: '$createdAt' },
+        },
       },
       // Only include chats that have messages
       {
         $match: {
-          messageCount: { $gt: 0 }
-        }
+          messageCount: { $gt: 0 },
+        },
       },
       // Sort by creation date, newest first
       { $sort: { createdAt: -1 } },
       // Project the fields we want to return
       {
         $project: {
-          id: "$_id",
-          title: { 
+          id: '$_id',
+          title: {
             $cond: {
-              if: { $gt: [ { $strLenCP: "$firstMessage" }, 30 ] },
-              then: { $concat: [ { $substrCP: [ "$firstMessage", 0, 30 ] }, "..." ] },
-              else: "$firstMessage"
-            }
+              if: { $gt: [{ $strLenCP: '$firstMessage' }, 30] },
+              then: {
+                $concat: [{ $substrCP: ['$firstMessage', 0, 30] }, '...'],
+              },
+              else: '$firstMessage',
+            },
           },
           messageCount: 1,
-          createdAt: 1
-        }
-      }
+          createdAt: 1,
+        },
+      },
     ]);
-    
+
     res.json(chats);
   } catch (err) {
     console.error('Error fetching chat history:', err);
@@ -133,26 +138,33 @@ router.get('/chats', async (req, res) => {
 // Get messages with enhanced filtering and pagination
 router.get('/', async (req, res) => {
   try {
-    const { subject, chatId, sentiment, messageType, page = 1, limit = 50 } = req.query;
+    const {
+      subject,
+      chatId,
+      sentiment,
+      messageType,
+      page = 1,
+      limit = 50,
+    } = req.query;
     const userId = req.user._id; // Get userId from authenticated user
-    
+
     if (!chatId) {
       return res.status(400).json({ error: 'chatId is required' });
     }
 
     // Build query with userId filter
     const query = { chatId, userId };
-    
+
     // Apply subject filter
     if (subject && subject !== 'All Subjects' && subject !== '') {
       query.subject = subject;
     }
-    
+
     // Apply sentiment filter
     if (sentiment && sentiment !== '') {
       query['sentiment.label'] = sentiment.toLowerCase();
     }
-    
+
     // Apply message type filter
     if (messageType && messageType !== '') {
       query.isAiResponse = messageType === 'ai';
@@ -168,16 +180,19 @@ router.get('/', async (req, res) => {
       .limit(parseInt(limit));
 
     // Get unique subjects for this chat and user
-    const uniqueSubjects = await Message.distinct('subject', { chatId, userId });
+    const uniqueSubjects = await Message.distinct('subject', {
+      chatId,
+      userId,
+    });
 
     res.json({
       messages,
       pagination: {
         total: totalMessages,
         page: parseInt(page),
-        pages: Math.ceil(totalMessages / limit)
+        pages: Math.ceil(totalMessages / limit),
       },
-      subjects: uniqueSubjects.filter(s => s) // Filter out empty subjects
+      subjects: uniqueSubjects.filter(s => s), // Filter out empty subjects
     });
   } catch (err) {
     console.error('Error fetching messages:', err);
@@ -188,7 +203,7 @@ router.get('/', async (req, res) => {
 // Create a new message and get AI response
 router.post('/', async (req, res) => {
   let userMessage, aiMessage, openAiResponse;
-  
+
   try {
     if (!req.body.text) {
       return res.status(400).json({ error: 'Message text is required' });
@@ -202,7 +217,7 @@ router.post('/', async (req, res) => {
     // Analyze sentiment and create the user message
     const sentimentResult = sentiment.analyze(req.body.text);
     const normalizedScore = sentimentResult.comparative; // Get normalized score (-1 to 1)
-    
+
     const userId = req.user._id; // Get userId from authenticated user
 
     userMessage = new Message({
@@ -214,8 +229,8 @@ router.post('/', async (req, res) => {
       createdAt: new Date(),
       sentiment: {
         score: normalizedScore,
-        label: getSentimentLabel(normalizedScore)
-      }
+        label: getSentimentLabel(normalizedScore),
+      },
     });
 
     try {
@@ -234,19 +249,22 @@ router.post('/', async (req, res) => {
         $or: [
           { topic: { $regex: keywords.join('|'), $options: 'i' } },
           { content: { $regex: keywords.join('|'), $options: 'i' } },
-          { tags: { $in: keywords } }
-        ]
+          { tags: { $in: keywords } },
+        ],
       }).lean();
     }
 
     // Get previous messages for context
-    const previousMessages = await Message.find({ chatId: req.body.chatId, userId })
+    const previousMessages = await Message.find({
+      chatId: req.body.chatId,
+      userId,
+    })
       .sort({ createdAt: 1 })
       .limit(10);
 
-    const conversationHistory = previousMessages.map(msg => (
-      `${msg.isAiResponse ? 'Assistant' : 'User'}: ${msg.text}`
-    )).join('\n');
+    const conversationHistory = previousMessages
+      .map(msg => `${msg.isAiResponse ? 'Assistant' : 'User'}: ${msg.text}`)
+      .join('\n');
 
     // Prepare prompt
     const prompt = relevantMaterial
@@ -255,26 +273,28 @@ router.post('/', async (req, res) => {
 
     // Call AI service with better error handling
     try {
-      openAiResponse = await axios.post(
-        'http://ai-service:3002/api/chat',
-        {
-          prompt,
-          conversationHistory
-        },
-        {
-          timeout: 30000,
-          headers: {
-            'Content-Type': 'application/json'
+      openAiResponse = await axios
+        .post(
+          'http://ai-service:3002/api/chat',
+          {
+            prompt,
+            conversationHistory,
+          },
+          {
+            timeout: 30000,
+            headers: {
+              'Content-Type': 'application/json',
+            },
           }
-        }
-      ).catch(error => {
-        console.error('AI service request failed:', {
-          status: error.response?.status,
-          data: error.response?.data,
-          message: error.message
+        )
+        .catch(error => {
+          console.error('AI service request failed:', {
+            status: error.response?.status,
+            data: error.response?.data,
+            message: error.message,
+          });
+          throw new Error(`AI service connection failed: ${error.message}`);
         });
-        throw new Error(`AI service connection failed: ${error.message}`);
-      });
 
       if (!openAiResponse?.data?.response) {
         console.error('Invalid AI response format:', openAiResponse?.data);
@@ -294,8 +314,8 @@ router.post('/', async (req, res) => {
         createdAt: new Date(),
         sentiment: {
           score: aiNormalizedScore,
-          label: getSentimentLabel(aiNormalizedScore)
-        }
+          label: getSentimentLabel(aiNormalizedScore),
+        },
       });
     } catch (error) {
       console.error('AI service error:', error);
@@ -306,26 +326,26 @@ router.post('/', async (req, res) => {
     // Return both messages
     res.status(201).json({
       userMessage,
-      aiMessage
+      aiMessage,
     });
-
   } catch (error) {
     console.error('Error details:', {
       message: error.message,
       response: error.response?.data,
-      status: error.response?.status
+      status: error.response?.status,
     });
 
     // Send detailed error response
     if (userMessage) {
       return res.status(500).json({
         userMessage,
-        error: error.message || 'AI response generation failed. Please try again.',
+        error:
+          error.message || 'AI response generation failed. Please try again.',
         details: {
           message: error.message,
           response: error.response?.data,
-          status: error.response?.status
-        }
+          status: error.response?.status,
+        },
       });
     }
 
@@ -335,8 +355,8 @@ router.post('/', async (req, res) => {
       details: {
         message: error.message,
         response: error.response?.data,
-        status: error.response?.status
-      }
+        status: error.response?.status,
+      },
     });
   }
 });

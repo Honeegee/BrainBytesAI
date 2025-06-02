@@ -1,0 +1,488 @@
+<testsuites id="" name="" tests="115" failures="0" skipped="115" errors="0" time="0.07611000000000001">
+<testsuite name="auth.setup.js" timestamp="2025-06-02T00:45:10.762Z" hostname="setup" tests="1" failures="0" skipped="1" time="0" errors="0">
+<testcase name="authenticate" classname="auth.setup.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="chat.spec.js" timestamp="2025-06-02T00:45:10.762Z" hostname="chromium" tests="11" failures="0" skipped="11" time="0" errors="0">
+<testcase name="Chat Functionality › should display chat interface" classname="chat.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Chat Functionality › should send a message" classname="chat.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Chat Functionality › should send message with Enter key" classname="chat.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Chat Functionality › should not send empty message" classname="chat.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Chat Functionality › should receive AI response" classname="chat.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Chat Functionality › should display typing indicator" classname="chat.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Chat Functionality › should filter chat history" classname="chat.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Chat Functionality › should clear chat history" classname="chat.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Chat Functionality › should export chat history" classname="chat.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Chat Functionality › should handle long messages" classname="chat.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Chat Functionality › should maintain chat scroll position" classname="chat.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="login.spec.js" timestamp="2025-06-02T00:45:10.762Z" hostname="chromium" tests="8" failures="0" skipped="8" time="0" errors="0">
+<testcase name="Login Flow › should display login form" classname="login.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Login Flow › should show validation errors for empty fields" classname="login.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Login Flow › should show error for invalid email format" classname="login.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Login Flow › should show error for invalid credentials" classname="login.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Login Flow › should successfully login with valid credentials" classname="login.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Login Flow › should toggle password visibility" classname="login.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Login Flow › should navigate to signup page" classname="login.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Login Flow › should handle forgot password flow" classname="login.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="chat.spec.js" timestamp="2025-06-02T00:45:10.762Z" hostname="firefox" tests="11" failures="0" skipped="11" time="0" errors="0">
+<testcase name="Chat Functionality › should display chat interface" classname="chat.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Chat Functionality › should send a message" classname="chat.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Chat Functionality › should send message with Enter key" classname="chat.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Chat Functionality › should not send empty message" classname="chat.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Chat Functionality › should receive AI response" classname="chat.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Chat Functionality › should display typing indicator" classname="chat.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Chat Functionality › should filter chat history" classname="chat.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Chat Functionality › should clear chat history" classname="chat.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Chat Functionality › should export chat history" classname="chat.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Chat Functionality › should handle long messages" classname="chat.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Chat Functionality › should maintain chat scroll position" classname="chat.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="login.spec.js" timestamp="2025-06-02T00:45:10.762Z" hostname="firefox" tests="8" failures="0" skipped="8" time="0" errors="0">
+<testcase name="Login Flow › should display login form" classname="login.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Login Flow › should show validation errors for empty fields" classname="login.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Login Flow › should show error for invalid email format" classname="login.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Login Flow › should show error for invalid credentials" classname="login.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Login Flow › should successfully login with valid credentials" classname="login.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Login Flow › should toggle password visibility" classname="login.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Login Flow › should navigate to signup page" classname="login.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Login Flow › should handle forgot password flow" classname="login.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="chat.spec.js" timestamp="2025-06-02T00:45:10.762Z" hostname="webkit" tests="11" failures="0" skipped="11" time="0" errors="0">
+<testcase name="Chat Functionality › should display chat interface" classname="chat.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Chat Functionality › should send a message" classname="chat.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Chat Functionality › should send message with Enter key" classname="chat.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Chat Functionality › should not send empty message" classname="chat.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Chat Functionality › should receive AI response" classname="chat.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Chat Functionality › should display typing indicator" classname="chat.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Chat Functionality › should filter chat history" classname="chat.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Chat Functionality › should clear chat history" classname="chat.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Chat Functionality › should export chat history" classname="chat.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Chat Functionality › should handle long messages" classname="chat.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Chat Functionality › should maintain chat scroll position" classname="chat.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="login.spec.js" timestamp="2025-06-02T00:45:10.762Z" hostname="webkit" tests="8" failures="0" skipped="8" time="0" errors="0">
+<testcase name="Login Flow › should display login form" classname="login.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Login Flow › should show validation errors for empty fields" classname="login.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Login Flow › should show error for invalid email format" classname="login.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Login Flow › should show error for invalid credentials" classname="login.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Login Flow › should successfully login with valid credentials" classname="login.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Login Flow › should toggle password visibility" classname="login.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Login Flow › should navigate to signup page" classname="login.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Login Flow › should handle forgot password flow" classname="login.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="chat.spec.js" timestamp="2025-06-02T00:45:10.762Z" hostname="Mobile Chrome" tests="11" failures="0" skipped="11" time="0" errors="0">
+<testcase name="Chat Functionality › should display chat interface" classname="chat.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Chat Functionality › should send a message" classname="chat.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Chat Functionality › should send message with Enter key" classname="chat.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Chat Functionality › should not send empty message" classname="chat.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Chat Functionality › should receive AI response" classname="chat.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Chat Functionality › should display typing indicator" classname="chat.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Chat Functionality › should filter chat history" classname="chat.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Chat Functionality › should clear chat history" classname="chat.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Chat Functionality › should export chat history" classname="chat.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Chat Functionality › should handle long messages" classname="chat.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Chat Functionality › should maintain chat scroll position" classname="chat.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="login.spec.js" timestamp="2025-06-02T00:45:10.762Z" hostname="Mobile Chrome" tests="8" failures="0" skipped="8" time="0" errors="0">
+<testcase name="Login Flow › should display login form" classname="login.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Login Flow › should show validation errors for empty fields" classname="login.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Login Flow › should show error for invalid email format" classname="login.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Login Flow › should show error for invalid credentials" classname="login.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Login Flow › should successfully login with valid credentials" classname="login.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Login Flow › should toggle password visibility" classname="login.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Login Flow › should navigate to signup page" classname="login.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Login Flow › should handle forgot password flow" classname="login.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="chat.spec.js" timestamp="2025-06-02T00:45:10.762Z" hostname="Mobile Safari" tests="11" failures="0" skipped="11" time="0" errors="0">
+<testcase name="Chat Functionality › should display chat interface" classname="chat.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Chat Functionality › should send a message" classname="chat.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Chat Functionality › should send message with Enter key" classname="chat.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Chat Functionality › should not send empty message" classname="chat.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Chat Functionality › should receive AI response" classname="chat.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Chat Functionality › should display typing indicator" classname="chat.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Chat Functionality › should filter chat history" classname="chat.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Chat Functionality › should clear chat history" classname="chat.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Chat Functionality › should export chat history" classname="chat.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Chat Functionality › should handle long messages" classname="chat.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Chat Functionality › should maintain chat scroll position" classname="chat.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="login.spec.js" timestamp="2025-06-02T00:45:10.762Z" hostname="Mobile Safari" tests="8" failures="0" skipped="8" time="0" errors="0">
+<testcase name="Login Flow › should display login form" classname="login.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Login Flow › should show validation errors for empty fields" classname="login.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Login Flow › should show error for invalid email format" classname="login.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Login Flow › should show error for invalid credentials" classname="login.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Login Flow › should successfully login with valid credentials" classname="login.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Login Flow › should toggle password visibility" classname="login.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Login Flow › should navigate to signup page" classname="login.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Login Flow › should handle forgot password flow" classname="login.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="chat.spec.js" timestamp="2025-06-02T00:45:10.762Z" hostname="Microsoft Edge" tests="11" failures="0" skipped="11" time="0" errors="0">
+<testcase name="Chat Functionality › should display chat interface" classname="chat.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Chat Functionality › should send a message" classname="chat.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Chat Functionality › should send message with Enter key" classname="chat.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Chat Functionality › should not send empty message" classname="chat.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Chat Functionality › should receive AI response" classname="chat.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Chat Functionality › should display typing indicator" classname="chat.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Chat Functionality › should filter chat history" classname="chat.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Chat Functionality › should clear chat history" classname="chat.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Chat Functionality › should export chat history" classname="chat.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Chat Functionality › should handle long messages" classname="chat.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Chat Functionality › should maintain chat scroll position" classname="chat.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="login.spec.js" timestamp="2025-06-02T00:45:10.762Z" hostname="Microsoft Edge" tests="8" failures="0" skipped="8" time="0" errors="0">
+<testcase name="Login Flow › should display login form" classname="login.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Login Flow › should show validation errors for empty fields" classname="login.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Login Flow › should show error for invalid email format" classname="login.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Login Flow › should show error for invalid credentials" classname="login.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Login Flow › should successfully login with valid credentials" classname="login.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Login Flow › should toggle password visibility" classname="login.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Login Flow › should navigate to signup page" classname="login.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Login Flow › should handle forgot password flow" classname="login.spec.js" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+</testsuites>

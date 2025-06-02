@@ -1,0 +1,117 @@
+version: '3.8'
+
+networks:
+  app-network:
+    driver: bridge
+
+services:
+  # AI Service container
+  ai-service:
+    image: ghcr.io/${GITHUB_REPOSITORY}/ai-service:${GITHUB_REF_NAME}
+    ports:
+      - "3002:3002"
+    environment:
+      - NODE_ENV=staging
+      - NODE_OPTIONS=--max_old_space_size=2048
+      - API_KEY=${STAGING_AI_API_KEY}
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 1G
+    networks:
+      - app-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Frontend container
+  frontend:
+    image: ghcr.io/${GITHUB_REPOSITORY}/frontend:${GITHUB_REF_NAME}
+    ports:
+      - "3001:3000"
+    environment:
+      - NODE_ENV=staging
+      - NODE_OPTIONS=--max_old_space_size=1024
+      - NEXT_PUBLIC_API_URL=https://api-staging.brainbytes.app
+      - NEXT_PUBLIC_FRONTEND_URL=https://staging.brainbytes.app
+    deploy:
+      resources:
+        limits:
+          memory: 1G  
+        reservations:
+          memory: 512M  
+    networks:
+      - app-network
+    depends_on:
+      - backend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Backend API container
+  backend:
+    image: ghcr.io/${GITHUB_REPOSITORY}/backend:${GITHUB_REF_NAME}
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=staging
+      - NODE_OPTIONS=--max_old_space_size=1024
+      - DATABASE_URL=${STAGING_DATABASE_URL}
+      - JWT_SECRET=${STAGING_JWT_SECRET}
+      - SESSION_SECRET=${STAGING_SESSION_SECRET}
+    deploy:
+      resources:
+        limits:
+          memory: 1G  
+        reservations:
+          memory: 512M  
+    networks:
+      - app-network
+    depends_on:
+      - mongo
+      - ai-service
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # MongoDB container
+  mongo:
+    image: mongo:4.4
+    ports:
+     - "27017:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=brainbytes_staging
+      - MONGO_INITDB_ROOT_USERNAME=${STAGING_MONGO_USER}
+      - MONGO_INITDB_ROOT_PASSWORD=${STAGING_MONGO_PASSWORD}
+    deploy:
+      resources:
+        limits:
+          memory: 1G 
+        reservations:
+          memory: 512M  
+    volumes:
+      - mongo-staging-data:/data/db
+    networks:
+      - app-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+# Define volumes for persistent data
+volumes:
+  mongo-staging-data:
+    driver: local

@@ -15,7 +15,7 @@ router.get('/download/:id', async (req, res) => {
   try {
     const material = await LearningMaterial.findOne({
       _id: req.params.id,
-      userId: req.user._id
+      userId: req.user._id,
     });
     if (!material) {
       return res.status(404).json({ error: 'Learning material not found' });
@@ -35,7 +35,6 @@ router.get('/download/:id', async (req, res) => {
     res.setHeader('Content-Type', 'text/plain');
     res.setHeader('Content-Disposition', `attachment; filename=${fileName}`);
     res.send(material.content);
-
   } catch (error) {
     if (error.name === 'CastError') {
       return res.status(400).json({ error: 'Invalid ID format' });
@@ -58,7 +57,9 @@ router.post('/', materialUpload.single('file'), async (req, res) => {
       resourceType: req.body.resourceType,
       difficulty: req.body.difficulty,
       tags: tags,
-      content: req.file ? `uploads/materials/${req.file.filename}` : (req.body.content || '')
+      content: req.file
+        ? `uploads/materials/${req.file.filename}`
+        : req.body.content || '',
     });
     await learningMaterial.save();
     res.status(201).json(learningMaterial);
@@ -70,44 +71,56 @@ router.post('/', materialUpload.single('file'), async (req, res) => {
 // Get all learning materials with pagination, filters, and field selection
 router.get('/', async (req, res) => {
   try {
-    const { 
-      subject, 
-      topic, 
-      resourceType, 
-      difficulty, 
+    const {
+      subject,
+      topic,
+      resourceType,
+      difficulty,
       tags,
       page = 1,
       limit = 10,
-      fields
+      fields,
     } = req.query;
 
     const query = {
-      userId: req.user._id
+      userId: req.user._id,
     };
     const options = {
       lean: true, // Return plain objects instead of Mongoose documents
       select: fields ? fields.split(',').join(' ') : '',
       limit: Math.min(parseInt(limit), 50), // Cap at 50 items per page
       skip: (Math.max(1, parseInt(page)) - 1) * parseInt(limit),
-      sort: { createdAt: -1 }
+      sort: { createdAt: -1 },
     };
 
     // Add filters if they exist
-    if (subject) query.subject = { $regex: subject, $options: 'i' };
+    if (subject) {
+      query.subject = { $regex: subject, $options: 'i' };
+    }
     if (req.query.subjects) {
       const subjectList = req.query.subjects.split(',');
       query.subject = { $in: subjectList };
     }
-    if (topic) query.topic = { $regex: topic, $options: 'i' };
-    if (resourceType) query.resourceType = resourceType;
-    if (difficulty) query.difficulty = difficulty;
-    if (tags) query.tags = { $in: tags.split(',') };
-    if (req.query.search) query.content = { $regex: req.query.search, $options: 'i' };
+    if (topic) {
+      query.topic = { $regex: topic, $options: 'i' };
+    }
+    if (resourceType) {
+      query.resourceType = resourceType;
+    }
+    if (difficulty) {
+      query.difficulty = difficulty;
+    }
+    if (tags) {
+      query.tags = { $in: tags.split(',') };
+    }
+    if (req.query.search) {
+      query.content = { $regex: req.query.search, $options: 'i' };
+    }
 
     // Execute query with pagination
     const [materials, total] = await Promise.all([
       LearningMaterial.find(query, null, options),
-      LearningMaterial.countDocuments(query)
+      LearningMaterial.countDocuments(query),
     ]);
 
     // Send paginated response
@@ -116,17 +129,20 @@ router.get('/', async (req, res) => {
       pagination: {
         total,
         page: parseInt(page),
-        pages: Math.ceil(total / options.limit)
-      }
+        pages: Math.ceil(total / options.limit),
+      },
     });
   } catch (error) {
     console.error('Error in subject creation:', error);
     if (error.name === 'ValidationError') {
       return res.status(400).json({ error: error.message });
-    } else if (error.code === 11000) { // MongoDB duplicate key error
+    } else if (error.code === 11000) {
+      // MongoDB duplicate key error
       return res.status(400).json({ error: 'Subject already exists' });
     }
-    res.status(500).json({ error: 'Internal server error while creating subject' });
+    res
+      .status(500)
+      .json({ error: 'Internal server error while creating subject' });
   }
 });
 
@@ -135,23 +151,25 @@ router.get('/subjects/:subject', async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = Math.min(parseInt(req.query.limit) || 10, 50);
-    const fields = req.query.fields ? req.query.fields.split(',').join(' ') : '';
+    const fields = req.query.fields
+      ? req.query.fields.split(',').join(' ')
+      : '';
 
     const [materials, total] = await Promise.all([
       LearningMaterial.find(
-        { 
+        {
           subject: req.params.subject,
-          userId: req.user._id
+          userId: req.user._id,
         },
         fields,
         {
           lean: true,
           limit,
           skip: (Math.max(1, page) - 1) * limit,
-          sort: { createdAt: -1 }
+          sort: { createdAt: -1 },
         }
       ),
-      LearningMaterial.countDocuments({ subject: req.params.subject })
+      LearningMaterial.countDocuments({ subject: req.params.subject }),
     ]);
 
     res.json({
@@ -159,8 +177,8 @@ router.get('/subjects/:subject', async (req, res) => {
       pagination: {
         total,
         page,
-        pages: Math.ceil(total / limit)
-      }
+        pages: Math.ceil(total / limit),
+      },
     });
   } catch (error) {
     console.error('Error in subject creation:', error);
@@ -171,7 +189,9 @@ router.get('/subjects/:subject', async (req, res) => {
     } else if (error.message === 'Database connection is not ready') {
       return res.status(503).json({ error: 'Service temporarily unavailable' });
     }
-    res.status(500).json({ error: 'Internal server error while creating subject' });
+    res
+      .status(500)
+      .json({ error: 'Internal server error while creating subject' });
   }
 });
 
@@ -189,7 +209,9 @@ router.post('/subjects', async (req, res) => {
     }
 
     // Check if subject already exists for this user
-    const existingSubjects = await LearningMaterial.distinct('subject', { userId: req.user._id });
+    const existingSubjects = await LearningMaterial.distinct('subject', {
+      userId: req.user._id,
+    });
     if (existingSubjects.includes(subject)) {
       return res.status(400).json({ error: 'Subject already exists' });
     }
@@ -201,7 +223,7 @@ router.post('/subjects', async (req, res) => {
       topic: 'Introduction',
       content: `Welcome to ${subject}`,
       resourceType: 'definition',
-      difficulty: 'beginner'
+      difficulty: 'beginner',
     });
     await learningMaterial.save();
 
@@ -219,9 +241,9 @@ router.delete('/subjects', async (req, res) => {
       return res.status(400).json({ error: 'Subject is required' });
     }
     // Delete all materials for this subject that belong to the user
-    await LearningMaterial.deleteMany({ 
+    await LearningMaterial.deleteMany({
       subject,
-      userId: req.user._id
+      userId: req.user._id,
     });
     res.json({ message: 'Subject deleted successfully' });
   } catch (error) {
@@ -233,26 +255,31 @@ router.delete('/subjects', async (req, res) => {
 // Get distinct subjects (cached response)
 router.get('/subjects', async (req, res) => {
   try {
-    const subjects = await LearningMaterial.distinct('subject', { userId: req.user._id });
+    const subjects = await LearningMaterial.distinct('subject', {
+      userId: req.user._id,
+    });
     res.json(subjects);
   } catch (error) {
     console.error('Error in subject creation:', error);
     if (error.name === 'ValidationError') {
       return res.status(400).json({ error: error.message });
     }
-    res.status(500).json({ error: 'Internal server error while creating subject' });
+    res
+      .status(500)
+      .json({ error: 'Internal server error while creating subject' });
   }
 });
 
 // Get a specific learning material
 router.get('/:id', async (req, res) => {
   try {
-    const fields = req.query.fields ? req.query.fields.split(',').join(' ') : '';
-    const learningMaterial = await LearningMaterial
-      .findOne({
-        _id: req.params.id,
-        userId: req.user._id
-      })
+    const fields = req.query.fields
+      ? req.query.fields.split(',').join(' ')
+      : '';
+    const learningMaterial = await LearningMaterial.findOne({
+      _id: req.params.id,
+      userId: req.user._id,
+    })
       .select(fields)
       .lean();
 
@@ -274,16 +301,16 @@ router.put('/:id', async (req, res) => {
     const learningMaterial = await LearningMaterial.findOneAndUpdate(
       {
         _id: req.params.id,
-        userId: req.user._id
+        userId: req.user._id,
       },
       { ...req.body, updatedAt: new Date() },
-      { 
-        new: true, 
+      {
+        new: true,
         runValidators: true,
-        lean: true 
+        lean: true,
       }
     );
-    
+
     if (!learningMaterial) {
       return res.status(404).json({ error: 'Learning material not found' });
     }
@@ -301,7 +328,7 @@ router.delete('/:id', async (req, res) => {
   try {
     const learningMaterial = await LearningMaterial.findOneAndDelete({
       _id: req.params.id,
-      userId: req.user._id
+      userId: req.user._id,
     });
     if (!learningMaterial) {
       return res.status(404).json({ error: 'Learning material not found' });
