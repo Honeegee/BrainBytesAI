@@ -177,17 +177,35 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Setup deployment environment
         run: |
-          # Create staging environment variables
+          # Set up environment variables for docker-compose
+          export STAGING_DATABASE_URL="${{ secrets.STAGING_DATABASE_URL || 'mongodb://mongo:27017/brainbytes_staging' }}"
+          export STAGING_JWT_SECRET="${{ secrets.STAGING_JWT_SECRET || 'staging_jwt_secret_default' }}"
+          export STAGING_SESSION_SECRET="${{ secrets.STAGING_SESSION_SECRET || 'staging_session_secret_default' }}"
+          export STAGING_MONGO_USER="${{ secrets.STAGING_MONGO_USER || 'staginguser' }}"
+          export STAGING_MONGO_PASSWORD="${{ secrets.STAGING_MONGO_PASSWORD || 'stagingpass' }}"
+          export STAGING_AI_API_KEY="${{ secrets.STAGING_AI_API_KEY || 'staging_ai_key_placeholder' }}"
+          export GITHUB_REF_NAME="${{ github.ref_name }}"
+          
+          # Create staging environment variables file
           cat > .env.staging << EOF
           NODE_ENV=staging
           API_URL=https://api-staging.brainbytes.app
           FRONTEND_URL=https://staging.brainbytes.app
-          DATABASE_URL=${{ secrets.STAGING_DATABASE_URL }}
-          JWT_SECRET=${{ secrets.STAGING_JWT_SECRET }}
-          AI_API_KEY=${{ secrets.STAGING_AI_API_KEY }}
+          DATABASE_URL=$STAGING_DATABASE_URL
+          JWT_SECRET=$STAGING_JWT_SECRET
+          AI_API_KEY=$STAGING_AI_API_KEY
           EOF
+          
+          echo "Environment variables set up for staging deployment"
 
       - name: Deploy to staging server
         run: |
@@ -217,6 +235,15 @@ jobs:
           
           echo "📋 Starting staging deployment..."
           
+          # Set environment variables for docker-compose
+          export STAGING_DATABASE_URL="\${STAGING_DATABASE_URL:-mongodb://mongo:27017/brainbytes_staging}"
+          export STAGING_JWT_SECRET="\${STAGING_JWT_SECRET:-staging_jwt_secret_default}"
+          export STAGING_SESSION_SECRET="\${STAGING_SESSION_SECRET:-staging_session_secret_default}"
+          export STAGING_MONGO_USER="\${STAGING_MONGO_USER:-staginguser}"
+          export STAGING_MONGO_PASSWORD="\${STAGING_MONGO_PASSWORD:-stagingpass}"
+          export STAGING_AI_API_KEY="\${STAGING_AI_API_KEY:-staging_ai_key_placeholder}"
+          export GITHUB_REF_NAME="\${GITHUB_REF_NAME:-development}"
+          
           # Check if staging config exists, otherwise use default
           if [ -f "docker-compose.staging.yml" ]; then
             COMPOSE_FILE="docker-compose.staging.yml"
@@ -225,17 +252,20 @@ jobs:
             echo "⚠️  Using default docker-compose.yml for staging"
           fi
           
-          # Pull latest images
-          echo "📦 Pulling latest Docker images..."
-          $DOCKER_COMPOSE_CMD -f \$COMPOSE_FILE pull || echo "⚠️  Pull failed, continuing with existing images"
+          # Try to pull latest images, fallback to building if pull fails
+          echo "📦 Attempting to pull latest Docker images..."
+          if ! $DOCKER_COMPOSE_CMD -f \$COMPOSE_FILE pull; then
+            echo "⚠️  Pull failed, building images locally..."
+            $DOCKER_COMPOSE_CMD -f \$COMPOSE_FILE build
+          fi
           
           # Stop existing services
           echo "🛑 Stopping existing services..."
           $DOCKER_COMPOSE_CMD -f \$COMPOSE_FILE down || echo "⚠️  No existing services to stop"
           
-          # Start new services
+          # Start new services (will build if needed)
           echo "🟢 Starting new services..."
-          $DOCKER_COMPOSE_CMD -f \$COMPOSE_FILE up -d
+          $DOCKER_COMPOSE_CMD -f \$COMPOSE_FILE up -d --build
           
           # Wait for services to be ready
           echo "⏳ Waiting for services to be ready..."
