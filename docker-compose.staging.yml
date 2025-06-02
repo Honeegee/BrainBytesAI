@@ -5,7 +5,10 @@ networks:
 services:
   # AI Service container
   ai-service:
-    image: ghcr.io/honeegee/brainbytesai/ai-service:${GITHUB_REF_NAME}
+    image: ghcr.io/honeegee/brainbytesai/ai-service:${GITHUB_REF_NAME:-development}
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
     ports:
       - "3002:3002"
     environment:
@@ -29,7 +32,10 @@ services:
 
   # Frontend container
   frontend:
-    image: ghcr.io/honeegee/brainbytesai/frontend:${GITHUB_REF_NAME}
+    image: ghcr.io/honeegee/brainbytesai/frontend:${GITHUB_REF_NAME:-development}
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
     ports:
       - "3001:3000"
     environment:
@@ -56,7 +62,10 @@ services:
 
   # Backend API container
   backend:
-    image: ghcr.io/honeegee/brainbytesai/backend:${GITHUB_REF_NAME}
+    image: ghcr.io/honeegee/brainbytesai/backend:${GITHUB_REF_NAME:-development}
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     ports:
       - "3000:3000"
     environment:
