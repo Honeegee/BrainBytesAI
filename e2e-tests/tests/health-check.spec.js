@@ -1,4 +1,4 @@
--const { test, expect } = require('@playwright/test');
+const { test, expect } = require('@playwright/test');
 
 // Simple health check tests that don't require authentication
 test.describe('Health Check Tests', () => {
