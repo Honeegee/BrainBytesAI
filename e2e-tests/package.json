@@ -10,10 +10,12 @@
     "test:report": "playwright show-report",
     "test:health": "node run-health-check.js",
     "test:health-only": "set SKIP_WEBSERVER=true && playwright test --project=health-check",
-    "test:simple": "set SKIP_WEBSERVER=true && playwright test simple-health-check.spec.js",
+    "test:simple": "set SKIP_WEBSERVER=true && playwright test simple-health-check.spec.js --project=health-check",
     "test:auth": "node run-auth-test.js",
     "test:auth-mock": "set SKIP_WEBSERVER=true && playwright test --project=health-check auth-mock",
     "test:setup": "set SKIP_WEBSERVER=true && playwright test --project=setup",
+    "test:working": "node run-working-tests.js",
+    "test:no-auth": "set SKIP_AUTH_SETUP=true && set SKIP_WEBSERVER=true && playwright test --project=health-check",
     "install": "playwright install --with-deps"
   },
   "dependencies": {

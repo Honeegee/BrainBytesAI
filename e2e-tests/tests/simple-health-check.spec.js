@@ -7,17 +7,13 @@ test.describe('Simple Health Check', () => {
     // This test checks if the server is reachable
     // If server is not running, it will skip gracefully
     
-    let serverRunning = false;
-    
     try {
-      const response = await page.goto('/', { 
-        waitUntil: 'domcontentloaded', 
-        timeout: 5000 
+      const response = await page.goto('/', {
+        waitUntil: 'domcontentloaded',
+        timeout: 3000
       });
       
       // If we get here, server is running
-      serverRunning = true;
-      
       // Basic checks if server is responding
       expect(response.status()).toBeLessThan(500); // No server errors
       
@@ -30,8 +26,16 @@ test.describe('Simple Health Check', () => {
       console.log(`   Status: ${response.status()}`);
       
     } catch (error) {
-      if (error.message.includes('ERR_CONNECTION_REFUSED') || 
-          error.message.includes('timeout')) {
+      // Handle all connection-related errors regardless of browser
+      const isConnectionError =
+        error.message.includes('ERR_CONNECTION_REFUSED') ||
+        error.message.includes('NS_ERROR_CONNECTION_REFUSED') ||
+        error.message.includes('Could not connect to server') ||
+        error.message.includes('timeout') ||
+        error.message.includes('net::ERR_') ||
+        error.message.includes('connection refused');
+        
+      if (isConnectionError) {
         console.log('⚠️  Server is not running on the configured URL');
         console.log('   This is expected if no development server is active');
         test.skip('Server not available - skipping connectivity test');

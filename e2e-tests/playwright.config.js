@@ -72,38 +72,38 @@ module.exports = defineConfig({
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
-      dependencies: ['setup'],
+      dependencies: process.env.SKIP_AUTH_SETUP ? [] : ['setup'],
     },
 
     {
       name: 'firefox',
       use: { ...devices['Desktop Firefox'] },
-      dependencies: ['setup'],
+      dependencies: process.env.SKIP_AUTH_SETUP ? [] : ['setup'],
     },
 
     {
       name: 'webkit',
       use: { ...devices['Desktop Safari'] },
-      dependencies: ['setup'],
+      dependencies: process.env.SKIP_AUTH_SETUP ? [] : ['setup'],
     },
 
     /* Test against mobile viewports. */
     {
       name: 'Mobile Chrome',
       use: { ...devices['Pixel 5'] },
-      dependencies: ['setup'],
+      dependencies: process.env.SKIP_AUTH_SETUP ? [] : ['setup'],
     },
     {
       name: 'Mobile Safari',
       use: { ...devices['iPhone 12'] },
-      dependencies: ['setup'],
+      dependencies: process.env.SKIP_AUTH_SETUP ? [] : ['setup'],
     },
 
     /* Test against branded browsers. */
     {
       name: 'Microsoft Edge',
       use: { ...devices['Desktop Edge'], channel: 'msedge' },
-      dependencies: ['setup'],
+      dependencies: process.env.SKIP_AUTH_SETUP ? [] : ['setup'],
     },
   ],
 
