@@ -54,6 +54,19 @@ module.exports = defineConfig({
     {
       name: 'setup',
       testMatch: /.*\.setup\.js/,
+      use: {
+        baseURL: process.env.BASE_URL || 'http://localhost:3001',
+      },
+    },
+    
+    // Health check tests (no auth required)
+    {
+      name: 'health-check',
+      testMatch: /.*health-check\.spec\.js|.*auth-mock\.spec\.js/,
+      use: {
+        ...devices['Desktop Chrome'],
+        baseURL: process.env.BASE_URL || 'http://localhost:3000'
+      },
     },
     
     {
@@ -98,7 +111,7 @@ module.exports = defineConfig({
   outputDir: 'test-results/',
   
   /* Run your local dev server before starting the tests */
-  webServer: process.env.CI ? undefined : {
+  webServer: (process.env.CI || process.env.SKIP_WEBSERVER) ? undefined : {
     command: 'cd ../frontend && npm run dev',
     url: 'http://localhost:3001',
     reuseExistingServer: !process.env.CI,
