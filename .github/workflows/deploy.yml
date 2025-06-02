@@ -312,28 +312,61 @@ jobs:
           AI_SERVICE_URL="http://localhost:3002"
           
           echo "Testing frontend health..."
-          if curl -f "$FRONTEND_URL" > /dev/null 2>&1; then
-            echo "✅ Frontend is responding at $FRONTEND_URL"
-          else
-            echo "❌ Frontend health check failed at $FRONTEND_URL"
-            exit 1
-          fi
+          # Try frontend health check with retries
+          for i in {1..8}; do
+            if curl -f "$FRONTEND_URL" > /dev/null 2>&1; then
+              echo "✅ Frontend is responding at $FRONTEND_URL"
+              break
+            else
+              echo "⏳ Frontend not ready yet, waiting... (attempt $i/8)"
+              sleep 8
+              if [ $i -eq 8 ]; then
+                echo "❌ Frontend health check failed at $FRONTEND_URL after 8 attempts"
+                echo "Checking frontend container logs..."
+                docker logs brainbytesai-frontend-1 --tail 50 || echo "Could not fetch frontend container logs"
+                exit 1
+              fi
+            fi
+          done
           
           echo "Testing backend API health..."
-          if curl -f "$BACKEND_URL" > /dev/null 2>&1; then
-            echo "✅ Backend API is responding at $BACKEND_URL"
-          else
-            echo "❌ Backend API health check failed at $BACKEND_URL"
-            exit 1
-          fi
+          # Try multiple endpoints and wait for backend to be ready
+          for i in {1..10}; do
+            if curl -f "$BACKEND_URL" > /dev/null 2>&1; then
+              echo "✅ Backend API is responding at $BACKEND_URL"
+              break
+            elif curl -f "$BACKEND_URL/health" > /dev/null 2>&1; then
+              echo "✅ Backend health endpoint is responding at $BACKEND_URL/health"
+              break
+            else
+              echo "⏳ Backend not ready yet, waiting... (attempt $i/10)"
+              sleep 10
+              if [ $i -eq 10 ]; then
+                echo "❌ Backend API health check failed at $BACKEND_URL after 10 attempts"
+                echo "Checking container logs..."
+                docker logs brainbytesai-backend-1 --tail 50 || echo "Could not fetch container logs"
+                exit 1
+              fi
+            fi
+          done
           
           echo "Testing AI service health..."
-          if curl -f "$AI_SERVICE_URL/health" > /dev/null 2>&1; then
-            echo "✅ AI Service is healthy at $AI_SERVICE_URL/health"
-          else
-            echo "❌ AI Service health check failed at $AI_SERVICE_URL/health"
-            exit 1
-          fi
+          # Try AI service health check with retries
+          for i in {1..10}; do
+            if curl -f "$AI_SERVICE_URL/health" > /dev/null 2>&1; then
+              echo "✅ AI Service is healthy at $AI_SERVICE_URL/health"
+              break
+            else
+              echo "⏳ AI Service not ready yet, waiting... (attempt $i/10)"
+              sleep 8
+              if [ $i -eq 10 ]; then
+                echo "❌ AI Service health check failed at $AI_SERVICE_URL/health after 10 attempts"
+                echo "Checking AI service container logs..."
+                docker logs brainbytesai-ai-service-1 --tail 50 || echo "Could not fetch AI service container logs"
+                exit 1
+              fi
+            fi
+          done
           
           echo "Testing container status..."
           if command -v docker >/dev/null 2>&1; then

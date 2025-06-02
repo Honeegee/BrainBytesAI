@@ -131,6 +131,16 @@ app.get('/', (req, res) => {
   });
 });
 
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    version: process.env.npm_package_version || '1.0.0'
+  });
+});
+
 // Routes
 app.use(apiRoutes.auth, authRouter);
 app.use(apiRoutes.messages, messagesRouter);
