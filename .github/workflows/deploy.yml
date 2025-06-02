@@ -186,15 +186,25 @@ jobs:
         run: |
           echo "🚀 Deploying to staging environment..."
           
-          # Install Docker Compose if needed
-          if ! command -v docker-compose &> /dev/null; then
-            echo "📦 Installing Docker Compose..."
-            sudo apt-get update
-            sudo apt-get install -y docker-compose-plugin
+          # Check if Docker Compose is available (either docker-compose or docker compose)
+          if command -v docker-compose &> /dev/null; then
+            echo "✅ docker-compose found"
+            DOCKER_COMPOSE_CMD="docker-compose"
+          elif docker compose version &> /dev/null; then
+            echo "✅ docker compose (v2) found"
+            DOCKER_COMPOSE_CMD="docker compose"
+          else
+            echo "📦 Installing Docker Compose v2..."
+            # Install Docker Compose v2 manually
+            sudo curl -L "https://github.com/docker/compose/releases/download/v2.24.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+            sudo chmod +x /usr/local/bin/docker-compose
+            DOCKER_COMPOSE_CMD="docker-compose"
           fi
           
-          # Create deployment script using docker compose (with space)
-          cat > deploy-staging.sh << 'EOF'
+          echo "Using Docker Compose command: $DOCKER_COMPOSE_CMD"
+          
+          # Create deployment script using the detected docker compose command
+          cat > deploy-staging.sh << EOF
           #!/bin/bash
           set -e
           
@@ -210,15 +220,15 @@ jobs:
           
           # Pull latest images
           echo "📦 Pulling latest Docker images..."
-          docker compose -f $COMPOSE_FILE pull || echo "⚠️  Pull failed, continuing with existing images"
+          $DOCKER_COMPOSE_CMD -f \$COMPOSE_FILE pull || echo "⚠️  Pull failed, continuing with existing images"
           
           # Stop existing services
           echo "🛑 Stopping existing services..."
-          docker compose -f $COMPOSE_FILE down || echo "⚠️  No existing services to stop"
+          $DOCKER_COMPOSE_CMD -f \$COMPOSE_FILE down || echo "⚠️  No existing services to stop"
           
           # Start new services
           echo "🟢 Starting new services..."
-          docker compose -f $COMPOSE_FILE up -d
+          $DOCKER_COMPOSE_CMD -f \$COMPOSE_FILE up -d
           
           # Wait for services to be ready
           echo "⏳ Waiting for services to be ready..."
@@ -226,7 +236,7 @@ jobs:
           
           # Check service status
           echo "🔍 Checking service status..."
-          docker compose -f $COMPOSE_FILE ps
+          $DOCKER_COMPOSE_CMD -f \$COMPOSE_FILE ps
           
           echo "✅ Staging deployment completed!"
           EOF
@@ -355,14 +365,24 @@ jobs:
         run: |
           echo "🚀 Deploying to production with blue-green strategy..."
           
-          # Install Docker Compose if needed
-          if ! command -v docker-compose &> /dev/null; then
-            echo "📦 Installing Docker Compose..."
-            sudo apt-get update
-            sudo apt-get install -y docker-compose-plugin
+          # Check if Docker Compose is available (either docker-compose or docker compose)
+          if command -v docker-compose &> /dev/null; then
+            echo "✅ docker-compose found"
+            DOCKER_COMPOSE_CMD="docker-compose"
+          elif docker compose version &> /dev/null; then
+            echo "✅ docker compose (v2) found"
+            DOCKER_COMPOSE_CMD="docker compose"
+          else
+            echo "📦 Installing Docker Compose v2..."
+            # Install Docker Compose v2 manually
+            sudo curl -L "https://github.com/docker/compose/releases/download/v2.24.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+            sudo chmod +x /usr/local/bin/docker-compose
+            DOCKER_COMPOSE_CMD="docker-compose"
           fi
           
-          cat > deploy-production.sh << 'EOF'
+          echo "Using Docker Compose command: $DOCKER_COMPOSE_CMD"
+          
+          cat > deploy-production.sh << EOF
           #!/bin/bash
           set -e
           
@@ -380,8 +400,8 @@ jobs:
           
           # Deploy to green environment first
           echo "🟢 Deploying to green environment..."
-          docker compose -f $PROD_COMPOSE_FILE pull || echo "⚠️  Pull failed, continuing with existing images"
-          docker compose -f $PROD_COMPOSE_FILE up -d
+          $DOCKER_COMPOSE_CMD -f \$PROD_COMPOSE_FILE pull || echo "⚠️  Pull failed, continuing with existing images"
+          $DOCKER_COMPOSE_CMD -f \$PROD_COMPOSE_FILE up -d
           
           # Wait for green environment to be ready
           echo "⏳ Waiting for green environment..."
@@ -389,7 +409,7 @@ jobs:
           
           # Health check green environment (simplified for demo)
           echo "🔍 Health checking green environment..."
-          docker compose -f $PROD_COMPOSE_FILE ps
+          $DOCKER_COMPOSE_CMD -f \$PROD_COMPOSE_FILE ps
           
           # In a real deployment, you would:
           # 1. Check service health endpoints
