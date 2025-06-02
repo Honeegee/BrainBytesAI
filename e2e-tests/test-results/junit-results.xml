@@ -1,18 +1,18 @@
-<testsuites id="" name="" tests="3" failures="0" skipped="0" errors="0" time="2.858694">
-<testsuite name="auth-mock.spec.js" timestamp="2025-06-02T06:28:37.576Z" hostname="health-check" tests="3" failures="0" skipped="0" time="5.742" errors="0">
-<testcase name="Authentication Flow (Mock) › login form validation and submission" classname="auth-mock.spec.js" time="1.927">
+<testsuites id="" name="" tests="3" failures="0" skipped="0" errors="0" time="2.9194850000000003">
+<testsuite name="auth-mock.spec.js" timestamp="2025-06-02T06:56:10.211Z" hostname="health-check" tests="3" failures="0" skipped="0" time="5.847" errors="0">
+<testcase name="Authentication Flow (Mock) › login form validation and submission" classname="auth-mock.spec.js" time="1.983">
 <system-out>
 <![CDATA[✅ Login form validation and submission working correctly
 ]]>
 </system-out>
 </testcase>
-<testcase name="Authentication Flow (Mock) › login form handles invalid credentials" classname="auth-mock.spec.js" time="1.94">
+<testcase name="Authentication Flow (Mock) › login form handles invalid credentials" classname="auth-mock.spec.js" time="1.981">
 <system-out>
 <![CDATA[✅ Login form properly handles invalid credentials
 ]]>
 </system-out>
 </testcase>
-<testcase name="Authentication Flow (Mock) › auth setup process simulation" classname="auth-mock.spec.js" time="1.875">
+<testcase name="Authentication Flow (Mock) › auth setup process simulation" classname="auth-mock.spec.js" time="1.883">
 <system-out>
 <![CDATA[🔐 Simulating authentication setup process...
 📝 User registration: SUCCESS
