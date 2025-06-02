@@ -139,7 +139,7 @@ jobs:
 
   # Job 3: Service Integration Testing
   e2e-tests:
-    name: Service Integration Tests
+    name: E2e Tests
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: [setup, test-matrix]
@@ -184,10 +184,11 @@ jobs:
           cd ../backend && npm ci
           cd ../ai-service && npm ci
 
-      - name: Prepare E2E testing
+      - name: Install Playwright
+        working-directory: ./e2e-tests
         run: |
-          # No need for Playwright since we're doing simple health checks
-          echo "E2E testing prepared - using simple health checks"
+          npm ci
+          npx playwright install --with-deps
 
       - name: Clean up ports
         run: |
@@ -223,24 +224,28 @@ jobs:
           echo "Checking frontend..."
           curl -f http://localhost:3001 || echo "Frontend not ready"
 
-      - name: Run Simple E2E health checks
+      - name: Run Simple E2E tests with Playwright
         working-directory: ./e2e-tests
         run: |
-          # Simple health check tests instead of complex UI tests
-          echo "Running simplified E2E health checks..."
+          # Create a simple health check test
+          cat > tests/simple-health.spec.js << 'EOF'
+          const { test, expect } = require('@playwright/test');
+
+          test('Backend API is responding', async ({ request }) => {
+            const response = await request.get('http://localhost:3000/');
+            expect(response.status()).toBe(200);
+            const data = await response.json();
+            expect(data.message).toContain('BrainBytes API');
+          });
+
+          test('Frontend is responding', async ({ page }) => {
+            await page.goto('http://localhost:3001');
+            await expect(page).toHaveTitle(/BrainBytes/);
+          });
+          EOF
           
-          # Test backend health endpoint
-          curl -f http://localhost:3000/api/health || exit 1
-          echo "✅ Backend health check passed"
-          
-          # Test frontend is responding
-          curl -f http://localhost:3001 || exit 1
-          echo "✅ Frontend health check passed"
-          
-          # Test AI service is running (if it has a health endpoint)
-          curl -f http://localhost:3002 || echo "⚠️ AI service not responding (may be expected)"
-          
-          echo "🎉 All simplified E2E health checks completed"
+          # Run the simple tests
+          npx playwright test tests/simple-health.spec.js
 
       - name: Upload E2E test results
         uses: actions/upload-artifact@v4
