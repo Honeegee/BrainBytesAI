@@ -13,7 +13,10 @@ const MongoStore = require('connect-mongo');
 const passport = require('passport');
 
 // Internal dependencies
-const { securityHeaders, initializePassport } = require('./middleware/security');
+const {
+  securityHeaders,
+  initializePassport,
+} = require('./middleware/security');
 const messagesRouter = require('./routes/messages');
 const usersRouter = require('./routes/users');
 const learningMaterialsRouter = require('./routes/learningMaterials');
@@ -29,7 +32,7 @@ const mongoConfig = {
   useNewUrlParser: true,
   useUnifiedTopology: true,
   useFindAndModify: false,
-  useCreateIndex: true // Use createIndex instead of ensureIndex
+  useCreateIndex: true, // Use createIndex instead of ensureIndex
 };
 
 // Performance optimizations for MongoDB
@@ -47,7 +50,7 @@ const corsOptions = {
   allowedHeaders: ['Content-Type', 'Authorization', 'x-requested-with'],
   exposedHeaders: ['Set-Cookie'],
   optionsSuccessStatus: 200,
-  preflightContinue: false
+  preflightContinue: false,
 };
 app.use(cors(corsOptions));
 
@@ -59,21 +62,23 @@ app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 app.use(securityHeaders);
 
 // Session configuration
-app.use(session({
-  secret: process.env.SESSION_SECRET || 'your-secret-key',
-  resave: false,
-  saveUninitialized: false,
-  store: MongoStore.create({
-    mongoUrl: process.env.MONGODB_URI,
-    ttl: 24 * 60 * 60, // 1 day
-    autoRemove: 'native'
-  }),
-  cookie: {
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: 24 * 60 * 60 * 1000 // 1 day
-  }
-}));
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || 'your-secret-key',
+    resave: false,
+    saveUninitialized: false,
+    store: MongoStore.create({
+      mongoUrl: process.env.MONGODB_URI,
+      ttl: 24 * 60 * 60, // 1 day
+      autoRemove: 'native',
+    }),
+    cookie: {
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 24 * 60 * 60 * 1000, // 1 day
+    },
+  })
+);
 
 // Initialize passport
 initializePassport(passport);
@@ -88,10 +93,12 @@ const isTestEnvironment = process.env.NODE_ENV === 'test';
 
 // Connect to MongoDB with optimized settings - skip if in test environment
 if (!isTestEnvironment) {
-  mongoose.connect(process.env.MONGODB_URI, mongoConfig)
+  mongoose
+    .connect(process.env.MONGODB_URI, mongoConfig)
     .then(() => {
       console.log('Connected to MongoDB');
-    }).catch(err => {
+    })
+    .catch(err => {
       console.error('Failed to connect to MongoDB:', err);
       process.exit(1); // Exit if DB connection fails
     });
@@ -113,14 +120,14 @@ const apiRoutes = {
   auth: '/api/auth',
   messages: '/api/messages',
   users: '/api/users',
-  materials: '/api/materials'
+  materials: '/api/materials',
 };
 
 // Welcome route
 app.get('/', (req, res) => {
-  res.json({ 
+  res.json({
     message: 'Welcome to the BrainBytes API',
-    endpoints: apiRoutes
+    endpoints: apiRoutes,
   });
 });
 
@@ -134,12 +141,12 @@ app.use(apiRoutes.materials, learningMaterialsRouter);
 app.use((err, req, res, next) => {
   console.error('Error:', err.message);
   console.error('Stack:', err.stack);
-  
+
   res.status(err.status || 500).json({
     error: {
       message: err.message || 'An unexpected error occurred',
-      status: err.status || 500
-    }
+      status: err.status || 500,
+    },
   });
 });
 
@@ -149,8 +156,8 @@ app.use((req, res) => {
     error: {
       message: 'Route not found',
       status: 404,
-      path: req.originalUrl
-    }
+      path: req.originalUrl,
+    },
   });
 });
 

@@ -6,7 +6,7 @@ require('dotenv').config();
 
 // Normalize prompt by cleaning and standardizing input
 const normalizePrompt = (input) => {
-  if (typeof input !== 'string') return '';
+  if (typeof input !== 'string') {return '';}
   return input
     .trim()
     .replace(/\s+/g, ' ')  // Replace multiple spaces with single space
@@ -16,12 +16,12 @@ const normalizePrompt = (input) => {
 
 // Handle basic math expressions
 const handleMathExpression = (input) => {
-  if (typeof input !== 'string') return input;
+  if (typeof input !== 'string') {return input;}
   
   const mathPattern = /^(\d+)\s*([\+\-\*\/])\s*(\d+)$/;
   const match = input.match(mathPattern);
   
-  if (!match) return input;
+  if (!match) {return input;}
   
   const [, num1, operator, num2] = match;
   try {
@@ -52,10 +52,10 @@ app.post('/api/chat', async (req, res) => {
 
     // Detect question types and normalize input
     const detectQuestionType = (input) => {
-      if (typeof input !== 'string') return { type: 'general', text: '' };
+      if (typeof input !== 'string') {return { type: 'general', text: '' };}
 
       // Clean the input first
-      let text = input
+      const text = input
         .replace(/<think>[\s\S]*?<\/think>/g, '')
         .replace(/\s+/g, ' ')
         .replace(/['"]/g, '')
@@ -202,7 +202,7 @@ Casual or vague responses.`
 
     // Minimal cleaning - removed formatting logic that's now in the frontend
     const cleanResponse = (text) => {
-      if (typeof text !== 'string') return '';
+      if (typeof text !== 'string') {return '';}
       return text
         .replace(/<think>[\s\S]*?<\/think>/g, '')  // Remove think tags
         .trim();

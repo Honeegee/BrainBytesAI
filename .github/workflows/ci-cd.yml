@@ -1,341 +1,548 @@
-name: BrainBytes CI/CD
+name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, development ]
+    branches: [ main, develop ]
   pull_request:
-    branches: [ main, development ]
+    branches: [ main, develop ]
   workflow_dispatch:
 
 env:
-  NODE_VERSION: '18.x'
+  NODE_VERSION_MATRIX: '[18, 20, 22]'
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  lint:
+  # Job 1: Code Quality and Linting
+  code-quality:
     name: Code Quality Checks
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     
     steps:
-      - name: Check out repository
+      - name: Checkout code
         uses: actions/checkout@v4
-      
-      - name: Set up Node.js
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version: '20'
           cache: 'npm'
-      
-      # Cache Node.js dependencies
-      - name: Cache Node.js dependencies
-        uses: actions/cache@v3
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
         with:
           path: |
+            ~/.npm
             **/node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
-            ${{ runner.os }}-node-
-      
-      # Frontend linting
+            ${{ runner.os }}-npm-
+
+      - name: Install root dependencies
+        run: npm ci
+
       - name: Install frontend dependencies
         working-directory: ./frontend
         run: npm ci
-      
-      - name: Lint frontend code
-        working-directory: ./frontend
-        run: |
-          npm run lint || echo "Frontend linting failed but continuing workflow"
-      
-      # Backend linting
+
       - name: Install backend dependencies
         working-directory: ./backend
         run: npm ci
-      
-      - name: Lint backend code
-        working-directory: ./backend
-        run: |
-          npm run lint || echo "Backend linting failed but continuing workflow"
-      
-      # AI Service linting
+
       - name: Install AI service dependencies
         working-directory: ./ai-service
         run: npm ci
-      
-      - name: Lint AI service code
-        working-directory: ./ai-service
-        run: |
-          npm run lint || echo "AI service linting failed but continuing workflow"
 
-  test:
-    name: Run Tests
-    needs: lint
-    strategy:
-      matrix:
-        node-version: [16.x, 18.x, 20.x]
-        os: [ubuntu-latest]
-    
-    runs-on: ${{ matrix.os }}
+      - name: ESLint check - Frontend
+        working-directory: ./frontend
+        run: npm run lint
+
+      - name: ESLint check - Backend
+        working-directory: ./backend
+        run: npm run lint
+
+      - name: ESLint check - AI Service
+        working-directory: ./ai-service
+        run: npm run lint
+
+      - name: Prettier format check - Frontend
+        working-directory: ./frontend
+        run: npm run format:check
+
+      - name: Prettier format check - Backend
+        working-directory: ./backend
+        run: npm run format:check
+
+      - name: Prettier format check - AI Service
+        working-directory: ./ai-service
+        run: npm run format:check
+
+      - name: Check for large files
+        run: |
+          find . -type f -size +50M -not -path "./node_modules/*" -not -path "./.git/*" | tee large_files.txt
+          if [ -s large_files.txt ]; then
+            echo "❌ Large files found:"
+            cat large_files.txt
+            exit 1
+          else
+            echo "✅ No large files found"
+          fi
+
+      - name: Check for secrets
+        run: |
+          if grep -r -E "(password|secret|key|token|api_key)" --include="*.js" --include="*.json" --exclude-dir=node_modules . | grep -v -E "(test|spec|example)" | grep -E "=.*['\"][^'\"]*['\"]"; then
+            echo "❌ Potential secrets found in code"
+            exit 1
+          else
+            echo "✅ No obvious secrets found"
+          fi
+
+  # Job 2: Security Scanning
+  security-scan:
+    name: Security Vulnerability Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: code-quality
     
     steps:
-      - name: Check out repository
+      - name: Checkout code
         uses: actions/checkout@v4
-      
-      - name: Set up Node.js ${{ matrix.node-version }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            **/node_modules
+          key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          cd frontend && npm ci
+          cd ../backend && npm ci
+          cd ../ai-service && npm ci
+
+      - name: Run npm audit - Frontend
+        working-directory: ./frontend
+        run: npm audit --audit-level=high
+        continue-on-error: true
+
+      - name: Run npm audit - Backend
+        working-directory: ./backend
+        run: npm audit --audit-level=high
+        continue-on-error: true
+
+      - name: Run npm audit - AI Service
+        working-directory: ./ai-service
+        run: npm audit --audit-level=high
+        continue-on-error: true
+
+      - name: Create security report
+        run: |
+          echo "# Security Scan Report" > security-report.md
+          echo "Generated on: $(date)" >> security-report.md
+          echo "" >> security-report.md
+          echo "## Frontend Audit" >> security-report.md
+          cd frontend && npm audit --json > ../frontend-audit.json 2>/dev/null || true
+          cd ../backend && npm audit --json > ../backend-audit.json 2>/dev/null || true
+          cd ../ai-service && npm audit --json > ../ai-service-audit.json 2>/dev/null || true
+
+      - name: Upload security artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-reports
+          path: |
+            security-report.md
+            *-audit.json
+          retention-days: 30
+
+  # Job 3: Matrix Testing with Multiple Node.js Versions
+  test-matrix:
+    name: Test Matrix (Node ${{ matrix.node-version }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: code-quality
+    
+    strategy:
+      matrix:
+        node-version: [18, 20, 22]
+        service: [frontend, backend, ai-service]
+      fail-fast: false
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
-      
-      # Cache Node.js dependencies
-      - name: Cache Node.js dependencies
-        uses: actions/cache@v3
-        with:
-          path: |
-            **/node_modules
-          key: ${{ runner.os }}-node-${{ matrix.node-version }}-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-${{ matrix.node-version }}-
-            ${{ runner.os }}-node-
-      
-      # Frontend tests
-      - name: Install frontend dependencies
-        working-directory: ./frontend
-        run: npm ci
-      
-      - name: Run frontend tests with coverage
-        working-directory: ./frontend
-        run: npm run test:coverage
-      
-      # Backend tests
-      - name: Install backend dependencies
-        working-directory: ./backend
-        run: npm ci
-      
-      - name: Run backend tests with coverage
-        working-directory: ./backend
-        run: npm run test:coverage
-      
-      # AI Service tests
-      - name: Install AI service dependencies
-        working-directory: ./ai-service
-        run: npm ci
-      
-      - name: Run AI service tests
-        working-directory: ./ai-service
-        run: npm test
-      
-      # Upload coverage reports (only for Node 18.x to avoid duplicates)
-      - name: Upload coverage reports
-        uses: actions/upload-artifact@v3
-        if: matrix.node-version == '18.x'
-        with:
-          name: coverage-reports
-          path: |
-            backend/coverage
-            frontend/coverage
-            ai-service/coverage
 
-  build:
-    name: Build Docker Images
-    needs: test
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            **/node_modules
+          key: ${{ runner.os }}-node${{ matrix.node-version }}-${{ matrix.service }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node${{ matrix.node-version }}-${{ matrix.service }}-
+
+      - name: Install dependencies
+        working-directory: ./${{ matrix.service }}
+        run: npm ci
+
+      - name: Run tests with coverage
+        working-directory: ./${{ matrix.service }}
+        run: npm run test:coverage
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./${{ matrix.service }}/coverage/lcov.info
+          flags: ${{ matrix.service }}-node${{ matrix.node-version }}
+          name: ${{ matrix.service }}-coverage-node${{ matrix.node-version }}
+          fail_ci_if_error: false
+
+      - name: Upload test artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.service }}-node${{ matrix.node-version }}
+          path: |
+            ./${{ matrix.service }}/coverage/
+            ./${{ matrix.service }}/test-results.xml
+          retention-days: 7
+
+  # Job 4: End-to-End Testing
+  e2e-tests:
+    name: End-to-End Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: [code-quality, test-matrix]
+    
+    services:
+      mongo:
+        image: mongo:4.4
+        ports:
+          - 27017:27017
+        env:
+          MONGO_INITDB_DATABASE: brainbytes
+        options: >-
+          --health-cmd mongosh
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            **/node_modules
+          key: ${{ runner.os }}-e2e-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-e2e-
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          cd frontend && npm ci
+          cd ../backend && npm ci
+          cd ../ai-service && npm ci
+
+      - name: Install Playwright
+        working-directory: ./e2e-tests
+        run: |
+          npm ci
+          npx playwright install --with-deps
+
+      - name: Start services
+        run: |
+          # Start backend
+          cd backend && npm start &
+          BACKEND_PID=$!
+          echo "BACKEND_PID=$BACKEND_PID" >> $GITHUB_ENV
+          
+          # Start AI service
+          cd ../ai-service && npm start &
+          AI_SERVICE_PID=$!
+          echo "AI_SERVICE_PID=$AI_SERVICE_PID" >> $GITHUB_ENV
+          
+          # Start frontend
+          cd ../frontend && npm run build && npm start &
+          FRONTEND_PID=$!
+          echo "FRONTEND_PID=$FRONTEND_PID" >> $GITHUB_ENV
+          
+          # Wait for services to be ready
+          sleep 30
+
+      - name: Run E2E tests
+        working-directory: ./e2e-tests
+        run: npx playwright test
+
+      - name: Upload E2E test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-test-results
+          path: |
+            ./e2e-tests/test-results/
+            ./e2e-tests/playwright-report/
+          retention-days: 7
+
+      - name: Cleanup services
+        if: always()
+        run: |
+          kill $BACKEND_PID $AI_SERVICE_PID $FRONTEND_PID 2>/dev/null || true
+
+  # Job 5: Docker Build and Test
+  docker-build:
+    name: Docker Build & Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    needs: [security-scan, test-matrix]
     
     steps:
-      - name: Check out repository
+      - name: Checkout code
         uses: actions/checkout@v4
-      
-      # Set up Docker Buildx
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-      
-      # Cache Docker layers
+
       - name: Cache Docker layers
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: /tmp/.buildx-cache
           key: ${{ runner.os }}-buildx-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-buildx-
-      
-      # Build frontend image
-      - name: Build frontend image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./frontend
-          push: false
-          tags: brainbytes/frontend:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          platforms: linux/amd64
-      
-      # Build backend image
-      - name: Build backend image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./backend
-          push: false
-          tags: brainbytes/backend:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          platforms: linux/amd64
-      
-      # Build AI service image
-      - name: Build AI service image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./ai-service
-          push: false
-          tags: brainbytes/ai-service:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          platforms: linux/amd64
-      
-      # Test Docker Compose
-      - name: Test Docker Compose
-        run: |
-          docker-compose -f docker-compose.yml up -d
-          sleep 30
-          docker-compose ps
-          
-          # Basic health checks
-          echo "Testing service availability..."
-          timeout 60 bash -c 'until curl -f http://localhost:3000 > /dev/null 2>&1; do sleep 2; done' || echo "Frontend not ready"
-          timeout 60 bash -c 'until curl -f http://localhost:5000 > /dev/null 2>&1; do sleep 2; done' || echo "Backend not ready"
-          timeout 60 bash -c 'until curl -f http://localhost:8000 > /dev/null 2>&1; do sleep 2; done' || echo "AI service not ready"
-          
-          docker-compose down
 
-  e2e-tests:
-    name: End-to-End Tests
-    needs: build
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-      
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-      
-      # Install E2E test dependencies
-      - name: Install E2E test dependencies
-        working-directory: ./e2e-tests
-        run: npm ci
-      
-      - name: Install Playwright browsers
-        working-directory: ./e2e-tests
-        run: npx playwright install --with-deps
-      
-      # Start services for E2E testing
-      - name: Start services for E2E testing
+      - name: Build Docker images
+        run: |
+          docker-compose build --parallel
+        env:
+          DOCKER_BUILDKIT: 1
+          BUILDX_CACHE_FROM: type=local,src=/tmp/.buildx-cache
+          BUILDX_CACHE_TO: type=local,dest=/tmp/.buildx-cache-new,mode=max
+
+      - name: Test Docker containers
         run: |
           docker-compose up -d
-          sleep 45
+          sleep 30
           
-          # Wait for services to be ready
-          echo "Waiting for services to be ready..."
-          timeout 120 bash -c 'until curl -f http://localhost:3000 > /dev/null 2>&1; do sleep 5; done' || echo "Frontend not ready"
-          timeout 120 bash -c 'until curl -f http://localhost:5000 > /dev/null 2>&1; do sleep 5; done' || echo "Backend not ready"
-          timeout 120 bash -c 'until curl -f http://localhost:8000 > /dev/null 2>&1; do sleep 5; done' || echo "AI service not ready"
-      
-      - name: Run E2E tests
-        working-directory: ./e2e-tests
-        run: npm run test:e2e
-      
-      - name: Upload E2E test results
-        uses: actions/upload-artifact@v3
+          # Test if services are running
+          docker-compose ps
+          
+          # Test service health
+          curl -f http://localhost:3000/health || exit 1
+          curl -f http://localhost:3001 || exit 1
+          curl -f http://localhost:3002/health || exit 1
+
+      - name: Cleanup Docker
         if: always()
+        run: |
+          docker-compose down
+          docker system prune -f
+
+      - name: Move cache
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+
+  # Job 6: Performance Testing
+  performance-test:
+    name: Performance Testing
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: docker-build
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          name: e2e-test-results
+          node-version: '20'
+
+      - name: Install dependencies
+        run: |
+          npm install -g artillery
+          cd frontend && npm ci
+          cd ../backend && npm ci
+
+      - name: Start services for performance testing
+        run: |
+          docker-compose up -d
+          sleep 30
+
+      - name: Run performance tests
+        run: |
+          # Create basic artillery config
+          cat > performance-test.yml << EOF
+          config:
+            target: 'http://localhost:3000'
+            phases:
+              - duration: 60
+                arrivalRate: 10
+          scenarios:
+            - name: "API Load Test"
+              requests:
+                - get:
+                    url: "/health"
+          EOF
+          
+          artillery run performance-test.yml --output performance-report.json
+
+      - name: Generate performance report
+        run: |
+          artillery report performance-report.json --output performance-report.html
+
+      - name: Upload performance artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-results
           path: |
-            e2e-tests/test-results/
-            e2e-tests/playwright-report/
-      
-      - name: Stop services
+            performance-report.json
+            performance-report.html
+          retention-days: 7
+
+      - name: Cleanup
         if: always()
         run: docker-compose down
 
-  security-scan:
-    name: Basic Security Scan
+  # Job 7: Test Summary
+  test-summary:
+    name: Test Summary Report
     runs-on: ubuntu-latest
-    
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-      
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-      
-      # Frontend security audit
-      - name: Frontend security audit
-        working-directory: ./frontend
-        run: |
-          npm ci
-          npm audit --audit-level=high || echo "Frontend has vulnerabilities but continuing"
-      
-      # Backend security audit
-      - name: Backend security audit
-        working-directory: ./backend
-        run: |
-          npm ci
-          npm audit --audit-level=high || echo "Backend has vulnerabilities but continuing"
-      
-      # AI Service security audit
-      - name: AI service security audit
-        working-directory: ./ai-service
-        run: |
-          npm ci
-          npm audit --audit-level=high || echo "AI service has vulnerabilities but continuing"
-
-  notify-results:
-    name: CI/CD Results Summary
-    needs: [lint, test, build, e2e-tests, security-scan]
-    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: [test-matrix, e2e-tests, performance-test]
     if: always()
     
     steps:
-      - name: Generate results summary
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Generate test summary
         run: |
-          echo "# 🚀 CI/CD Pipeline Results" >> summary.md
-          echo "" >> summary.md
-          echo "## Job Status Summary" >> summary.md
-          echo "" >> summary.md
-          echo "| Job | Status |" >> summary.md
-          echo "|-----|--------|" >> summary.md
-          echo "| Lint | ${{ needs.lint.result }} |" >> summary.md
-          echo "| Test | ${{ needs.test.result }} |" >> summary.md
-          echo "| Build | ${{ needs.build.result }} |" >> summary.md
-          echo "| E2E Tests | ${{ needs.e2e-tests.result }} |" >> summary.md
-          echo "| Security Scan | ${{ needs.security-scan.result }} |" >> summary.md
-          echo "" >> summary.md
-          echo "Generated on: $(date)" >> summary.md
+          echo "# Test Summary Report" > test-summary.md
+          echo "Generated on: $(date)" >> test-summary.md
+          echo "" >> test-summary.md
           
-          cat summary.md
-      
-      - name: Upload results summary
-        uses: actions/upload-artifact@v3
-        with:
-          name: ci-cd-summary
-          path: summary.md
-      
-      - name: Check overall status
-        run: |
-          if [ "${{ needs.lint.result }}" = "success" ] && \
-             [ "${{ needs.test.result }}" = "success" ] && \
-             [ "${{ needs.build.result }}" = "success" ]; then
-            echo "✅ CI/CD pipeline completed successfully!"
-            exit 0
+          # Check if test artifacts exist and summarize
+          if [ -d "test-results-frontend-node20" ]; then
+            echo "✅ Frontend tests completed" >> test-summary.md
           else
-            echo "❌ CI/CD pipeline failed!"
-            echo "Lint: ${{ needs.lint.result }}"
-            echo "Test: ${{ needs.test.result }}"
-            echo "Build: ${{ needs.build.result }}"
-            echo "E2E Tests: ${{ needs.e2e-tests.result }}"
-            echo "Security Scan: ${{ needs.security-scan.result }}"
-            exit 1
+            echo "❌ Frontend tests failed" >> test-summary.md
           fi
+          
+          if [ -d "test-results-backend-node20" ]; then
+            echo "✅ Backend tests completed" >> test-summary.md
+          else
+            echo "❌ Backend tests failed" >> test-summary.md
+          fi
+          
+          if [ -d "e2e-test-results" ]; then
+            echo "✅ E2E tests completed" >> test-summary.md
+          else
+            echo "❌ E2E tests failed" >> test-summary.md
+          fi
+          
+          if [ -d "performance-results" ]; then
+            echo "✅ Performance tests completed" >> test-summary.md
+          else
+            echo "❌ Performance tests failed or skipped" >> test-summary.md
+          fi
+
+      - name: Upload test summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-summary
+          path: test-summary.md
+          retention-days: 30
+
+  # Job 8: Notification
+  notify:
+    name: Send Notifications
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: [test-summary]
+    if: always()
+    
+    steps:
+      - name: Determine workflow status
+        id: status
+        run: |
+          if [[ "${{ needs.test-summary.result }}" == "success" ]]; then
+            echo "status=success" >> $GITHUB_OUTPUT
+            echo "color=good" >> $GITHUB_OUTPUT
+            echo "emoji=✅" >> $GITHUB_OUTPUT
+          else
+            echo "status=failure" >> $GITHUB_OUTPUT
+            echo "color=danger" >> $GITHUB_OUTPUT
+            echo "emoji=❌" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Send Slack notification
+        if: env.SLACK_WEBHOOK_URL != ''
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ steps.status.outputs.status }}
+          channel: '#ci-cd'
+          username: 'GitHub Actions'
+          text: |
+            ${{ steps.status.outputs.emoji }} **${{ github.repository }}** - ${{ github.workflow }}
+            
+            **Branch:** ${{ github.ref_name }}
+            **Commit:** ${{ github.sha }}
+            **Author:** ${{ github.actor }}
+            **Status:** ${{ steps.status.outputs.status }}
+            
+            [View Details](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Create GitHub issue on failure
+        if: failure() && github.ref == 'refs/heads/main'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `CI/CD Pipeline Failed - ${context.sha}`,
+              body: `The CI/CD pipeline failed for commit ${context.sha}.
+              
+              **Branch:** ${context.ref}
+              **Workflow:** ${context.workflow}
+              **Run ID:** ${context.runId}
+              
+              Please investigate and fix the issues.
+              
+              [View Workflow Run](${context.payload.repository.html_url}/actions/runs/${context.runId})`,
+              labels: ['bug', 'ci/cd', 'urgent']
+            })

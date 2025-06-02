@@ -2,7 +2,10 @@ const request = require('supertest');
 const express = require('express');
 const passport = require('passport');
 const jwt = require('jsonwebtoken');
-const { authenticate, initializePassport } = require('../../middleware/security');
+const {
+  authenticate,
+  initializePassport,
+} = require('../../middleware/security');
 const UserProfile = require('../../models/userProfile');
 const { generateTestToken } = require('../setup');
 
@@ -39,10 +42,10 @@ describe('Authentication Middleware', () => {
     // Create a test user for auth tests
     testUser = new UserProfile({
       email: 'middleware@example.com',
-      name: 'middleware'
+      name: 'middleware',
     });
     await testUser.save();
-    
+
     // Generate a valid JWT token for the test user
     testToken = generateTestToken(testUser._id, testUser.email);
   });
@@ -51,15 +54,14 @@ describe('Authentication Middleware', () => {
     const response = await request(app)
       .get('/api/protected')
       .set('Authorization', `Bearer ${testToken}`);
-    
+
     expect(response.statusCode).toBe(200);
     expect(response.body).toHaveProperty('message', 'Access granted');
   });
 
   test('should deny access with no token', async () => {
-    const response = await request(app)
-      .get('/api/protected');
-    
+    const response = await request(app).get('/api/protected');
+
     expect(response.statusCode).toBe(401);
     expect(response.body).toHaveProperty('error', 'Authentication required');
   });
@@ -68,7 +70,7 @@ describe('Authentication Middleware', () => {
     const response = await request(app)
       .get('/api/protected')
       .set('Authorization', 'Bearer invalid.token.here');
-    
+
     expect(response.statusCode).toBe(401);
     expect(response.body).toHaveProperty('error', 'Authentication required');
   });
@@ -76,19 +78,19 @@ describe('Authentication Middleware', () => {
   test('should deny access with an expired token', async () => {
     // Create an expired token (back-dated by 2 hours)
     const expiredToken = jwt.sign(
-      { 
-        userId: testUser._id, 
+      {
+        userId: testUser._id,
         email: testUser.email,
         iat: Math.floor(Date.now() / 1000) - 7200, // 2 hours ago
-        exp: Math.floor(Date.now() / 1000) - 3600  // expired 1 hour ago
+        exp: Math.floor(Date.now() / 1000) - 3600, // expired 1 hour ago
       },
       process.env.JWT_SECRET
     );
-    
+
     const response = await request(app)
       .get('/api/protected')
       .set('Authorization', `Bearer ${expiredToken}`);
-    
+
     expect(response.statusCode).toBe(401);
     expect(response.body).toHaveProperty('error', 'Authentication required');
   });
