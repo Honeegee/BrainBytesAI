@@ -690,13 +690,44 @@ jobs:
             const status = '${{ steps.status.outputs.status }}';
             const deployUrl = '${{ needs.setup.outputs.deploy_url }}';
             
-            // Create deployment status
-            await github.rest.repos.createDeploymentStatus({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              deployment_id: context.payload.deployment?.id || 0,
-              state: status === 'success' ? 'success' : 'failure',
-              environment: environment,
-              environment_url: deployUrl,
-              description: `Deployment to ${environment} ${status}`
-            });
+            // Only update deployment status if we have a valid deployment ID
+            const deploymentId = context.payload.deployment?.id;
+            
+            if (deploymentId) {
+              console.log(`Updating deployment status for deployment ID: ${deploymentId}`);
+              await github.rest.repos.createDeploymentStatus({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                deployment_id: deploymentId,
+                state: status === 'success' ? 'success' : 'failure',
+                environment: environment,
+                environment_url: deployUrl,
+                description: `Deployment to ${environment} ${status}`
+              });
+            } else {
+              console.log('No deployment ID found in context payload. Creating a new deployment record...');
+              
+              // Create a deployment record first
+              const deployment = await github.rest.repos.createDeployment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: context.sha,
+                environment: environment,
+                description: `Deploy ${context.sha.substring(0, 7)} to ${environment}`,
+                auto_merge: false,
+                required_contexts: []
+              });
+              
+              // Now create the deployment status
+              await github.rest.repos.createDeploymentStatus({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                deployment_id: deployment.data.id,
+                state: status === 'success' ? 'success' : 'failure',
+                environment: environment,
+                environment_url: deployUrl,
+                description: `Deployment to ${environment} ${status}`
+              });
+              
+              console.log(`Created deployment ${deployment.data.id} and updated status to ${status}`);
+            }
