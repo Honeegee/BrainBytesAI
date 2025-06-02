@@ -1,7 +1,7 @@
 describe('Chat E2E Tests', () => {
   const testUser = {
     email: 'test@example.com',
-    password: 'Test12345,'
+    password: 'Test12345,',
   };
 
   beforeAll(async () => {
@@ -11,34 +11,42 @@ describe('Chat E2E Tests', () => {
   test('should login and navigate to chat', async () => {
     // Wait for the form to be rendered
     await page.waitForSelector('form', { timeout: 5000 });
-    
+
     // Fill in login form
     await page.type('input[name="email"]', testUser.email);
     await page.type('input[name="password"]', testUser.password);
-    
+
     // Submit form and wait for navigation
     await Promise.all([
       page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 30000 }),
-      page.click('button[type="submit"]')
+      page.click('button[type="submit"]'),
     ]);
     expect(page.url()).toContain('/chat');
-    
+
     // Wait for chat interface to be ready
-    await page.waitForSelector('div.bg-hf-blue.bg-opacity-20', { timeout: 15000 });
+    await page.waitForSelector('div.bg-hf-blue.bg-opacity-20', {
+      timeout: 15000,
+    });
   }, 90000);
 
   test('should send a message and receive AI response', async () => {
     // Wait for chat interface to be ready
-    await page.waitForSelector('textarea[placeholder="Message BrainBytes..."]', { visible: true, timeout: 15000 });
-    
+    await page.waitForSelector(
+      'textarea[placeholder="Message BrainBytes..."]',
+      { visible: true, timeout: 15000 }
+    );
+
     // Type and send a message
     const testMessage = 'Hello, this is a test message';
-    await page.type('textarea[placeholder="Message BrainBytes..."]', testMessage);
+    await page.type(
+      'textarea[placeholder="Message BrainBytes..."]',
+      testMessage
+    );
     await page.click('button[type="submit"]');
 
     // Wait for user message to appear
     await page.waitForSelector('div[class*="bg-hf-blue"]', { timeout: 15000 });
-    
+
     // Verify messages exist
     const messageElements = await page.$$('div[class*="bg-hf-blue"]');
     expect(messageElements.length).toBeGreaterThan(0);
@@ -60,20 +68,29 @@ describe('Chat E2E Tests', () => {
 
   test('should handle message filtering', async () => {
     // Wait for chat interface to be ready
-    await page.waitForSelector('div.bg-hf-blue.bg-opacity-20', { visible: true, timeout: 15000 });
-    
+    await page.waitForSelector('div.bg-hf-blue.bg-opacity-20', {
+      visible: true,
+      timeout: 15000,
+    });
+
     // Wait for filter dropdown
-    await page.waitForSelector('select.bg-bg-dark-secondary', { visible: true, timeout: 15000 });
+    await page.waitForSelector('select.bg-bg-dark-secondary', {
+      visible: true,
+      timeout: 15000,
+    });
     await page.select('select.bg-bg-dark-secondary', '');
 
     // Wait for messages to update after filtering
     await page.waitForSelector('div[class*="bg-hf-blue"]', { visible: true });
-    
+
     // Verify messages are visible
-    const visibleMessages = await page.$$eval('div[class*="bg-hf-blue"]',
-      messages => messages.filter(m => window.getComputedStyle(m).display !== 'none').length
+    const visibleMessages = await page.$$eval(
+      'div[class*="bg-hf-blue"]',
+      messages =>
+        messages.filter(m => window.getComputedStyle(m).display !== 'none')
+          .length
     );
-    
+
     expect(visibleMessages).toBeGreaterThan(0);
   }, 90000);
 });

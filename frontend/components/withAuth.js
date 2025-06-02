@@ -2,17 +2,17 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import api from '../lib/api';
 
-const withAuth = (WrappedComponent) => {
+const withAuth = WrappedComponent => {
   return function WithAuth(props) {
     const router = useRouter();
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
-    
+
     useEffect(() => {
       const verifyAuth = async () => {
         const token = localStorage.getItem('token');
         const userId = localStorage.getItem('userId');
-        
+
         if (!token || !userId) {
           router.replace('/login');
           return;
