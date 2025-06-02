@@ -62,13 +62,23 @@ app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 app.use(securityHeaders);
 
 // Session configuration
+const mongoUrl =
+  process.env.MONGODB_URI ||
+  process.env.DATABASE_URL ||
+  'mongodb://mongo:27017/brainbytes_staging';
+
+console.log(
+  'MongoDB URL configured:',
+  mongoUrl.replace(/\/\/.*@/, '//***:***@')
+); // Hide credentials in logs
+
 app.use(
   session({
     secret: process.env.SESSION_SECRET || 'your-secret-key',
     resave: false,
     saveUninitialized: false,
     store: MongoStore.create({
-      mongoUrl: process.env.MONGODB_URI,
+      mongoUrl: mongoUrl,
       ttl: 24 * 60 * 60, // 1 day
       autoRemove: 'native',
     }),
@@ -94,7 +104,7 @@ const isTestEnvironment = process.env.NODE_ENV === 'test';
 // Connect to MongoDB with optimized settings - skip if in test environment
 if (!isTestEnvironment) {
   mongoose
-    .connect(process.env.MONGODB_URI, mongoConfig)
+    .connect(mongoUrl, mongoConfig)
     .then(() => {
       console.log('Connected to MongoDB');
     })
