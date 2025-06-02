@@ -190,35 +190,28 @@ jobs:
           npm ci
           npx playwright install --with-deps
 
-      - name: Start services
-        env:
-          # Backend environment variables
-          PORT: 3000
-          MONGODB_URI: mongodb://localhost:27017/brainbytes
-          FRONTEND_URL: http://localhost:3001
-          JWT_SECRET: test_jwt_secret_key
-          NODE_ENV: test
-          RATE_LIMIT_WINDOW: 15
-          RATE_LIMIT_MAX: 100
-          COOKIE_SECURE: false
-          SESSION_SECRET: test_session_secret_key
-          # Frontend environment variables
-          NEXT_PUBLIC_BACKEND_URL: http://localhost:3000
-          # AI Service environment variables
-          GROQ_API_KEY: test_key_placeholder
+      - name: Clean up ports
         run: |
-          # Start backend
-          (cd backend && npm start) &
+          # Kill any processes using our target ports
+          sudo lsof -ti:3000 | xargs -r sudo kill -9 || true
+          sudo lsof -ti:3001 | xargs -r sudo kill -9 || true
+          sudo lsof -ti:3002 | xargs -r sudo kill -9 || true
+          echo "Ports cleaned up"
+
+      - name: Start services
+        run: |
+          # Start backend on port 3000
+          (cd backend && PORT=3000 MONGODB_URI=mongodb://localhost:27017/brainbytes JWT_SECRET=test_jwt_secret_key SESSION_SECRET=test_session_secret_key NODE_ENV=test npm start) &
           BACKEND_PID=$!
           echo "BACKEND_PID=$BACKEND_PID" >> $GITHUB_ENV
           
-          # Start AI service
-          (cd ai-service && npm start) &
+          # Start AI service on port 3002
+          (cd ai-service && PORT=3002 GROQ_API_KEY=test_key_placeholder NODE_ENV=test npm start) &
           AI_SERVICE_PID=$!
           echo "AI_SERVICE_PID=$AI_SERVICE_PID" >> $GITHUB_ENV
           
-          # Start frontend
-          (cd frontend && npm run build && npm start) &
+          # Start frontend on port 3001
+          (cd frontend && NEXT_PUBLIC_BACKEND_URL=http://localhost:3000 npm run build && PORT=3001 npm start) &
           FRONTEND_PID=$!
           echo "FRONTEND_PID=$FRONTEND_PID" >> $GITHUB_ENV
           
@@ -227,9 +220,9 @@ jobs:
           
           # Check if services are running
           echo "Checking backend health..."
-          curl -f http://localhost:3001/api/health || echo "Backend not ready"
+          curl -f http://localhost:3000/api/health || echo "Backend not ready"
           echo "Checking frontend..."
-          curl -f http://localhost:3000 || echo "Frontend not ready"
+          curl -f http://localhost:3001 || echo "Frontend not ready"
 
       - name: Run E2E tests
         working-directory: ./e2e-tests
@@ -275,35 +268,28 @@ jobs:
           (cd backend && npm ci)
           (cd ai-service && npm ci)
 
-      - name: Start services for performance testing
-        env:
-          # Backend environment variables
-          PORT: 3000
-          MONGODB_URI: mongodb://localhost:27017/brainbytes
-          FRONTEND_URL: http://localhost:3001
-          JWT_SECRET: test_jwt_secret_key
-          NODE_ENV: test
-          RATE_LIMIT_WINDOW: 15
-          RATE_LIMIT_MAX: 100
-          COOKIE_SECURE: false
-          SESSION_SECRET: test_session_secret_key
-          # Frontend environment variables
-          NEXT_PUBLIC_BACKEND_URL: http://localhost:3000
-          # AI Service environment variables
-          GROQ_API_KEY: test_key_placeholder
+      - name: Clean up ports for performance testing
         run: |
-          # Start backend
-          (cd backend && npm start) &
+          # Kill any processes using our target ports
+          sudo lsof -ti:3000 | xargs -r sudo kill -9 || true
+          sudo lsof -ti:3001 | xargs -r sudo kill -9 || true
+          sudo lsof -ti:3002 | xargs -r sudo kill -9 || true
+          echo "Ports cleaned up for performance testing"
+
+      - name: Start services for performance testing
+        run: |
+          # Start backend on port 3000
+          (cd backend && PORT=3000 MONGODB_URI=mongodb://localhost:27017/brainbytes JWT_SECRET=test_jwt_secret_key SESSION_SECRET=test_session_secret_key NODE_ENV=test npm start) &
           BACKEND_PID=$!
           echo "BACKEND_PID=$BACKEND_PID" >> $GITHUB_ENV
           
-          # Start AI service
-          (cd ai-service && npm start) &
+          # Start AI service on port 3002
+          (cd ai-service && PORT=3002 GROQ_API_KEY=test_key_placeholder NODE_ENV=test npm start) &
           AI_SERVICE_PID=$!
           echo "AI_SERVICE_PID=$AI_SERVICE_PID" >> $GITHUB_ENV
           
-          # Start frontend
-          (cd frontend && npm run build && npm start) &
+          # Start frontend on port 3001
+          (cd frontend && NEXT_PUBLIC_BACKEND_URL=http://localhost:3000 npm run build && PORT=3001 npm start) &
           FRONTEND_PID=$!
           echo "FRONTEND_PID=$FRONTEND_PID" >> $GITHUB_ENV
           
