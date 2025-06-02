@@ -50,12 +50,5 @@
     "nodemon": "^3.0.1",
     "prettier": "^3.1.0",
     "supertest": "^6.3.4"
-  },
-  "jest": {
-    "testEnvironment": "node",
-    "coveragePathIgnorePatterns": [
-      "/node_modules/"
-    ],
-    "testTimeout": 30000
   }
 }
