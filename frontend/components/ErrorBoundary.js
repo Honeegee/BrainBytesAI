@@ -50,7 +50,7 @@ export default class ErrorBoundary extends React.Component {
         <div className={STYLES.CONTAINER}>
           <h2 className={STYLES.TITLE}>Oops! Something went wrong</h2>
           <p className={STYLES.MESSAGE}>
-            We're sorry, but something went wrong. Please try reloading the page.
+            We&apos;re sorry, but something went wrong. Please try reloading the page.
           </p>
           
           <div className="space-x-4">
