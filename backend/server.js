@@ -62,10 +62,23 @@ app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 app.use(securityHeaders);
 
 // Session configuration
-const mongoUrl =
-  process.env.MONGODB_URI ||
-  process.env.DATABASE_URL ||
-  'mongodb://mongo:27017/brainbytes_staging';
+// Build MongoDB URL with authentication if credentials are provided
+let mongoUrl = process.env.MONGODB_URI || process.env.DATABASE_URL;
+
+if (!mongoUrl) {
+  const mongoUser = process.env.STAGING_MONGO_USER || process.env.MONGO_USER;
+  const mongoPassword =
+    process.env.STAGING_MONGO_PASSWORD || process.env.MONGO_PASSWORD;
+  const mongoHost = process.env.MONGO_HOST || 'mongo';
+  const mongoPort = process.env.MONGO_PORT || '27017';
+  const mongoDb = process.env.MONGO_DB || 'brainbytes_staging';
+
+  if (mongoUser && mongoPassword) {
+    mongoUrl = `mongodb://${mongoUser}:${mongoPassword}@${mongoHost}:${mongoPort}/${mongoDb}?authSource=admin`;
+  } else {
+    mongoUrl = `mongodb://${mongoHost}:${mongoPort}/${mongoDb}`;
+  }
+}
 
 console.log(
   'MongoDB URL configured:',
