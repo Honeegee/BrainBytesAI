@@ -18,25 +18,30 @@ __tests__/
 ## Test Categories
 
 ### Unit Tests (`unit/`)
+
 Tests individual functions and components in isolation.
 
 - **[`basic.test.js`](unit/basic.test.js)**: Basic environment and setup verification
 - **[`utils.test.js`](unit/utils.test.js)**: Tests for utility functions like `normalizePrompt` and `handleMathExpression`
 
-### Integration Tests (`integration/`) - *To be added*
+### Integration Tests (`integration/`) - _To be added_
+
 Tests API endpoints and external service integrations.
 
-### Helper Utilities (`helpers/`) - *To be added*
+### Helper Utilities (`helpers/`) - _To be added_
+
 Shared utilities and setup functions for tests.
 
 ## Running Tests
 
 ### All AI Service Tests
+
 ```bash
 npm test
 ```
 
 ### Specific Test Categories
+
 ```bash
 # Unit tests only
 npx jest __tests__/unit/
@@ -46,6 +51,7 @@ npx jest __tests__/unit/utils.test.js
 ```
 
 ### Watch Mode
+
 ```bash
 npm run test:watch
 ```
@@ -79,14 +85,18 @@ Key testing packages used:
 ## Tested Functions
 
 ### normalizePrompt
+
 Tests the prompt normalization utility that:
+
 - Trims whitespace
 - Replaces multiple spaces with single space
 - Normalizes smart quotes
 - Handles non-string inputs
 
 ### handleMathExpression
+
 Tests the math expression handler that:
+
 - Evaluates basic arithmetic (addition, subtraction, multiplication, division)
 - Returns original input for non-math expressions
 - Handles edge cases and invalid inputs
@@ -94,6 +104,7 @@ Tests the math expression handler that:
 ## Adding New Tests
 
 ### Unit Tests
+
 Add to `unit/` directory for isolated function testing:
 
 ```javascript
@@ -105,6 +116,7 @@ describe('Function Name', () => {
 ```
 
 ### Integration Tests (Future)
+
 Add to `integration/` directory for API endpoint testing:
 
 ```javascript
@@ -113,10 +125,8 @@ const app = require('../../server');
 
 describe('API Endpoints', () => {
   test('POST /ai should return response', async () => {
-    const response = await request(app)
-      .post('/ai')
-      .send({ prompt: 'test' });
-    
+    const response = await request(app).post('/ai').send({ prompt: 'test' });
+
     expect(response.status).toBe(200);
   });
 });
@@ -125,6 +135,7 @@ describe('API Endpoints', () => {
 ## Service Architecture
 
 The AI service includes:
+
 - Express.js server
 - CORS configuration for frontend communication
 - Prompt normalization utilities
@@ -173,6 +184,7 @@ Coverage reports are generated in the `coverage/` directory.
 ## Security Considerations
 
 The AI service tests should verify:
+
 - Input validation and sanitization
 - Rate limiting (when implemented)
 - API key security (when using external services)

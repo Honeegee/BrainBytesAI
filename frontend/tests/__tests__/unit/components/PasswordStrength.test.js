@@ -1,20 +1,22 @@
 // Test for PasswordStrength component
 describe('PasswordStrength Component', () => {
   test('Password strength validation logic', () => {
-    const validatePassword = (password) => {
+    const validatePassword = password => {
       const minLength = password.length >= 8;
       const hasUpper = /[A-Z]/.test(password);
       const hasLower = /[a-z]/.test(password);
       const hasNumber = /[0-9]/.test(password);
       const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
-      
+
       return {
         minLength,
         hasUpper,
         hasLower,
         hasNumber,
         hasSpecial,
-        score: [minLength, hasUpper, hasLower, hasNumber, hasSpecial].filter(Boolean).length
+        score: [minLength, hasUpper, hasLower, hasNumber, hasSpecial].filter(
+          Boolean
+        ).length,
       };
     };
 
@@ -39,7 +41,7 @@ describe('PasswordStrength Component', () => {
   });
 
   test('Password strength levels', () => {
-    const getStrengthLevel = (score) => {
+    const getStrengthLevel = score => {
       if (score <= 2) return 'weak';
       if (score <= 3) return 'medium';
       if (score <= 4) return 'strong';
@@ -54,12 +56,12 @@ describe('PasswordStrength Component', () => {
   });
 
   test('Password strength colors', () => {
-    const getStrengthColor = (level) => {
+    const getStrengthColor = level => {
       const colors = {
-        'weak': 'red',
-        'medium': 'orange',
-        'strong': 'yellow',
-        'very-strong': 'green'
+        weak: 'red',
+        medium: 'orange',
+        strong: 'yellow',
+        'very-strong': 'green',
       };
       return colors[level];
     };

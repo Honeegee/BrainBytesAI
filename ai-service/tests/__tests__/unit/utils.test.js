@@ -83,7 +83,9 @@ describe('AI Service Utility Functions', () => {
     test('should return input unchanged for non-math expressions', () => {
       expect(handleMathExpression('hello world')).toBe('hello world');
       expect(handleMathExpression('2 + 3 + 4')).toBe('2 + 3 + 4');
-      expect(handleMathExpression('invalid expression')).toBe('invalid expression');
+      expect(handleMathExpression('invalid expression')).toBe(
+        'invalid expression'
+      );
     });
 
     test('should handle non-string input', () => {

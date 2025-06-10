@@ -3,24 +3,24 @@ describe('Login Page', () => {
   test('Form validation logic', () => {
     const validateLoginForm = (email, password) => {
       const errors = {};
-      
+
       // Email validation
       if (!email) {
         errors.email = 'Email is required';
       } else if (!/\S+@\S+\.\S+/.test(email)) {
         errors.email = 'Email is invalid';
       }
-      
+
       // Password validation
       if (!password) {
         errors.password = 'Password is required';
       } else if (password.length < 6) {
         errors.password = 'Password must be at least 6 characters';
       }
-      
+
       return {
         isValid: Object.keys(errors).length === 0,
-        errors
+        errors,
       };
     };
 
@@ -42,7 +42,9 @@ describe('Login Page', () => {
     // Test short password
     const shortPassword = validateLoginForm('user@example.com', '123');
     expect(shortPassword.isValid).toBe(false);
-    expect(shortPassword.errors.password).toBe('Password must be at least 6 characters');
+    expect(shortPassword.errors.password).toBe(
+      'Password must be at least 6 characters'
+    );
   });
 
   test('Login form state management', () => {
@@ -50,7 +52,7 @@ describe('Login Page', () => {
       email: '',
       password: '',
       isLoading: false,
-      errors: {}
+      errors: {},
     };
 
     const formReducer = (state, action) => {
@@ -59,7 +61,7 @@ describe('Login Page', () => {
           return {
             ...state,
             [action.field]: action.value,
-            errors: { ...state.errors, [action.field]: null }
+            errors: { ...state.errors, [action.field]: null },
           };
         case 'SET_LOADING':
           return { ...state, isLoading: action.loading };
@@ -74,7 +76,7 @@ describe('Login Page', () => {
     let state = formReducer(initialState, {
       type: 'SET_FIELD',
       field: 'email',
-      value: 'user@example.com'
+      value: 'user@example.com',
     });
     expect(state.email).toBe('user@example.com');
 
@@ -85,7 +87,7 @@ describe('Login Page', () => {
     // Test setting errors
     state = formReducer(state, {
       type: 'SET_ERRORS',
-      errors: { email: 'Invalid email' }
+      errors: { email: 'Invalid email' },
     });
     expect(state.errors.email).toBe('Invalid email');
     expect(state.isLoading).toBe(false);
@@ -96,39 +98,39 @@ describe('Login Page', () => {
       return {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           email: email.trim().toLowerCase(),
-          password: password
-        })
+          password: password,
+        }),
       };
     };
 
     const request = formatLoginRequest('  User@Example.COM  ', 'password123');
-    
+
     expect(request.method).toBe('POST');
     expect(request.headers['Content-Type']).toBe('application/json');
-    
+
     const body = JSON.parse(request.body);
     expect(body.email).toBe('user@example.com');
     expect(body.password).toBe('password123');
   });
 
   test('Login response handling', () => {
-    const handleLoginResponse = (response) => {
+    const handleLoginResponse = response => {
       if (response.status === 'success') {
         return {
           success: true,
           token: response.token,
           user: response.user,
-          redirectTo: '/dashboard'
+          redirectTo: '/dashboard',
         };
       } else {
         return {
           success: false,
           error: response.message || 'Login failed',
-          redirectTo: null
+          redirectTo: null,
         };
       }
     };
@@ -137,7 +139,7 @@ describe('Login Page', () => {
     const successResponse = {
       status: 'success',
       token: 'jwt-token-here',
-      user: { id: '123', email: 'user@example.com' }
+      user: { id: '123', email: 'user@example.com' },
     };
     const success = handleLoginResponse(successResponse);
     expect(success.success).toBe(true);
@@ -147,7 +149,7 @@ describe('Login Page', () => {
     // Test failed login
     const failResponse = {
       status: 'error',
-      message: 'Invalid credentials'
+      message: 'Invalid credentials',
     };
     const fail = handleLoginResponse(failResponse);
     expect(fail.success).toBe(false);

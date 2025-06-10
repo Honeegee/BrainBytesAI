@@ -22,12 +22,14 @@ __tests__/
 ## Test Categories
 
 ### Unit Tests (`unit/`)
+
 Tests individual components in isolation with minimal dependencies.
 
 - **[`basic.test.js`](unit/basic.test.js)**: Simple functionality verification
 - **[`middleware.test.js`](unit/middleware.test.js)**: Authentication middleware testing
 
 ### Integration Tests (`integration/`)
+
 Tests that verify component interactions and API endpoints.
 
 - **[`api.test.js`](integration/api.test.js)**: API endpoint testing with mocked dependencies
@@ -35,6 +37,7 @@ Tests that verify component interactions and API endpoints.
 - **[`database/db-persistence.test.js`](integration/database/db-persistence.test.js)**: Database persistence across container restarts
 
 ### Helper Utilities (`helpers/`)
+
 Shared utilities and setup functions for tests.
 
 - **[`db-handler.js`](helpers/db-handler.js)**: MongoDB Memory Server management
@@ -43,11 +46,13 @@ Shared utilities and setup functions for tests.
 ## Running Tests
 
 ### All Tests
+
 ```bash
 npm test
 ```
 
 ### Specific Test Categories
+
 ```bash
 # Unit tests only
 npx jest __tests__/unit/
@@ -60,6 +65,7 @@ npx jest __tests__/unit/basic.test.js
 ```
 
 ### Test Scripts
+
 The backend provides several convenience scripts:
 
 ```bash
