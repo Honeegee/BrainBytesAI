@@ -1,54 +1,49 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuites name="jest tests" tests="20" failures="0" errors="0" time="2.652">
-  <testsuite name="Basic Test" errors="0" failures="0" skipped="0" timestamp="2025-06-02T04:38:35" time="0.466" tests="1">
-    <testcase classname="Basic Test" name="Math works" time="0.005">
+<testsuites name="jest tests" tests="19" failures="0" errors="0" time="2.443">
+  <testsuite name="Basic Test" errors="0" failures="0" skipped="0" timestamp="2025-06-10T04:44:38" time="0.357" tests="1">
+    <testcase classname="Basic Test" name="Math works" time="0.007">
     </testcase>
   </testsuite>
-  <testsuite name="Database Persistence Tests" errors="0" failures="0" skipped="1" timestamp="2025-06-02T04:38:35" time="0.884" tests="1">
-    <testcase classname="Database Persistence Tests" name="Skipping all Docker-dependent tests" time="0">
-      <skipped/>
+  <testsuite name="Authentication Middleware" errors="0" failures="0" skipped="0" timestamp="2025-06-10T04:44:38" time="1.564" tests="4">
+    <testcase classname="Authentication Middleware" name="should allow access with a valid JWT token" time="0.054">
     </testcase>
-  </testsuite>
-  <testsuite name="API Endpoints" errors="0" failures="0" skipped="0" timestamp="2025-06-02T04:38:35" time="1.819" tests="6">
-    <testcase classname="API Endpoints" name="GET /api/health should return status ok" time="0.025">
+    <testcase classname="Authentication Middleware" name="should deny access with no token" time="0.007">
     </testcase>
-    <testcase classname="API Endpoints" name="GET / should return welcome message" time="0.004">
-    </testcase>
-    <testcase classname="API Endpoints Chat Endpoints" name="POST /api/messages should create a new message" time="0.026">
-    </testcase>
-    <testcase classname="API Endpoints Chat Endpoints" name="GET /api/messages/chats should return chat history" time="0.013">
-    </testcase>
-    <testcase classname="API Endpoints Chat Endpoints" name="GET /api/messages should return messages for a chat" time="0.013">
-    </testcase>
-    <testcase classname="API Endpoints Chat Endpoints" name="DELETE /api/messages/chats/:chatId should delete all messages in a chat" time="0.01">
-    </testcase>
-  </testsuite>
-  <testsuite name="Authentication Middleware" errors="0" failures="0" skipped="0" timestamp="2025-06-02T04:38:35" time="1.84" tests="4">
-    <testcase classname="Authentication Middleware" name="should allow access with a valid JWT token" time="0.049">
-    </testcase>
-    <testcase classname="Authentication Middleware" name="should deny access with no token" time="0.008">
-    </testcase>
-    <testcase classname="Authentication Middleware" name="should deny access with an invalid token" time="0.009">
+    <testcase classname="Authentication Middleware" name="should deny access with an invalid token" time="0.007">
     </testcase>
     <testcase classname="Authentication Middleware" name="should deny access with an expired token" time="0.009">
     </testcase>
   </testsuite>
-  <testsuite name="Authentication API" errors="0" failures="0" skipped="0" timestamp="2025-06-02T04:38:35" time="2.379" tests="8">
-    <testcase classname="Authentication API POST /api/auth/register" name="should register a new user with valid data" time="0.125">
+  <testsuite name="Authentication API" errors="0" failures="0" skipped="0" timestamp="2025-06-10T04:44:38" time="2.066" tests="8">
+    <testcase classname="Authentication API POST /api/auth/register" name="should register a new user with valid data" time="0.118">
     </testcase>
-    <testcase classname="Authentication API POST /api/auth/register" name="should return 400 if email is already registered" time="0.069">
+    <testcase classname="Authentication API POST /api/auth/register" name="should return 400 if email is already registered" time="0.067">
     </testcase>
-    <testcase classname="Authentication API POST /api/auth/register" name="should return 400 if email format is invalid" time="0.005">
+    <testcase classname="Authentication API POST /api/auth/register" name="should return 400 if email format is invalid" time="0.006">
     </testcase>
-    <testcase classname="Authentication API POST /api/auth/register" name="should return 400 if password does not meet requirements" time="0.006">
+    <testcase classname="Authentication API POST /api/auth/register" name="should return 400 if password does not meet requirements" time="0.005">
     </testcase>
     <testcase classname="Authentication API POST /api/auth/login" name="should log in a user with valid credentials" time="0.133">
     </testcase>
-    <testcase classname="Authentication API POST /api/auth/login" name="should return 401 if email is not registered" time="0.066">
+    <testcase classname="Authentication API POST /api/auth/login" name="should return 401 if email is not registered" time="0.065">
     </testcase>
     <testcase classname="Authentication API POST /api/auth/login" name="should return 401 if password is incorrect" time="0.127">
     </testcase>
-    <testcase classname="Authentication API POST /api/auth/logout" name="should log out a user successfully" time="0.006">
+    <testcase classname="Authentication API POST /api/auth/logout" name="should log out a user successfully" time="0.005">
+    </testcase>
+  </testsuite>
+  <testsuite name="API Endpoints" errors="0" failures="0" skipped="0" timestamp="2025-06-10T04:44:38" time="2.216" tests="6">
+    <testcase classname="API Endpoints" name="GET /api/health should return status ok" time="0.02">
+    </testcase>
+    <testcase classname="API Endpoints" name="GET / should return welcome message" time="0.004">
+    </testcase>
+    <testcase classname="API Endpoints Chat Endpoints" name="POST /api/messages should create a new message" time="0.025">
+    </testcase>
+    <testcase classname="API Endpoints Chat Endpoints" name="GET /api/messages/chats should return chat history" time="0.018">
+    </testcase>
+    <testcase classname="API Endpoints Chat Endpoints" name="GET /api/messages should return messages for a chat" time="0.011">
+    </testcase>
+    <testcase classname="API Endpoints Chat Endpoints" name="DELETE /api/messages/chats/:chatId should delete all messages in a chat" time="0.007">
     </testcase>
   </testsuite>
 </testsuites>
