@@ -319,7 +319,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     needs: setup
-    if: needs.setup.outputs.should_deploy == 'true'
+    if: always() && needs.setup.result == 'success' && needs.setup.outputs.should_deploy == 'true'
     permissions:
       contents: read
       packages: write
@@ -329,6 +329,14 @@ jobs:
         service: [frontend, backend, ai-service]
     
     steps:
+      - name: Debug - Build Images Info
+        run: |
+          echo "🔍 Build images job starting..."
+          echo "Setup result: ${{ needs.setup.result }}"
+          echo "Should deploy: ${{ needs.setup.outputs.should_deploy }}"
+          echo "Environment: ${{ needs.setup.outputs.environment }}"
+          echo "Service: ${{ matrix.service }}"
+
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -392,12 +400,21 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: [setup, build-images]
-    if: needs.setup.outputs.environment == 'staging'
+    if: always() && needs.setup.result == 'success' && needs.setup.outputs.environment == 'staging'
     environment:
       name: staging
       url: ${{ needs.setup.outputs.deploy_url }}
     
     steps:
+      - name: Debug - Deployment Info
+        run: |
+          echo "🔍 Deploy staging job starting..."
+          echo "Setup result: ${{ needs.setup.result }}"
+          echo "Environment: ${{ needs.setup.outputs.environment }}"
+          echo "Should deploy: ${{ needs.setup.outputs.should_deploy }}"
+          echo "Deploy URL: ${{ needs.setup.outputs.deploy_url }}"
+          echo "Build images result: ${{ needs.build-images.result }}"
+
       - name: Checkout code
         uses: actions/checkout@v4
 

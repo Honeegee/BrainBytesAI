@@ -99,10 +99,11 @@ jobs:
 
   # Job 2: Matrix Testing with Multiple Node.js Versions
   test-matrix:
-    name: Test Matrix (Node ${{ matrix.node-version }})
+    name: Test Matrix (Node ${{ matrix.node-version }}) - ${{ matrix.service }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     needs: setup
+    if: needs.setup.result == 'success'
     
     strategy:
       matrix:
@@ -111,6 +112,13 @@ jobs:
       fail-fast: false
 
     steps:
+      - name: Debug - Matrix Info
+        run: |
+          echo "🔍 Matrix job starting..."
+          echo "Node version: ${{ matrix.node-version }}"
+          echo "Service: ${{ matrix.service }}"
+          echo "Setup result: ${{ needs.setup.result }}"
+
       - name: Checkout code
         uses: actions/checkout@v4
 
