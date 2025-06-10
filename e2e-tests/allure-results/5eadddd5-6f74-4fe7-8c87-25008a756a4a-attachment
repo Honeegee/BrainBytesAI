@@ -1,0 +1,172 @@
+# Test info
+
+- Name: Health Check Tests >> application loads successfully
+- Location: c:\Users\Honey\Desktop\BrainBytesAI\e2e-tests\tests\health-check.spec.js:12:3
+
+# Error details
+
+```
+Error: Timed out 10000ms waiting for expect(locator).toHaveTitle(expected)
+
+Locator: locator(':root')
+Expected pattern: /BrainBytesAI/i
+Received string:  "BrainBytes AI Tutoring"
+Call log:
+  - expect.toHaveTitle with timeout 10000ms
+  - waiting for locator(':root')
+    5 × locator resolved to <html lang="en">…</html>
+      - unexpected value ""
+    8 × locator resolved to <html lang="en">…</html>
+      - unexpected value "BrainBytes AI Tutoring"
+
+    at c:\Users\Honey\Desktop\BrainBytesAI\e2e-tests\tests\health-check.spec.js:18:26
+```
+
+# Page snapshot
+
+```yaml
+- banner:
+  - navigation:
+    - link "BrainBytes BrainBytes":
+      - /url: /
+      - img "BrainBytes"
+      - heading "BrainBytes" [level=1]
+- main:
+  - heading "Login" [level=1]
+  - text: "Email:"
+  - textbox "Email:"
+  - text: "Password:"
+  - textbox "Password:"
+  - checkbox "Remember me"
+  - text: Remember me
+  - button "Login"
+  - paragraph:
+    - text: Don't have an account?
+    - link "Sign up here":
+      - /url: /signup
+- alert: BrainBytes AI Tutoring
+```
+
+# Test source
+
+```ts
+   1 | const { test, expect } = require('@playwright/test');
+   2 |
+   3 | // Simple health check tests that don't require authentication
+   4 | test.describe('Health Check Tests', () => {
+   5 |   test.beforeEach(async ({ page }) => {
+   6 |     // Add error handling for connection issues
+   7 |     page.on('pageerror', exception => {
+   8 |       console.log(`Page error: ${exception}`);
+   9 |     });
+   10 |   });
+   11 |
+   12 |   test('application loads successfully', async ({ page }) => {
+   13 |     try {
+   14 |       // Navigate to the home page
+   15 |       await page.goto('/', { waitUntil: 'domcontentloaded', timeout: 10000 });
+   16 |       
+   17 |       // Check if the page loads without error
+>  18 |       await expect(page).toHaveTitle(/BrainBytesAI/i);
+      |                          ^ Error: Timed out 10000ms waiting for expect(locator).toHaveTitle(expected)
+   19 |       
+   20 |       // Verify the page contains expected content
+   21 |       const body = page.locator('body');
+   22 |       await expect(body).toBeVisible();
+   23 |     } catch (error) {
+   24 |       if (error.message.includes('net::ERR_CONNECTION_REFUSED')) {
+   25 |         test.skip('Application server is not running. Please start the frontend server first.');
+   26 |       }
+   27 |       throw error;
+   28 |     }
+   29 |   });
+   30 |
+   31 |   test('login page is accessible', async ({ page }) => {
+   32 |     try {
+   33 |       // Navigate to login page
+   34 |       await page.goto('/login');
+   35 |       
+   36 |       // Check if login page loads
+   37 |       await expect(page.locator('h1')).toContainText('Login');
+   38 |       
+   39 |       // Verify form elements exist (using actual IDs from the component)
+   40 |       await expect(page.locator('#email')).toBeVisible();
+   41 |       await expect(page.locator('#password')).toBeVisible();
+   42 |       await expect(page.locator('button[type="submit"]')).toBeVisible();
+   43 |     } catch (error) {
+   44 |       if (error.message.includes('net::ERR_CONNECTION_REFUSED')) {
+   45 |         test.skip('Application server is not running. Please start the frontend server first.');
+   46 |       }
+   47 |       throw error;
+   48 |     }
+   49 |   });
+   50 |
+   51 |   test('signup page is accessible', async ({ page }) => {
+   52 |     try {
+   53 |       // Navigate to signup page
+   54 |       await page.goto('/signup');
+   55 |       
+   56 |       // Check if signup page loads (or redirects properly)
+   57 |       // This test will pass if the page loads without throwing an error
+   58 |       await page.waitForLoadState('networkidle');
+   59 |       
+   60 |       // Basic check that we're not getting a 404 or error page
+   61 |       const title = await page.title();
+   62 |       expect(title).toBeTruthy();
+   63 |     } catch (error) {
+   64 |       if (error.message.includes('net::ERR_CONNECTION_REFUSED')) {
+   65 |         test.skip('Application server is not running. Please start the frontend server first.');
+   66 |       }
+   67 |       throw error;
+   68 |     }
+   69 |   });
+   70 |
+   71 |   test('navigation between pages works', async ({ page }) => {
+   72 |     try {
+   73 |       // Start at login page
+   74 |       await page.goto('/login');
+   75 |       await expect(page.locator('h1')).toContainText('Login');
+   76 |       
+   77 |       // Navigate to signup via link
+   78 |       await page.click('a[href="/signup"]');
+   79 |       await page.waitForLoadState('networkidle');
+   80 |       
+   81 |       // Verify we're on a different page (title or URL changed)
+   82 |       const currentUrl = page.url();
+   83 |       expect(currentUrl).toContain('/signup');
+   84 |     } catch (error) {
+   85 |       if (error.message.includes('net::ERR_CONNECTION_REFUSED')) {
+   86 |         test.skip('Application server is not running. Please start the frontend server first.');
+   87 |       }
+   88 |       throw error;
+   89 |     }
+   90 |   });
+   91 |
+   92 |   test('application responds to basic interactions', async ({ page }) => {
+   93 |     try {
+   94 |       // Navigate to login page
+   95 |       await page.goto('/login');
+   96 |       
+   97 |       // Test form interaction without submitting
+   98 |       await page.fill('#email', 'test@example.com');
+   99 |       await page.fill('#password', 'testpassword');
+  100 |       
+  101 |       // Verify the values were set
+  102 |       const emailValue = await page.inputValue('#email');
+  103 |       const passwordValue = await page.inputValue('#password');
+  104 |       
+  105 |       expect(emailValue).toBe('test@example.com');
+  106 |       expect(passwordValue).toBe('testpassword');
+  107 |     } catch (error) {
+  108 |       if (error.message.includes('net::ERR_CONNECTION_REFUSED')) {
+  109 |         test.skip('Application server is not running. Please start the frontend server first.');
+  110 |       }
+  111 |       throw error;
+  112 |     }
+  113 |   });
+  114 |
+  115 |   test('error handling - invalid route', async ({ page }) => {
+  116 |     try {
+  117 |       // Navigate to a non-existent page
+  118 |       const response = await page.goto('/nonexistent-page');
+```

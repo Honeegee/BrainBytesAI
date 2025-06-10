@@ -10,7 +10,7 @@
     "test": "jest",
     "test:coverage": "jest --coverage --verbose",
     "test:quick": "jest --passWithNoTests --silent",
-    "test:auth": "NODE_ENV=test jest tests/auth --verbose",
+    "test:auth": "NODE_ENV=test jest tests/__tests__/integration/auth.test.js --verbose",
     "test:watch": "jest --watch",
     "lint": "eslint .",
     "lint:fix": "eslint . --ext .js,.ts --fix",

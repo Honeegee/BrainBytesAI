@@ -330,8 +330,8 @@ jobs:
 
       - name: Run performance tests
         run: |
-          # Use the existing performance test configuration
-          artillery run performance-test.yml --output performance-report.json
+          # Use the performance test configuration from new location
+          artillery run tests/performance/performance-test.yml --output performance-report.json
 
       - name: Generate performance report
         run: |

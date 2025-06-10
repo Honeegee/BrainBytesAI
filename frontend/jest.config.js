@@ -4,6 +4,8 @@ module.exports = {
     '<rootDir>/.next/',
     '<rootDir>/node_modules/',
     '<rootDir>/tests/e2e/',
+    '<rootDir>/tests/__tests__/e2e/',
+    '<rootDir>/tests/__tests__/helpers/',
   ],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
@@ -33,7 +35,8 @@ module.exports = {
   testTimeout: 30000,
   moduleFileExtensions: ['js', 'jsx', 'ts', 'tsx', 'json'],
   testMatch: [
-    '<rootDir>/**/__tests__/**/*.{js,jsx,ts,tsx}',
+    '<rootDir>/tests/__tests__/unit/**/*.{js,jsx,ts,tsx}',
+    '<rootDir>/tests/__tests__/integration/**/*.{js,jsx,ts,tsx}',
     '<rootDir>/**/*.{test,spec}.{js,jsx,ts,tsx}',
   ],
   reporters: [
