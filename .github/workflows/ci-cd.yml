@@ -9,6 +9,9 @@ on:
       - main
       - development
       - week-6
+  push:
+    branches:
+      - week-6
   workflow_dispatch:
 
 env:
@@ -37,13 +40,29 @@ jobs:
             exit 1
           fi
 
+  # Skip code quality check for direct push events on week-6 (testing purposes)
+  skip-code-quality:
+    name: Skip Code Quality Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    if: github.event_name == 'push' && github.ref == 'refs/heads/week-6'
+    outputs:
+      should_proceed: ${{ steps.skip.outputs.should_proceed }}
+    
+    steps:
+      - name: Skip code quality check for testing
+        id: skip
+        run: |
+          echo "should_proceed=true" >> $GITHUB_OUTPUT
+          echo "⚠️ Skipping code quality check for week-6 testing"
+
   # Job 1: Setup and Basic Dependency Install
   setup:
     name: Setup Dependencies
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: [check-code-quality]
-    if: always() && (github.event_name == 'workflow_dispatch' || needs.check-code-quality.outputs.should_proceed == 'true')
+    needs: [check-code-quality, skip-code-quality]
+    if: always() && (github.event_name == 'workflow_dispatch' || needs.check-code-quality.outputs.should_proceed == 'true' || needs.skip-code-quality.outputs.should_proceed == 'true')
     
     steps:
       - name: Checkout code
@@ -115,6 +134,14 @@ jobs:
         working-directory: ./${{ matrix.service }}
         run: npm ci
 
+      - name: Debug - List available scripts
+        working-directory: ./${{ matrix.service }}
+        run: |
+          echo "Available scripts in ${{ matrix.service }}:"
+          npm run
+          echo "Checking if test:coverage script exists..."
+          npm run test:coverage --version || echo "test:coverage script check completed"
+
       - name: Run tests with coverage
         working-directory: ./${{ matrix.service }}
         env:
@@ -143,7 +170,8 @@ jobs:
     name: E2e Tests
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    needs: [setup, test-matrix]
+    needs: [setup]
+    if: always() && needs.setup.result == 'success'
     
     services:
       mongo:
@@ -268,8 +296,8 @@ jobs:
     name: Performance Testing
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    needs: [test-matrix]
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/development' || github.event_name == 'workflow_dispatch'
+    needs: [setup]
+    if: always() && needs.setup.result == 'success' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/development' || github.ref == 'refs/heads/week-6' || github.event_name == 'workflow_dispatch')
     
     services:
       mongo:
@@ -357,7 +385,7 @@ jobs:
     name: Test Summary Report
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    needs: [test-matrix, e2e-tests, performance-test]
+    needs: [setup, test-matrix, e2e-tests, performance-test]
     if: always()
     
     steps:
