@@ -408,7 +408,7 @@ jobs:
     name: Send Notifications
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    needs: [test-summary]
+    needs: [setup, test-matrix, e2e-tests, performance-test, test-summary]
     if: always()
     
     steps:
@@ -435,10 +435,10 @@ jobs:
           echo "**Triggered by:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Job Results:" >> $GITHUB_STEP_SUMMARY
-          echo "- **Setup:** ${{ needs.setup.result || 'N/A' }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Test Matrix:** ${{ needs.test-matrix.result || 'N/A' }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **E2E Tests:** ${{ needs.e2e-tests.result || 'N/A' }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Performance Tests:** ${{ needs.performance-test.result || 'N/A' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Setup:** ${{ needs.setup.result || 'Skipped' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Test Matrix:** ${{ needs.test-matrix.result || 'Skipped' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **E2E Tests:** ${{ needs.e2e-tests.result || 'Skipped' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Performance Tests:** ${{ needs.performance-test.result || 'Skipped' }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "> 💡 **Note:** Docker builds and deployments are handled by the separate [Deploy to Environments](../actions/workflows/deploy.yml) workflow."
 
@@ -464,10 +464,10 @@ jobs:
             **Commit:** ${{ github.sha }}
             
             ### Job Results:
-            - **Setup:** ${{ needs.setup.result || 'N/A' }}
-            - **Test Matrix:** ${{ needs.test-matrix.result || 'N/A' }}  
-            - **E2E Tests:** ${{ needs.e2e-tests.result || 'N/A' }}
-            - **Performance Tests:** ${{ needs.performance-test.result || 'N/A' }}
+            - **Setup:** ${{ needs.setup.result || 'Skipped' }}
+            - **Test Matrix:** ${{ needs.test-matrix.result || 'Skipped' }}
+            - **E2E Tests:** ${{ needs.e2e-tests.result || 'Skipped' }}
+            - **Performance Tests:** ${{ needs.performance-test.result || 'Skipped' }}
             
             > 💡 **Note:** Code quality checks are handled by [Code Quality & Security](../actions/workflows/code-quality.yml) and Docker builds/deployments by [Deploy to Environments](../actions/workflows/deploy.yml).`;
             
