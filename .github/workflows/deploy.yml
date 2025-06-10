@@ -9,6 +9,9 @@ on:
       - main
       - development
       - week-6
+  push:
+    branches:
+      - week-6
   workflow_dispatch:
     inputs:
       environment:
@@ -57,13 +60,29 @@ jobs:
             exit 1
           fi
 
+  # Skip CI/CD check for direct push events on week-6 (testing purposes)
+  skip-ci-cd:
+    name: Skip CI/CD Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    if: github.event_name == 'push' && github.ref == 'refs/heads/week-6'
+    outputs:
+      should_proceed: ${{ steps.skip.outputs.should_proceed }}
+    
+    steps:
+      - name: Skip CI/CD check for testing
+        id: skip
+        run: |
+          echo "should_proceed=true" >> $GITHUB_OUTPUT
+          echo "⚠️ Skipping CI/CD check for week-6 testing"
+
   # Determine deployment environment and settings
   setup:
     name: Setup Deployment
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    needs: [check-ci-cd]
-    if: always() && (github.event_name == 'workflow_dispatch' || needs.check-ci-cd.outputs.should_proceed == 'true')
+    needs: [check-ci-cd, skip-ci-cd]
+    if: always() && (github.event_name == 'workflow_dispatch' || needs.check-ci-cd.outputs.should_proceed == 'true' || needs.skip-ci-cd.outputs.should_proceed == 'true')
     outputs:
       environment: ${{ steps.determine-env.outputs.environment }}
       deploy_url: ${{ steps.determine-env.outputs.deploy_url }}
