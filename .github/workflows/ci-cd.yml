@@ -8,6 +8,7 @@ on:
     branches:
       - main
       - development
+      - week-6
   workflow_dispatch:
 
 env:
