@@ -20,17 +20,21 @@ __tests__/
 ## Test Categories
 
 ### End-to-End Tests (`e2e/`)
+
 Tests the complete user workflows using a real browser environment.
 
 - **[`chat.test.js`](e2e/chat.test.js)**: Complete chat functionality testing including login, messaging, and persistence
 
-### Unit Tests (`unit/`) - *To be added*
+### Unit Tests (`unit/`) - _To be added_
+
 Tests individual React components and utility functions in isolation.
 
-### Integration Tests (`integration/`) - *To be added*
+### Integration Tests (`integration/`) - _To be added_
+
 Tests component interactions and API integrations.
 
 ### Helper Utilities (`helpers/`)
+
 Shared utilities and setup functions for tests.
 
 - **[`setup.js`](helpers/setup.js)**: Global test configuration and utilities
@@ -38,11 +42,13 @@ Shared utilities and setup functions for tests.
 ## Running Tests
 
 ### All Frontend Tests
+
 ```bash
 npm test
 ```
 
 ### Specific Test Categories
+
 ```bash
 # E2E tests only
 npx jest __tests__/e2e/
@@ -55,6 +61,7 @@ npx jest __tests__/e2e/chat.test.js
 ```
 
 ### Watch Mode
+
 ```bash
 npm run test:watch
 ```
@@ -92,6 +99,7 @@ Key testing packages used:
 ## Adding New Tests
 
 ### E2E Tests
+
 Add to `e2e/` directory for complete user workflow testing:
 
 ```javascript
@@ -107,6 +115,7 @@ describe('Feature E2E Tests', () => {
 ```
 
 ### Unit Tests (Future)
+
 Add to `unit/components/` for component testing:
 
 ```javascript
@@ -124,12 +133,14 @@ describe('Component', () => {
 ## Test Data
 
 Test uses the following test user credentials:
+
 - Email: `test@example.com`
 - Password: `Test12345,`
 
 ## Browser Configuration
 
 E2E tests run with the following Puppeteer configuration:
+
 - Default navigation timeout: 60 seconds
 - Headless mode: configurable
 - Browser args: defined in jest-puppeteer.config.js

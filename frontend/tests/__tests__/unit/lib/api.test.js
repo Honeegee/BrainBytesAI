@@ -18,7 +18,7 @@ describe('API Utilities', () => {
       auth: '/api/auth',
       messages: '/api/messages',
       users: '/api/users',
-      health: '/api/health'
+      health: '/api/health',
     };
 
     Object.values(endpoints).forEach(endpoint => {
@@ -42,7 +42,7 @@ describe('API Utilities', () => {
   test('Error handling structure', () => {
     const errorResponse = {
       status: 'error',
-      message: 'Test error message'
+      message: 'Test error message',
     };
 
     expect(errorResponse).toHaveProperty('status');
