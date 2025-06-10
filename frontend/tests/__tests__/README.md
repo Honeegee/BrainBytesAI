@@ -187,6 +187,7 @@ npx jest __tests__/e2e/chat.test.js --verbose
 ## Testing Documentation
 
 For comprehensive testing patterns, best practices, and debugging techniques, see:
+
 - **[Testing Approach Documentation](../../../docs/TESTING_APPROACH.md)**: Complete testing strategy and patterns
 - **[CI/CD Documentation](../../../docs/CI_CD_DOCUMENTATION.md)**: GitHub Actions workflow details
 - **[Performance Testing](../../../docs/PERFORMANCE_TESTING.md)**: Load testing and performance metrics
