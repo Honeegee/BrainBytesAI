@@ -1,11 +1,9 @@
 const request = require('supertest');
 const mongoose = require('mongoose');
 const { MongoMemoryServer } = require('mongodb-memory-server');
-const jwt = require('jsonwebtoken');
 const express = require('express');
 const Message = require('../../../models/message');
 const UserProfile = require('../../../models/userProfile');
-const { generateTestToken } = require('../helpers/setup');
 
 // Create a minimal Express app for testing
 const app = express();
@@ -15,7 +13,6 @@ const messagesRouter = require('../../../routes/messages');
 const usersRouter = require('../../../routes/users');
 const {
   securityHeaders,
-  authenticate,
 } = require('../../../middleware/security');
 
 // Mock dependencies
@@ -64,7 +61,7 @@ app.use('/api/messages', messagesRouter);
 app.use('/api/users', usersRouter);
 
 // Error handling
-app.use((err, req, res, next) => {
+app.use((err, req, res) => {
   res.status(500).json({ error: err.message });
 });
 

@@ -1,7 +1,6 @@
 const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
 const validator = require('validator');
-const jwt = require('jsonwebtoken');
 const passport = require('passport');
 const { Strategy: JwtStrategy, ExtractJwt } = require('passport-jwt');
 const UserProfile = require('../models/userProfile');
@@ -122,7 +121,7 @@ const initializePassport = passport => {
 // Authentication middleware - supports both session and JWT
 const authenticate = (req, res, next) => {
   // Try JWT first
-  passport.authenticate('jwt', { session: false }, (err, user, info) => {
+  passport.authenticate('jwt', { session: false }, (err, user) => {
     if (err) {
       return next(err);
     }

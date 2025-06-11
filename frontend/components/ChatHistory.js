@@ -59,17 +59,8 @@ export default function ChatHistory({
     return () => document.removeEventListener('click', handleClickOutside);
   }, [contextMenu]);
 
-  const handleContextMenu = (e, chatId) => {
-    e.preventDefault();
-    setContextMenu({
-      visible: true,
-      x: e.clientX,
-      y: e.clientY,
-      chatId,
-    });
-  };
 
-  const handleEditTitle = (chatId, currentTitle) => {
+  const handleEditTitle = (chatId) => {
     if (!chatId) return;
     setEditingId(chatId);
     setContextMenu({ visible: false, x: 0, y: 0, chatId: null });

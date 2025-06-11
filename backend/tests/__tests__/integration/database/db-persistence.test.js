@@ -3,7 +3,6 @@ const { exec } = require('child_process');
 const util = require('util');
 const execPromise = util.promisify(exec);
 const Message = require('../../../../models/message');
-const UserProfile = require('../../../../models/userProfile');
 
 // This test verifies that data persists in MongoDB across container restarts
 // Note: This test requires Docker to be running and the database container to be up

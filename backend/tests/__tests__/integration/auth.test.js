@@ -1,11 +1,8 @@
 const request = require('supertest');
-const mongoose = require('mongoose');
 const express = require('express');
-const app = express();
 const authRouter = require('../../../routes/auth');
 const Auth = require('../../../models/auth');
 const UserProfile = require('../../../models/userProfile');
-const { generateTestToken } = require('../helpers/setup');
 
 // Set environment variables required for tests
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-jwt-secret';

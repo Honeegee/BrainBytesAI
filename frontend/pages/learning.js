@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import LearningMaterials from '../components/LearningMaterials';
-import LearningMaterialUpload from '../components/LearningMaterialUpload';
 import api from '../lib/api';
 import withAuth from '../components/withAuth';
 

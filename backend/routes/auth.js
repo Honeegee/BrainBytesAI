@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
-const passport = require('passport');
 const Auth = require('../models/auth');
 const UserProfile = require('../models/userProfile');
 const { authLimiter, validateAuthInput } = require('../middleware/security');
@@ -9,7 +8,7 @@ const { authLimiter, validateAuthInput } = require('../middleware/security');
 // Register new user
 router.post('/register', validateAuthInput, async (req, res) => {
   try {
-    const { email, password, rememberMe } = req.body;
+    const { email, password } = req.body;
 
     // Check if user already exists
     const existingAuth = await Auth.findOne({ email });
@@ -76,7 +75,7 @@ router.post('/register', validateAuthInput, async (req, res) => {
 // Login user
 router.post('/login', authLimiter, validateAuthInput, async (req, res) => {
   try {
-    const { email, password, rememberMe } = req.body;
+    const { email, password } = req.body;
 
     // Find auth record
     const auth = await Auth.findOne({ email }).populate('userProfile');
