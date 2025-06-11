@@ -229,7 +229,7 @@ function markdownToHtml(text) {
         tableHtml += '<thead class="bg-gray-700">';
         tableHtml += '<tr>';
 
-        tableHeaders.forEach((header) => {
+        tableHeaders.forEach(header => {
           const headerObj =
             typeof header === 'object'
               ? header
@@ -281,7 +281,7 @@ function markdownToHtml(text) {
   };
 
   // Enhanced list context management with standardization and proper nested list support
-  const processLists = (line) => {
+  const processLists = line => {
     // First standardize list markers (moved from backend)
     line = line
       .replace(/^(\s*)(?:[-•])\s+/gm, '$1• ') // Standardize bullets to '• '

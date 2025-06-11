@@ -58,7 +58,6 @@ app.post('/api/chat', async (req, res) => {
   try {
     const { prompt, conversationHistory } = req.body;
 
-
     const rawQuery =
       typeof prompt === 'string'
         ? prompt

@@ -11,9 +11,7 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const messagesRouter = require('../../../routes/messages');
 const usersRouter = require('../../../routes/users');
-const {
-  securityHeaders,
-} = require('../../../middleware/security');
+const { securityHeaders } = require('../../../middleware/security');
 
 // Mock dependencies
 jest.mock('axios', () => ({
