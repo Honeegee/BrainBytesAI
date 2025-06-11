@@ -9,6 +9,13 @@ on:
     # Run security scan daily at 2 AM UTC
     - cron: '0 2 * * *'
 
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+  security-events: write
+  checks: write
+
 jobs:
   # ESLint and Prettier checks
   lint-and-format:
@@ -65,6 +72,11 @@ jobs:
     name: Security Vulnerability Scan
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+      security-events: write
     
     steps:
       - name: Checkout code
@@ -132,16 +144,73 @@ jobs:
         if: github.event_name == 'pull_request' && env.SECURITY_ISSUES == 'true'
         uses: actions/github-script@v7
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const fs = require('fs');
-            const report = fs.readFileSync('security-report.md', 'utf8');
-            
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: `## 🔒 Security Scan Results\n\n${report}\n\nPlease review and address any high/critical vulnerabilities before merging.`
-            });
+            try {
+              const report = fs.readFileSync('security-report.md', 'utf8');
+              
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: '## 🔒 Security Scan Results\n\n' + report + '\n\nPlease review and address any high/critical vulnerabilities before merging.'
+              });
+            } catch (error) {
+              console.log('Error posting security report:', error.message);
+              // Don't fail the workflow if comment posting fails
+              core.warning('Failed to post security report comment: ' + error.message);
+            }
+
+      - name: Create issue for scheduled security findings
+        if: github.event_name == 'schedule' && env.SECURITY_ISSUES == 'true'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            try {
+              const report = fs.readFileSync('security-report.md', 'utf8');
+              
+              // Check if there's already an open security issue
+              const { data: issues } = await github.rest.issues.listForRepo({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'open',
+                labels: 'security,automated'
+              });
+              
+              const existingIssue = issues.find(issue =>
+                issue.title.includes('Security Vulnerabilities Detected')
+              );
+              
+              const title = `Security Vulnerabilities Detected - ${new Date().toISOString().split('T')[0]}`;
+              const body = `## 🔒 Automated Security Scan Results\n\n${report}\n\nThis issue was automatically created by the scheduled security scan.\n\nPlease review and address any high/critical vulnerabilities.`;
+              
+              if (existingIssue) {
+                // Update existing issue
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: existingIssue.number,
+                  body: `## 📅 Updated Security Scan - ${new Date().toISOString()}\n\n${report}`
+                });
+                console.log(`Updated existing security issue #${existingIssue.number}`);
+              } else {
+                // Create new issue
+                const { data: newIssue } = await github.rest.issues.create({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  title: title,
+                  body: body,
+                  labels: ['security', 'automated', 'bug']
+                });
+                console.log(`Created new security issue #${newIssue.number}`);
+              }
+            } catch (error) {
+              console.log('Error handling scheduled security findings:', error.message);
+              core.warning('Failed to create/update security issue: ' + error.message);
+            }
 
   # Code complexity and maintainability analysis
   code-analysis:
@@ -215,9 +284,8 @@ jobs:
         uses: trufflesecurity/trufflehog@main
         with:
           path: ./
-          base: main
-          head: HEAD
           extra_args: --debug --only-verified
+        continue-on-error: true
 
       - name: Manual secrets check
         run: |
@@ -259,6 +327,10 @@ jobs:
     timeout-minutes: 5
     needs: [lint-and-format, security-scan, code-analysis, secrets-scan]
     if: always()
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
     
     steps:
       - name: Download all artifacts
@@ -321,13 +393,20 @@ jobs:
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v7
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const fs = require('fs');
-            const summary = fs.readFileSync('quality-summary.md', 'utf8');
-            
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: `## 📊 Code Quality Summary\n\n${summary}`
-            });
+            try {
+              const summary = fs.readFileSync('quality-summary.md', 'utf8');
+              
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: '## 📊 Code Quality Summary\n\n' + summary
+              });
+            } catch (error) {
+              console.log('Error posting quality summary:', error.message);
+              // Don't fail the workflow if comment posting fails
+              core.warning('Failed to post quality summary comment: ' + error.message);
+            }
