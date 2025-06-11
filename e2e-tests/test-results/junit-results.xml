@@ -1,0 +1,243 @@
+<testsuites id="" name="" tests="10" failures="5" skipped="0" errors="0" time="12.634812">
+<testsuite name="health-check.spec.js" timestamp="2025-06-10T13:20:21.995Z" hostname="health-check" tests="7" failures="4" skipped="0" time="26.845" errors="0">
+<testcase name="Health Check Tests › application loads successfully" classname="health-check.spec.js" time="11.319">
+<failure message="health-check.spec.js:12:3 application loads successfully" type="FAILURE">
+<![CDATA[  [health-check] › health-check.spec.js:12:3 › Health Check Tests › application loads successfully ─
+
+    Error: Timed out 10000ms waiting for expect(locator).toHaveTitle(expected)
+
+    Locator: locator(':root')
+    Expected pattern: /BrainBytesAI/i
+    Received string:  "BrainBytes AI Tutoring"
+    Call log:
+      - expect.toHaveTitle with timeout 10000ms
+      - waiting for locator(':root')
+        5 × locator resolved to <html lang="en">…</html>
+          - unexpected value ""
+        8 × locator resolved to <html lang="en">…</html>
+          - unexpected value "BrainBytes AI Tutoring"
+
+
+      16 |       
+      17 |       // Check if the page loads without error
+    > 18 |       await expect(page).toHaveTitle(/BrainBytesAI/i);
+         |                          ^
+      19 |       
+      20 |       // Verify the page contains expected content
+      21 |       const body = page.locator('body');
+        at c:\Users\Honey\Desktop\BrainBytesAI\e2e-tests\tests\health-check.spec.js:18:26
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\health-check-Health-Check--c2c21-lication-loads-successfully-health-check\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results\health-check-Health-Check--c2c21-lication-loads-successfully-health-check\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ..\test-results\health-check-Health-Check--c2c21-lication-loads-successfully-health-check\error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|health-check-Health-Check--c2c21-lication-loads-successfully-health-check\test-failed-1.png]]
+
+[[ATTACHMENT|health-check-Health-Check--c2c21-lication-loads-successfully-health-check\video.webm]]
+
+[[ATTACHMENT|health-check-Health-Check--c2c21-lication-loads-successfully-health-check\error-context.md]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Health Check Tests › login page is accessible" classname="health-check.spec.js" time="2.544">
+<failure message="health-check.spec.js:31:3 login page is accessible" type="FAILURE">
+<![CDATA[  [health-check] › health-check.spec.js:31:3 › Health Check Tests › login page is accessible ───────
+
+    Error: expect.toContainText: Error: strict mode violation: locator('h1') resolved to 2 elements:
+        1) <h1 class="text-xl font-semibold text-text-light">BrainBytes</h1> aka getByRole('link', { name: 'BrainBytes BrainBytes' })
+        2) <h1 class="text-2xl font-bold text-text-light mb-6">Login</h1> aka getByRole('heading', { name: 'Login' })
+
+    Call log:
+      - expect.toContainText with timeout 10000ms
+      - waiting for locator('h1')
+
+
+      35 |       
+      36 |       // Check if login page loads
+    > 37 |       await expect(page.locator('h1')).toContainText('Login');
+         |                                        ^
+      38 |       
+      39 |       // Verify form elements exist (using actual IDs from the component)
+      40 |       await expect(page.locator('#email')).toBeVisible();
+        at c:\Users\Honey\Desktop\BrainBytesAI\e2e-tests\tests\health-check.spec.js:37:40
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\health-check-Health-Check-Tests-login-page-is-accessible-health-check\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results\health-check-Health-Check-Tests-login-page-is-accessible-health-check\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ..\test-results\health-check-Health-Check-Tests-login-page-is-accessible-health-check\error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|health-check-Health-Check-Tests-login-page-is-accessible-health-check\test-failed-1.png]]
+
+[[ATTACHMENT|health-check-Health-Check-Tests-login-page-is-accessible-health-check\video.webm]]
+
+[[ATTACHMENT|health-check-Health-Check-Tests-login-page-is-accessible-health-check\error-context.md]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Health Check Tests › signup page is accessible" classname="health-check.spec.js" time="2.834">
+</testcase>
+<testcase name="Health Check Tests › navigation between pages works" classname="health-check.spec.js" time="2.295">
+<failure message="health-check.spec.js:71:3 navigation between pages works" type="FAILURE">
+<![CDATA[  [health-check] › health-check.spec.js:71:3 › Health Check Tests › navigation between pages works ─
+
+    Error: expect.toContainText: Error: strict mode violation: locator('h1') resolved to 2 elements:
+        1) <h1 class="text-xl font-semibold text-text-light">BrainBytes</h1> aka getByRole('link', { name: 'BrainBytes BrainBytes' })
+        2) <h1 class="text-2xl font-bold text-text-light mb-6">Login</h1> aka getByRole('heading', { name: 'Login' })
+
+    Call log:
+      - expect.toContainText with timeout 10000ms
+      - waiting for locator('h1')
+
+
+      73 |       // Start at login page
+      74 |       await page.goto('/login');
+    > 75 |       await expect(page.locator('h1')).toContainText('Login');
+         |                                        ^
+      76 |       
+      77 |       // Navigate to signup via link
+      78 |       await page.click('a[href="/signup"]');
+        at c:\Users\Honey\Desktop\BrainBytesAI\e2e-tests\tests\health-check.spec.js:75:40
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\health-check-Health-Check--1fe84-igation-between-pages-works-health-check\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results\health-check-Health-Check--1fe84-igation-between-pages-works-health-check\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ..\test-results\health-check-Health-Check--1fe84-igation-between-pages-works-health-check\error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|health-check-Health-Check--1fe84-igation-between-pages-works-health-check\test-failed-1.png]]
+
+[[ATTACHMENT|health-check-Health-Check--1fe84-igation-between-pages-works-health-check\video.webm]]
+
+[[ATTACHMENT|health-check-Health-Check--1fe84-igation-between-pages-works-health-check\error-context.md]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Health Check Tests › application responds to basic interactions" classname="health-check.spec.js" time="2.574">
+</testcase>
+<testcase name="Health Check Tests › error handling - invalid route" classname="health-check.spec.js" time="2.767">
+</testcase>
+<testcase name="Health Check Tests › responsive design basics" classname="health-check.spec.js" time="2.512">
+<failure message="health-check.spec.js:134:3 responsive design basics" type="FAILURE">
+<![CDATA[  [health-check] › health-check.spec.js:134:3 › Health Check Tests › responsive design basics ──────
+
+    Error: expect.toBeVisible: Error: strict mode violation: locator('h1') resolved to 2 elements:
+        1) <h1 class="text-xl font-semibold text-text-light">BrainBytes</h1> aka getByRole('link', { name: 'BrainBytes BrainBytes' })
+        2) <h1 class="text-2xl font-bold text-text-light mb-6">Login</h1> aka getByRole('heading', { name: 'Login' })
+
+    Call log:
+      - expect.toBeVisible with timeout 10000ms
+      - waiting for locator('h1')
+
+
+      139 |       
+      140 |       // Verify page still renders properly on mobile
+    > 141 |       await expect(page.locator('h1')).toBeVisible();
+          |                                        ^
+      142 |       await expect(page.locator('#email')).toBeVisible();
+      143 |       
+      144 |       // Test on desktop viewport
+        at c:\Users\Honey\Desktop\BrainBytesAI\e2e-tests\tests\health-check.spec.js:141:40
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\health-check-Health-Check-Tests-responsive-design-basics-health-check\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results\health-check-Health-Check-Tests-responsive-design-basics-health-check\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ..\test-results\health-check-Health-Check-Tests-responsive-design-basics-health-check\error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|health-check-Health-Check-Tests-responsive-design-basics-health-check\test-failed-1.png]]
+
+[[ATTACHMENT|health-check-Health-Check-Tests-responsive-design-basics-health-check\video.webm]]
+
+[[ATTACHMENT|health-check-Health-Check-Tests-responsive-design-basics-health-check\error-context.md]]
+]]>
+</system-out>
+</testcase>
+</testsuite>
+<testsuite name="simple-health-check.spec.js" timestamp="2025-06-10T13:20:21.995Z" hostname="health-check" tests="3" failures="1" skipped="0" time="2.432" errors="0">
+<testcase name="Simple Health Check › server connectivity check" classname="simple-health-check.spec.js" time="2.243">
+<failure message="simple-health-check.spec.js:6:3 server connectivity check" type="FAILURE">
+<![CDATA[  [health-check] › simple-health-check.spec.js:6:3 › Simple Health Check › server connectivity check 
+
+    Error: expect(received).toBeTruthy()
+
+    Received: ""
+
+      20 |       // Check that we got some HTML content
+      21 |       const title = await page.title();
+    > 22 |       expect(title).toBeTruthy();
+         |                     ^
+      23 |       
+      24 |       console.log(`✅ Server is running and responding`);
+      25 |       console.log(`   Title: ${title}`);
+        at c:\Users\Honey\Desktop\BrainBytesAI\e2e-tests\tests\simple-health-check.spec.js:22:21
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\simple-health-check-Simple-2b0e4-k-server-connectivity-check-health-check\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results\simple-health-check-Simple-2b0e4-k-server-connectivity-check-health-check\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ..\test-results\simple-health-check-Simple-2b0e4-k-server-connectivity-check-health-check\error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|simple-health-check-Simple-2b0e4-k-server-connectivity-check-health-check\test-failed-1.png]]
+
+[[ATTACHMENT|simple-health-check-Simple-2b0e4-k-server-connectivity-check-health-check\video.webm]]
+
+[[ATTACHMENT|simple-health-check-Simple-2b0e4-k-server-connectivity-check-health-check\error-context.md]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Simple Health Check › configuration validation" classname="simple-health-check.spec.js" time="0.004">
+<system-out>
+<![CDATA[📋 Test Configuration:
+   Base URL: http://localhost:3002 
+   Environment: development
+   Skip WebServer: true
+✅ Configuration is valid
+]]>
+</system-out>
+</testcase>
+<testcase name="Simple Health Check › playwright installation check" classname="simple-health-check.spec.js" time="0.185">
+<system-out>
+<![CDATA[✅ Playwright is working correctly
+]]>
+</system-out>
+</testcase>
+</testsuite>
+</testsuites>

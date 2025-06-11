@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="jest tests" tests="21" failures="2" errors="0" time="26.366">
+  <testsuite name="Basic Test" errors="0" failures="0" skipped="0" timestamp="2025-06-11T03:44:49" time="3.679" tests="1">
+    <testcase classname="Basic Test" name="Math works" time="0.007">
+    </testcase>
+  </testsuite>
+  <testsuite name="Authentication Middleware" errors="0" failures="0" skipped="0" timestamp="2025-06-11T03:44:49" time="14.668" tests="4">
+    <testcase classname="Authentication Middleware" name="should allow access with a valid JWT token" time="0.062">
+    </testcase>
+    <testcase classname="Authentication Middleware" name="should deny access with no token" time="0.01">
+    </testcase>
+    <testcase classname="Authentication Middleware" name="should deny access with an invalid token" time="0.009">
+    </testcase>
+    <testcase classname="Authentication Middleware" name="should deny access with an expired token" time="0.011">
+    </testcase>
+  </testsuite>
+  <testsuite name="API Endpoints" errors="0" failures="0" skipped="0" timestamp="2025-06-11T03:44:49" time="14.82" tests="6">
+    <testcase classname="API Endpoints" name="GET /api/health should return status ok" time="0.038">
+    </testcase>
+    <testcase classname="API Endpoints" name="GET / should return welcome message" time="0.005">
+    </testcase>
+    <testcase classname="API Endpoints Chat Endpoints" name="POST /api/messages should create a new message" time="0.162">
+    </testcase>
+    <testcase classname="API Endpoints Chat Endpoints" name="GET /api/messages/chats should return chat history" time="0.029">
+    </testcase>
+    <testcase classname="API Endpoints Chat Endpoints" name="GET /api/messages should return messages for a chat" time="0.018">
+    </testcase>
+    <testcase classname="API Endpoints Chat Endpoints" name="DELETE /api/messages/chats/:chatId should delete all messages in a chat" time="0.011">
+    </testcase>
+  </testsuite>
+  <testsuite name="Authentication API" errors="0" failures="0" skipped="0" timestamp="2025-06-11T03:44:49" time="15.367" tests="8">
+    <testcase classname="Authentication API POST /api/auth/register" name="should register a new user with valid data" time="0.291">
+    </testcase>
+    <testcase classname="Authentication API POST /api/auth/register" name="should return 400 if email is already registered" time="0.087">
+    </testcase>
+    <testcase classname="Authentication API POST /api/auth/register" name="should return 400 if email format is invalid" time="0.008">
+    </testcase>
+    <testcase classname="Authentication API POST /api/auth/register" name="should return 400 if password does not meet requirements" time="0.008">
+    </testcase>
+    <testcase classname="Authentication API POST /api/auth/login" name="should log in a user with valid credentials" time="0.154">
+    </testcase>
+    <testcase classname="Authentication API POST /api/auth/login" name="should return 401 if email is not registered" time="0.092">
+    </testcase>
+    <testcase classname="Authentication API POST /api/auth/login" name="should return 401 if password is incorrect" time="0.143">
+    </testcase>
+    <testcase classname="Authentication API POST /api/auth/logout" name="should log out a user successfully" time="0.009">
+    </testcase>
+  </testsuite>
+  <testsuite name="Database Persistence Tests" errors="0" failures="2" skipped="0" timestamp="2025-06-11T03:44:49" time="25.483" tests="2">
+    <testcase classname="Database Persistence Tests" name="Data should persist across MongoDB container restarts" time="0.004">
+      <failure>MongooseServerSelectionError: connect ECONNREFUSED ::1:27017
+    at NativeConnection.Object.&lt;anonymous&gt;.Connection.openUri (C:\Users\Honey\Desktop\BrainBytesAI\backend\node_modules\mongoose\lib\connection.js:847:32)
+    at C:\Users\Honey\Desktop\BrainBytesAI\backend\node_modules\mongoose\lib\index.js:351:10
+    at C:\Users\Honey\Desktop\BrainBytesAI\backend\node_modules\mongoose\lib\helpers\promiseOrCallback.js:32:5
+    at new Promise (&lt;anonymous&gt;)
+    at promiseOrCallback (C:\Users\Honey\Desktop\BrainBytesAI\backend\node_modules\mongoose\lib\helpers\promiseOrCallback.js:31:10)
+    at Mongoose.Object.&lt;anonymous&gt;.Mongoose._promiseOrCallback (C:\Users\Honey\Desktop\BrainBytesAI\backend\node_modules\mongoose\lib\index.js:1149:10)
+    at Mongoose.Object.&lt;anonymous&gt;.Mongoose.connect (C:\Users\Honey\Desktop\BrainBytesAI\backend\node_modules\mongoose\lib\index.js:350:20)
+    at Object.connect (C:\Users\Honey\Desktop\BrainBytesAI\backend\tests\__tests__\integration\database\db-persistence.test.js:59:20)
+    at Promise.then.completed (C:\Users\Honey\Desktop\BrainBytesAI\backend\node_modules\jest-circus\build\utils.js:298:28)
+    at new Promise (&lt;anonymous&gt;)
+    at callAsyncCircusFn (C:\Users\Honey\Desktop\BrainBytesAI\backend\node_modules\jest-circus\build\utils.js:231:10)
+    at _callCircusHook (C:\Users\Honey\Desktop\BrainBytesAI\backend\node_modules\jest-circus\build\run.js:281:40)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at _runTestsForDescribeBlock (C:\Users\Honey\Desktop\BrainBytesAI\backend\node_modules\jest-circus\build\run.js:95:7)
+    at _runTestsForDescribeBlock (C:\Users\Honey\Desktop\BrainBytesAI\backend\node_modules\jest-circus\build\run.js:121:9)
+    at run (C:\Users\Honey\Desktop\BrainBytesAI\backend\node_modules\jest-circus\build\run.js:71:3)
+    at runAndTransformResultsToJestFormat (C:\Users\Honey\Desktop\BrainBytesAI\backend\node_modules\jest-circus\build\legacy-code-todo-rewrite\jestAdapterInit.js:122:21)
+    at jestAdapter (C:\Users\Honey\Desktop\BrainBytesAI\backend\node_modules\jest-circus\build\legacy-code-todo-rewrite\jestAdapter.js:79:19)
+    at runTestInternal (c:\Users\Honey\Desktop\BrainBytesAI\backend\node_modules\jest-runner\build\runTest.js:367:16)
+    at runTest (c:\Users\Honey\Desktop\BrainBytesAI\backend\node_modules\jest-runner\build\runTest.js:444:34)
+    at Object.worker (c:\Users\Honey\Desktop\BrainBytesAI\backend\node_modules\jest-runner\build\testWorker.js:106:12)</failure>
+    </testcase>
+    <testcase classname="Database Persistence Tests" name="MongoDB should handle multiple records with persistence" time="0">
+      <failure>MongooseServerSelectionError: connect ECONNREFUSED ::1:27017
+    at NativeConnection.Object.&lt;anonymous&gt;.Connection.openUri (C:\Users\Honey\Desktop\BrainBytesAI\backend\node_modules\mongoose\lib\connection.js:847:32)
+    at C:\Users\Honey\Desktop\BrainBytesAI\backend\node_modules\mongoose\lib\index.js:351:10
+    at C:\Users\Honey\Desktop\BrainBytesAI\backend\node_modules\mongoose\lib\helpers\promiseOrCallback.js:32:5
+    at new Promise (&lt;anonymous&gt;)
+    at promiseOrCallback (C:\Users\Honey\Desktop\BrainBytesAI\backend\node_modules\mongoose\lib\helpers\promiseOrCallback.js:31:10)
+    at Mongoose.Object.&lt;anonymous&gt;.Mongoose._promiseOrCallback (C:\Users\Honey\Desktop\BrainBytesAI\backend\node_modules\mongoose\lib\index.js:1149:10)
+    at Mongoose.Object.&lt;anonymous&gt;.Mongoose.connect (C:\Users\Honey\Desktop\BrainBytesAI\backend\node_modules\mongoose\lib\index.js:350:20)
+    at Object.connect (C:\Users\Honey\Desktop\BrainBytesAI\backend\tests\__tests__\integration\database\db-persistence.test.js:59:20)
+    at Promise.then.completed (C:\Users\Honey\Desktop\BrainBytesAI\backend\node_modules\jest-circus\build\utils.js:298:28)
+    at new Promise (&lt;anonymous&gt;)
+    at callAsyncCircusFn (C:\Users\Honey\Desktop\BrainBytesAI\backend\node_modules\jest-circus\build\utils.js:231:10)
+    at _callCircusHook (C:\Users\Honey\Desktop\BrainBytesAI\backend\node_modules\jest-circus\build\run.js:281:40)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at _runTestsForDescribeBlock (C:\Users\Honey\Desktop\BrainBytesAI\backend\node_modules\jest-circus\build\run.js:95:7)
+    at _runTestsForDescribeBlock (C:\Users\Honey\Desktop\BrainBytesAI\backend\node_modules\jest-circus\build\run.js:121:9)
+    at run (C:\Users\Honey\Desktop\BrainBytesAI\backend\node_modules\jest-circus\build\run.js:71:3)
+    at runAndTransformResultsToJestFormat (C:\Users\Honey\Desktop\BrainBytesAI\backend\node_modules\jest-circus\build\legacy-code-todo-rewrite\jestAdapterInit.js:122:21)
+    at jestAdapter (C:\Users\Honey\Desktop\BrainBytesAI\backend\node_modules\jest-circus\build\legacy-code-todo-rewrite\jestAdapter.js:79:19)
+    at runTestInternal (c:\Users\Honey\Desktop\BrainBytesAI\backend\node_modules\jest-runner\build\runTest.js:367:16)
+    at runTest (c:\Users\Honey\Desktop\BrainBytesAI\backend\node_modules\jest-runner\build\runTest.js:444:34)
+    at Object.worker (c:\Users\Honey\Desktop\BrainBytesAI\backend\node_modules\jest-runner\build\testWorker.js:106:12)</failure>
+    </testcase>
+    <testcase classname="" name="Test execution failure: could be caused by test hooks like &apos;afterAll&apos;." time="0">
+      <failure>{&quot;message&quot;:&quot;&quot;,&quot;stack&quot;:&quot;MongooseError: Operation `messages.deleteMany()` buffering timed out after 10000ms\n    at Timeout.&lt;anonymous&gt; (C:\\Users\\Honey\\Desktop\\BrainBytesAI\\backend\\node_modules\\mongoose\\lib\\drivers\\node-mongodb-native\\collection.js:198:23)\n    at listOnTimeout (node:internal/timers:594:17)\n    at processTimers (node:internal/timers:529:7)&quot;}</failure>
+    </testcase>
+  </testsuite>
+</testsuites>

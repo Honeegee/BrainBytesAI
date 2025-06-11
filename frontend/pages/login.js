@@ -9,7 +9,7 @@ export default function Login() {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    rememberMe: false
+    rememberMe: false,
   });
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
@@ -24,11 +24,11 @@ export default function Login() {
     }
   }, [router]);
 
-  const handleChange = (e) => {
+  const handleChange = e => {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: type === 'checkbox' ? checked : value,
     }));
   };
 
@@ -49,10 +49,10 @@ export default function Login() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async e => {
     e.preventDefault();
     setErrors({});
-    
+
     if (!validateForm()) {
       return;
     }
@@ -62,9 +62,9 @@ export default function Login() {
       const response = await api.post('/api/auth/login', {
         email: formData.email,
         password: formData.password,
-        rememberMe: formData.rememberMe
+        rememberMe: formData.rememberMe,
       });
-      
+
       // Store auth data
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('userId', response.data.data.userId);
@@ -75,12 +75,12 @@ export default function Login() {
         localStorage.removeItem('rememberMe');
         localStorage.removeItem('email');
       }
-      
+
       router.push('/chat');
     } catch (err) {
       setErrors(prev => ({
         ...prev,
-        submit: err.response?.data?.message || 'Login failed'
+        submit: err.response?.data?.message || 'Login failed',
       }));
     } finally {
       setIsLoading(false);
@@ -89,12 +89,12 @@ export default function Login() {
 
   return (
     <Layout darkMode={true}>
-      <div className="max-w-md mx-auto px-4 py-8">
-        <h1 className="text-2xl font-bold text-text-light mb-6">Login</h1>
-        
+      <div className='max-w-md mx-auto px-4 py-8'>
+        <h1 className='text-2xl font-bold text-text-light mb-6'>Login</h1>
+
         {Object.keys(errors).length > 0 && (
-          <div className="bg-red-900 bg-opacity-50 text-red-200 p-3 rounded-md mb-4">
-            <ul className="list-disc list-inside space-y-1">
+          <div className='bg-red-900 bg-opacity-50 text-red-200 p-3 rounded-md mb-4'>
+            <ul className='list-disc list-inside space-y-1'>
               {Object.values(errors).map((error, index) => (
                 <li key={index}>{error}</li>
               ))}
@@ -102,15 +102,18 @@ export default function Login() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className='space-y-4'>
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-text-medium mb-1">
+            <label
+              htmlFor='email'
+              className='block text-sm font-medium text-text-medium mb-1'
+            >
               Email:
             </label>
             <input
-              type="email"
-              id="email"
-              name="email"
+              type='email'
+              id='email'
+              name='email'
               value={formData.email}
               onChange={handleChange}
               required
@@ -121,13 +124,16 @@ export default function Login() {
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-text-medium mb-1">
+            <label
+              htmlFor='password'
+              className='block text-sm font-medium text-text-medium mb-1'
+            >
               Password:
             </label>
             <input
-              type="password"
-              id="password"
-              name="password"
+              type='password'
+              id='password'
+              name='password'
               value={formData.password}
               onChange={handleChange}
               required
@@ -137,24 +143,27 @@ export default function Login() {
             />
           </div>
 
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
+          <div className='flex items-center justify-between'>
+            <div className='flex items-center'>
               <input
-                type="checkbox"
-                id="rememberMe"
-                name="rememberMe"
+                type='checkbox'
+                id='rememberMe'
+                name='rememberMe'
                 checked={formData.rememberMe}
                 onChange={handleChange}
-                className="h-4 w-4 text-hf-blue rounded border-border-dark focus:ring-hf-blue bg-bg-dark"
+                className='h-4 w-4 text-hf-blue rounded border-border-dark focus:ring-hf-blue bg-bg-dark'
               />
-              <label htmlFor="rememberMe" className="ml-2 block text-sm text-text-medium">
+              <label
+                htmlFor='rememberMe'
+                className='ml-2 block text-sm text-text-medium'
+              >
                 Remember me
               </label>
             </div>
           </div>
 
           <button
-            type="submit"
+            type='submit'
             disabled={isLoading}
             className={`btn bg-hf-blue hover:bg-blue-700 text-white px-4 py-2 rounded-lg w-full relative ${
               isLoading ? 'opacity-75 cursor-not-allowed' : ''
@@ -162,9 +171,9 @@ export default function Login() {
           >
             {isLoading ? (
               <>
-                <span className="opacity-0">Login</span>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                <span className='opacity-0'>Login</span>
+                <div className='absolute inset-0 flex items-center justify-center'>
+                  <div className='w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin'></div>
                 </div>
               </>
             ) : (
@@ -172,9 +181,9 @@ export default function Login() {
             )}
           </button>
 
-          <p className="text-text-medium text-center mt-4">
-            Don't have an account?{' '}
-            <Link href="/signup" className="text-hf-blue hover:text-blue-400">
+          <p className='text-text-medium text-center mt-4'>
+            Don&apos;t have an account?{' '}
+            <Link href='/signup' className='text-hf-blue hover:text-blue-400'>
               Sign up here
             </Link>
           </p>

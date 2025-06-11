@@ -40,9 +40,9 @@ router.get('/:userId/activity', async (req, res) => {
     }
 
     // Get recent messages
-    const recentMessages = await Message.find({ 
+    const recentMessages = await Message.find({
       userId: mongoose.Types.ObjectId(req.user._id),
-      isAiResponse: false // Only show user messages in recent activity
+      isAiResponse: false, // Only show user messages in recent activity
     })
       .sort({ createdAt: -1 })
       .limit(5)
@@ -51,45 +51,55 @@ router.get('/:userId/activity', async (req, res) => {
     // Get user's learning materials grouped by subject
     const learningMaterials = await LearningMaterial.aggregate([
       { $match: { userId: mongoose.Types.ObjectId(req.user._id) } },
-      { $group: {
+      {
+        $group: {
           _id: '$subject',
-          interactions: { $sum: 1 }
-      }},
-      { $project: {
+          interactions: { $sum: 1 },
+        },
+      },
+      {
+        $project: {
           subject: '$_id',
           interactions: 1,
           level: {
             $cond: {
-              if: { $gte: ['$interactions', 30] }, then: 'Expert',
+              if: { $gte: ['$interactions', 30] },
+              then: 'Expert',
               else: {
                 $cond: {
-                  if: { $gte: ['$interactions', 20] }, then: 'Advanced',
+                  if: { $gte: ['$interactions', 20] },
+                  then: 'Advanced',
                   else: {
                     $cond: {
-                      if: { $gte: ['$interactions', 10] }, then: 'Intermediate',
-                      else: 'Beginner'
-                    }
-                  }
-                }
-              }
-            }
-          }
-      }}
+                      if: { $gte: ['$interactions', 10] },
+                      then: 'Intermediate',
+                      else: 'Beginner',
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     ]);
 
     // Calculate total stats
-    const totalInteractions = learningMaterials.reduce((sum, subject) => sum + subject.interactions, 0);
+    const totalInteractions = learningMaterials.reduce(
+      (sum, subject) => sum + subject.interactions,
+      0
+    );
     const activeSubjects = learningMaterials.length;
 
     res.json({
       recentActivity: {
-        messages: recentMessages
+        messages: recentMessages,
       },
       progress: learningMaterials,
       stats: {
         totalInteractions,
-        activeSubjects
-      }
+        activeSubjects,
+      },
     });
   } catch (error) {
     console.error('Error fetching user activity:', error);
@@ -106,7 +116,7 @@ router.put('/:userId', avatarUpload.single('avatar'), async (req, res) => {
     }
 
     const updateData = { ...req.body };
-    
+
     // Handle file upload
     if (req.file) {
       // Get current user profile to check for existing avatar
@@ -120,7 +130,7 @@ router.put('/:userId', avatarUpload.single('avatar'), async (req, res) => {
           // Continue with update even if delete fails
         }
       }
-      
+
       // Update with new avatar path
       updateData.avatar = `/uploads/avatars/${req.file.filename}`;
     }
@@ -129,9 +139,10 @@ router.put('/:userId', avatarUpload.single('avatar'), async (req, res) => {
     if (req.body.preferredSubjects) {
       try {
         // Parse if it's a string
-        const subjects = typeof req.body.preferredSubjects === 'string' 
-          ? JSON.parse(req.body.preferredSubjects)
-          : req.body.preferredSubjects;
+        const subjects =
+          typeof req.body.preferredSubjects === 'string'
+            ? JSON.parse(req.body.preferredSubjects)
+            : req.body.preferredSubjects;
         updateData.preferredSubjects = subjects;
       } catch (e) {
         console.error('Error parsing preferredSubjects:', e);

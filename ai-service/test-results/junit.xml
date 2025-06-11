@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="jest tests" tests="14" failures="0" errors="0" time="0.634">
+  <testsuite name="AI Service Basic Test" errors="0" failures="0" skipped="0" timestamp="2025-06-10T04:46:11" time="0.298" tests="2">
+    <testcase classname="AI Service Basic Test" name="Math works" time="0.005">
+    </testcase>
+    <testcase classname="AI Service Basic Test" name="Environment setup" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="AI Service Utility Functions" errors="0" failures="0" skipped="0" timestamp="2025-06-10T04:46:11" time="0.429" tests="12">
+    <testcase classname="AI Service Utility Functions normalizePrompt" name="should trim whitespace" time="0.004">
+    </testcase>
+    <testcase classname="AI Service Utility Functions normalizePrompt" name="should replace multiple spaces with single space" time="0">
+    </testcase>
+    <testcase classname="AI Service Utility Functions normalizePrompt" name="should normalize smart quotes" time="0.001">
+    </testcase>
+    <testcase classname="AI Service Utility Functions normalizePrompt" name="should return empty string for non-string input" time="0">
+    </testcase>
+    <testcase classname="AI Service Utility Functions normalizePrompt" name="should handle empty string" time="0">
+    </testcase>
+    <testcase classname="AI Service Utility Functions handleMathExpression" name="should handle basic addition" time="0.001">
+    </testcase>
+    <testcase classname="AI Service Utility Functions handleMathExpression" name="should handle basic subtraction" time="0">
+    </testcase>
+    <testcase classname="AI Service Utility Functions handleMathExpression" name="should handle basic multiplication" time="0">
+    </testcase>
+    <testcase classname="AI Service Utility Functions handleMathExpression" name="should handle basic division" time="0.001">
+    </testcase>
+    <testcase classname="AI Service Utility Functions handleMathExpression" name="should return input unchanged for non-math expressions" time="0">
+    </testcase>
+    <testcase classname="AI Service Utility Functions handleMathExpression" name="should handle non-string input" time="0">
+    </testcase>
+    <testcase classname="AI Service Utility Functions handleMathExpression" name="should handle edge cases" time="0">
+    </testcase>
+  </testsuite>
+</testsuites>

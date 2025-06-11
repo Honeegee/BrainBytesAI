@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="jest tests" tests="19" failures="0" errors="0" time="11.91">
+  <testsuite name="withAuth HOC" errors="0" failures="0" skipped="0" timestamp="2025-06-11T03:45:44" time="2.289" tests="4">
+    <testcase classname="withAuth HOC" name="Authentication token validation" time="0.006">
+    </testcase>
+    <testcase classname="withAuth HOC" name="Local storage token management" time="0.002">
+    </testcase>
+    <testcase classname="withAuth HOC" name="Protected route logic" time="0.001">
+    </testcase>
+    <testcase classname="withAuth HOC" name="User session validation" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="PasswordStrength Component" errors="0" failures="0" skipped="0" timestamp="2025-06-11T03:45:44" time="2.292" tests="3">
+    <testcase classname="PasswordStrength Component" name="Password strength validation logic" time="0.007">
+    </testcase>
+    <testcase classname="PasswordStrength Component" name="Password strength levels" time="0.001">
+    </testcase>
+    <testcase classname="PasswordStrength Component" name="Password strength colors" time="0.003">
+    </testcase>
+  </testsuite>
+  <testsuite name="API Utilities" errors="0" failures="0" skipped="0" timestamp="2025-06-11T03:45:44" time="2.292" tests="5">
+    <testcase classname="API Utilities" name="API base URL is defined" time="0.006">
+    </testcase>
+    <testcase classname="API Utilities" name="API endpoints structure" time="0.001">
+    </testcase>
+    <testcase classname="API Utilities" name="HTTP methods are available" time="0.002">
+    </testcase>
+    <testcase classname="API Utilities" name="JSON content type header" time="0">
+    </testcase>
+    <testcase classname="API Utilities" name="Error handling structure" time="0.002">
+    </testcase>
+  </testsuite>
+  <testsuite name="Frontend Basic Test" errors="0" failures="0" skipped="0" timestamp="2025-06-11T03:45:44" time="2.314" tests="3">
+    <testcase classname="Frontend Basic Test" name="Math works" time="0.007">
+    </testcase>
+    <testcase classname="Frontend Basic Test" name="Environment setup" time="0.001">
+    </testcase>
+    <testcase classname="Frontend Basic Test" name="React is available" time="0.027">
+    </testcase>
+  </testsuite>
+  <testsuite name="Login Page" errors="0" failures="0" skipped="0" timestamp="2025-06-11T03:45:44" time="2.443" tests="4">
+    <testcase classname="Login Page" name="Form validation logic" time="0.005">
+    </testcase>
+    <testcase classname="Login Page" name="Login form state management" time="0.001">
+    </testcase>
+    <testcase classname="Login Page" name="Login API request format" time="0">
+    </testcase>
+    <testcase classname="Login Page" name="Login response handling" time="0.001">
+    </testcase>
+  </testsuite>
+</testsuites>

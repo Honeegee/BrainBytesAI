@@ -1,0 +1,128 @@
+# Test info
+
+- Name: Simple Health Check >> server connectivity check
+- Location: c:\Users\Honey\Desktop\BrainBytesAI\e2e-tests\tests\simple-health-check.spec.js:6:3
+
+# Error details
+
+```
+Error: expect(received).toBeTruthy()
+
+Received: ""
+    at c:\Users\Honey\Desktop\BrainBytesAI\e2e-tests\tests\simple-health-check.spec.js:22:21
+```
+
+# Page snapshot
+
+```yaml
+- banner:
+  - navigation:
+    - link "BrainBytes BrainBytes":
+      - /url: /
+      - img "BrainBytes"
+      - heading "BrainBytes" [level=1]
+- main:
+  - heading "Login" [level=1]
+  - text: "Email:"
+  - textbox "Email:"
+  - text: "Password:"
+  - textbox "Password:"
+  - checkbox "Remember me"
+  - text: Remember me
+  - button "Login"
+  - paragraph:
+    - text: Don't have an account?
+    - link "Sign up here":
+      - /url: /signup
+- alert: BrainBytes AI Tutoring
+```
+
+# Test source
+
+```ts
+   1 | const { test, expect } = require('@playwright/test');
+   2 |
+   3 | // Very simple health check that can be run independently
+   4 | test.describe('Simple Health Check', () => {
+   5 |   
+   6 |   test('server connectivity check', async ({ page }) => {
+   7 |     // This test checks if the server is reachable
+   8 |     // If server is not running, it will skip gracefully
+   9 |     
+  10 |     try {
+  11 |       const response = await page.goto('/', {
+  12 |         waitUntil: 'domcontentloaded',
+  13 |         timeout: 3000
+  14 |       });
+  15 |       
+  16 |       // If we get here, server is running
+  17 |       // Basic checks if server is responding
+  18 |       expect(response.status()).toBeLessThan(500); // No server errors
+  19 |       
+  20 |       // Check that we got some HTML content
+  21 |       const title = await page.title();
+> 22 |       expect(title).toBeTruthy();
+     |                     ^ Error: expect(received).toBeTruthy()
+  23 |       
+  24 |       console.log(`✅ Server is running and responding`);
+  25 |       console.log(`   Title: ${title}`);
+  26 |       console.log(`   Status: ${response.status()}`);
+  27 |       
+  28 |     } catch (error) {
+  29 |       // Handle all connection-related errors regardless of browser
+  30 |       const isConnectionError =
+  31 |         error.message.includes('ERR_CONNECTION_REFUSED') ||
+  32 |         error.message.includes('NS_ERROR_CONNECTION_REFUSED') ||
+  33 |         error.message.includes('Could not connect to server') ||
+  34 |         error.message.includes('timeout') ||
+  35 |         error.message.includes('net::ERR_') ||
+  36 |         error.message.includes('connection refused');
+  37 |         
+  38 |       if (isConnectionError) {
+  39 |         console.log('⚠️  Server is not running on the configured URL');
+  40 |         console.log('   This is expected if no development server is active');
+  41 |         test.skip('Server not available - skipping connectivity test');
+  42 |       } else {
+  43 |         // Re-throw other errors
+  44 |         throw error;
+  45 |       }
+  46 |     }
+  47 |   });
+  48 |
+  49 |   test('configuration validation', async () => {
+  50 |     // This test always runs and validates the test configuration
+  51 |     const baseURL = process.env.BASE_URL || 'http://localhost:3000';
+  52 |     
+  53 |     console.log(`📋 Test Configuration:`);
+  54 |     console.log(`   Base URL: ${baseURL}`);
+  55 |     console.log(`   Environment: ${process.env.NODE_ENV || 'development'}`);
+  56 |     console.log(`   Skip WebServer: ${process.env.SKIP_WEBSERVER || 'false'}`);
+  57 |     
+  58 |     // Basic validation
+  59 |     expect(baseURL).toMatch(/^https?:\/\//);
+  60 |     expect(baseURL).not.toBe('');
+  61 |     
+  62 |     console.log('✅ Configuration is valid');
+  63 |   });
+  64 |
+  65 |   test('playwright installation check', async ({ page }) => {
+  66 |     // Verify Playwright is working correctly
+  67 |     await page.setContent(`
+  68 |       <html>
+  69 |         <head><title>Health Check</title></head>
+  70 |         <body>
+  71 |           <h1>Playwright Test</h1>
+  72 |           <p id="test-element">This is a test</p>
+  73 |         </body>
+  74 |       </html>
+  75 |     `);
+  76 |     
+  77 |     // Basic Playwright functionality test
+  78 |     await expect(page).toHaveTitle('Health Check');
+  79 |     await expect(page.locator('h1')).toContainText('Playwright Test');
+  80 |     await expect(page.locator('#test-element')).toBeVisible();
+  81 |     
+  82 |     console.log('✅ Playwright is working correctly');
+  83 |   });
+  84 | });
+```

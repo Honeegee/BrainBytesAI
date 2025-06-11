@@ -1,5 +1,9 @@
 # BrainBytes AI Tutoring Platform
 
+[![CI/CD Pipeline](https://github.com/Honeegee/BrainBytesAI/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/Honeegee/BrainBytesAI/actions/workflows/ci-cd.yml)
+[![Code Quality & Security](https://github.com/Honeegee/BrainBytesAI/actions/workflows/code-quality.yml/badge.svg)](https://github.com/Honeegee/BrainBytesAI/actions/workflows/code-quality.yml)
+[![Deploy to Environments](https://github.com/Honeegee/BrainBytesAI/actions/workflows/deploy.yml/badge.svg)](https://github.com/Honeegee/BrainBytesAI/actions/workflows/deploy.yml)
+
 ## Overview
 
 BrainBytes is an innovative AI-powered tutoring platform designed to provide accessible academic assistance to Filipino students. The platform leverages modern web technologies and AI to create an interactive, personalized learning experience.

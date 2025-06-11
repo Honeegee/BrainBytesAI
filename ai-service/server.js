@@ -5,24 +5,30 @@ const { checkCommonResponse } = require('./commonResponses');
 require('dotenv').config();
 
 // Normalize prompt by cleaning and standardizing input
-const normalizePrompt = (input) => {
-  if (typeof input !== 'string') return '';
+const normalizePrompt = input => {
+  if (typeof input !== 'string') {
+    return '';
+  }
   return input
     .trim()
-    .replace(/\s+/g, ' ')  // Replace multiple spaces with single space
-    .replace(/['']/g, "'")  // Normalize smart quotes
+    .replace(/\s+/g, ' ') // Replace multiple spaces with single space
+    .replace(/['']/g, "'") // Normalize smart quotes
     .replace(/[""]/g, '"'); // Normalize smart double quotes
 };
 
 // Handle basic math expressions
-const handleMathExpression = (input) => {
-  if (typeof input !== 'string') return input;
-  
-  const mathPattern = /^(\d+)\s*([\+\-\*\/])\s*(\d+)$/;
+const handleMathExpression = input => {
+  if (typeof input !== 'string') {
+    return input;
+  }
+
+  const mathPattern = /^(\d+)\s*([+\-*/])\s*(\d+)$/;
   const match = input.match(mathPattern);
-  
-  if (!match) return input;
-  
+
+  if (!match) {
+    return input;
+  }
+
   const [, num1, operator, num2] = match;
   try {
     // Use Function instead of eval for safer execution
@@ -39,84 +45,29 @@ const PORT = process.env.PORT || 3002;
 
 app.use(express.json());
 
-app.use(cors({
-  origin: ['http://localhost:3001', 'http://localhost:3000'],
-  credentials: true,
-  methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+app.use(
+  cors({
+    origin: ['http://localhost:3001', 'http://localhost:3000'],
+    credentials: true,
+    methods: ['GET', 'POST', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  })
+);
 
 app.post('/api/chat', async (req, res) => {
   try {
     const { prompt, conversationHistory } = req.body;
 
-    // Detect question types and normalize input
-    const detectQuestionType = (input) => {
-      if (typeof input !== 'string') return { type: 'general', text: '' };
-
-      // Clean the input first
-      let text = input
-        .replace(/<think>[\s\S]*?<\/think>/g, '')
-        .replace(/\s+/g, ' ')
-        .replace(/['"]/g, '')
-        .replace(/\s*\?\s*$/, '')
-        .toLowerCase()
-        .trim();
-
-      // Check for math expressions first
-      const mathPattern = /^\d+\s*[\+\-\*\/]\s*\d+$/;
-      if (mathPattern.test(text)) {
-        return {
-          type: 'math_expression',
-          text: text.replace(/\s+/g, '')
-        };
-      }
-
-      // Check for definition questions
-      if (text.match(/^(what|who)\s+(is|are)\s+/i) || 
-          text.match(/^define\s+/i)) {
-        return {
-          type: 'definition',
-          text: text.replace(/^(what|who)\s+(is|are)\s+/i, '')
-                   .replace(/^define\s+/i, '')
-        };
-      }
-
-      // Check for explanation requests
-      if (text.match(/^(explain|how does|how do)\s+/i) ||
-          text.match(/^(describe|tell me about)\s+/i)) {
-        return {
-          type: 'explanation', 
-          text: text.replace(/^(explain|how does|how do)\s+/i, '')
-                   .replace(/^(describe|tell me about)\s+/i, '')
-        };
-      }
-
-      // Check for example requests
-      if (text.match(/^(give|show|provide)\s+(me\s+)?(an\s+)?example(s)?\s+/i) ||
-          text.match(/^for\s+example/i)) {
-        return {
-          type: 'examples',
-          text: text.replace(/^(give|show|provide)\s+(me\s+)?(an\s+)?example(s)?\s+/i, '')
-                   .replace(/^for\s+example/i, '')
-        };
-      }
-
-      // Default to general type
-      return {
-        type: 'general',
-        text
-      };
-    };
-
-    const rawQuery = typeof prompt === 'string'
-      ? prompt
-      : typeof prompt === 'object' && prompt.currentQuery
-        ? prompt.currentQuery
-        : '';
+    const rawQuery =
+      typeof prompt === 'string'
+        ? prompt
+        : typeof prompt === 'object' && prompt.currentQuery
+          ? prompt.currentQuery
+          : '';
 
     const query = handleMathExpression(normalizePrompt(rawQuery));
-    const subject = typeof prompt === 'object' ? prompt.learningContext?.subject : null;
+    const subject =
+      typeof prompt === 'object' ? prompt.learningContext?.subject : null;
 
     console.log('Normalized query:', query);
 
@@ -127,8 +78,8 @@ app.post('/api/chat', async (req, res) => {
         response: commonResponse.response,
         metadata: {
           source: 'predefined',
-          complexity: commonResponse.complexity
-        }
+          complexity: commonResponse.complexity,
+        },
       });
     }
 
@@ -160,37 +111,49 @@ Do not use difficult vocabulary unless explained.
 Avoid:
 Overly technical terms without explanation.
 Long paragraphs.
-Casual or vague responses.`
+Casual or vague responses.`,
       },
       {
         role: 'user',
         content: (() => {
-          const commonAffirmatives = ["yes", "yeah", "yep", "sure", "ok", "okay", "alright"];
-          const commonNegatives = ["no", "nope", "nah"];
+          const commonAffirmatives = [
+            'yes',
+            'yeah',
+            'yep',
+            'sure',
+            'ok',
+            'okay',
+            'alright',
+          ];
+          const commonNegatives = ['no', 'nope', 'nah'];
           const lowerRawQuery = rawQuery.toLowerCase().trim();
 
-          if (conversationHistory && (commonAffirmatives.includes(lowerRawQuery) || commonNegatives.includes(lowerRawQuery))) {
+          if (
+            conversationHistory &&
+            (commonAffirmatives.includes(lowerRawQuery) ||
+              commonNegatives.includes(lowerRawQuery))
+          ) {
             return `Context:\n${conversationHistory}\n\nThe user responded with "${rawQuery}" to your previous question. Please continue the conversation or address their response appropriately, maintaining the established response format.`;
           }
           return conversationHistory
             ? `Context:\n${conversationHistory}\n\nCurrent Query: ${prompt}\n\nProvide a structured response that builds on previous information while addressing the current query. Use clear sections and concise explanations.`
             : `Query: ${prompt}\n\nProvide a structured response with clear sections and concise explanations.`;
-        })()
-      }
+        })(),
+      },
     ];
 
     const openAiResponse = await axios.post(
       'https://api.groq.com/openai/v1/chat/completions',
       {
         model: 'deepseek-r1-distill-llama-70b',
-        messages
+        messages,
       },
       {
         headers: {
-          'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
-          'Content-Type': 'application/json'
+          Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+          'Content-Type': 'application/json',
         },
-        timeout: 30000
+        timeout: 30000,
       }
     );
 
@@ -201,17 +164,18 @@ Casual or vague responses.`
     }
 
     // Minimal cleaning - removed formatting logic that's now in the frontend
-    const cleanResponse = (text) => {
-      if (typeof text !== 'string') return '';
+    const cleanResponse = text => {
+      if (typeof text !== 'string') {
+        return '';
+      }
       return text
-        .replace(/<think>[\s\S]*?<\/think>/g, '')  // Remove think tags
+        .replace(/<think>[\s\S]*?<\/think>/g, '') // Remove think tags
         .trim();
     };
 
     res.json({
-      response: cleanResponse(rawResponse)
+      response: cleanResponse(rawResponse),
     });
-
   } catch (error) {
     console.error('Error in /api/chat:', error.message);
     res.status(500).json({ error: error.message });

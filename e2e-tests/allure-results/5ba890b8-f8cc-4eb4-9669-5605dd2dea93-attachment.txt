@@ -1,0 +1,3 @@
+✅ Server is running and responding
+   Title: Finmark E-commerce Platform
+   Status: 200

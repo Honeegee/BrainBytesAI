@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+
+# Build output
+build/
+dist/
+
+# Test results and reports
+coverage/
+test-results/
+eslint-report.json
+*.log
+
+# Environment files
+.env*
+
+# OS files
+.DS_Store
+Thumbs.db

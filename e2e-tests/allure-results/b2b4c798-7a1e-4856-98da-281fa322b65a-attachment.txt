@@ -1,0 +1,5 @@
+📋 Test Configuration:
+   Base URL: http://localhost:3002 
+   Environment: development
+   Skip WebServer: true 
+✅ Configuration is valid
