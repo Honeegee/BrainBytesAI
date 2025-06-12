@@ -17,6 +17,7 @@ const {
   securityHeaders,
   initializePassport,
 } = require('./middleware/security');
+const { connectDatabase } = require('./config/database');
 const messagesRouter = require('./routes/messages');
 const usersRouter = require('./routes/users');
 const learningMaterialsRouter = require('./routes/learningMaterials');
@@ -27,17 +28,9 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const uploadDir = path.join(__dirname, 'public', 'uploads', 'avatars');
 
-// MongoDB configuration
-const mongoConfig = {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-  useFindAndModify: false,
-  useCreateIndex: true, // Use createIndex instead of ensureIndex
-};
-
 // Performance optimizations for MongoDB
 mongoose.set('debug', false); // Disable debug mode in production
-mongoose.set('bufferCommands', false); // Disable mongoose buffering
+// Note: Don't disable bufferCommands until after connection is established
 
 // Ensure uploads directory exists
 fs.mkdirSync(uploadDir, { recursive: true });
@@ -62,28 +55,39 @@ app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 app.use(securityHeaders);
 
 // Session configuration
-// Build MongoDB URL with authentication if credentials are provided
-let mongoUrl = process.env.MONGODB_URI || process.env.DATABASE_URL;
+// Get MongoDB URL for session store (will use same connection as main DB)
+const getSessionStoreUrl = () => {
+  // Try new environment variables first
+  let mongoUrl =
+    process.env.PROD_DATABASE_URL ||
+    process.env.STAGING_DATABASE_URL ||
+    process.env.LOCAL_DATABASE_URL;
 
-if (!mongoUrl) {
-  const mongoUser = process.env.STAGING_MONGO_USER || process.env.MONGO_USER;
-  const mongoPassword =
-    process.env.STAGING_MONGO_PASSWORD || process.env.MONGO_PASSWORD;
-  const mongoHost = process.env.MONGO_HOST || 'mongo';
-  const mongoPort = process.env.MONGO_PORT || '27017';
-  const mongoDb = process.env.MONGO_DB || 'brainbytes_staging';
-
-  if (mongoUser && mongoPassword) {
-    mongoUrl = `mongodb://${mongoUser}:${mongoPassword}@${mongoHost}:${mongoPort}/${mongoDb}?authSource=admin`;
-  } else {
-    mongoUrl = `mongodb://${mongoHost}:${mongoPort}/${mongoDb}`;
+  // Fallback to legacy environment variables
+  if (!mongoUrl) {
+    mongoUrl = process.env.MONGODB_URI || process.env.DATABASE_URL;
   }
-}
 
-console.log(
-  'MongoDB URL configured:',
-  mongoUrl.replace(/\/\/.*@/, '//***:***@')
-); // Hide credentials in logs
+  // Final fallback to constructed URL
+  if (!mongoUrl) {
+    const mongoUser = process.env.STAGING_MONGO_USER || process.env.MONGO_USER;
+    const mongoPassword =
+      process.env.STAGING_MONGO_PASSWORD || process.env.MONGO_PASSWORD;
+    const mongoHost = process.env.MONGO_HOST || 'mongo';
+    const mongoPort = process.env.MONGO_PORT || '27017';
+    const mongoDb = process.env.MONGO_DB || 'brainbytes_staging';
+
+    if (mongoUser && mongoPassword) {
+      mongoUrl = `mongodb://${mongoUser}:${mongoPassword}@${mongoHost}:${mongoPort}/${mongoDb}?authSource=admin`;
+    } else {
+      mongoUrl = `mongodb://${mongoHost}:${mongoPort}/${mongoDb}`;
+    }
+  }
+
+  return mongoUrl;
+};
+
+const mongoUrl = getSessionStoreUrl();
 
 app.use(
   session({
@@ -114,21 +118,13 @@ app.use('/uploads', express.static('public/uploads'));
 // Detect if we're in a test environment
 const isTestEnvironment = process.env.NODE_ENV === 'test';
 
-// Connect to MongoDB with optimized settings - skip if in test environment
-if (!isTestEnvironment) {
-  mongoose
-    .connect(mongoUrl, mongoConfig)
-    .then(() => {
-      console.log('Connected to MongoDB');
-    })
-    .catch(err => {
-      console.error('Failed to connect to MongoDB:', err);
-      process.exit(1); // Exit if DB connection fails
-    });
-}
+// Database connection promise for non-test environments
+let dbConnectionPromise = Promise.resolve();
 
-// Handle MongoDB connection events - skip if in test environment
 if (!isTestEnvironment) {
+  dbConnectionPromise = connectDatabase();
+
+  // Handle MongoDB connection events
   mongoose.connection.on('error', err => {
     console.error('MongoDB connection error:', err);
   });
@@ -171,7 +167,7 @@ app.use(apiRoutes.users, usersRouter);
 app.use(apiRoutes.materials, learningMaterialsRouter);
 
 // Error handling middleware
-app.use((err, req, res) => {
+app.use((err, req, res, next) => {
   console.error('Error:', err.message);
   console.error('Stack:', err.stack);
 
@@ -197,6 +193,14 @@ app.use((req, res) => {
 // Server configuration and startup
 const startServer = async () => {
   try {
+    // Wait for database connection before starting server
+    await dbConnectionPromise;
+
+    // Now it's safe to disable buffering since we have a connection
+    if (!isTestEnvironment) {
+      mongoose.set('bufferCommands', false);
+    }
+
     await app.listen(PORT);
     console.log(`Server running on port ${PORT}`);
     console.log(`API Documentation available at http://localhost:${PORT}`);

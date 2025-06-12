@@ -89,7 +89,7 @@ router.get('/chats', async (req, res) => {
       // Match documents for this user first
       {
         $match: {
-          userId: mongoose.Types.ObjectId(userId),
+          userId: new mongoose.Types.ObjectId(userId),
         },
       },
       // Group by chatId to get first message and count of messages
@@ -275,7 +275,7 @@ router.post('/', async (req, res) => {
     try {
       openAiResponse = await axios
         .post(
-          'http://ai-service:3002/api/chat',
+          `${process.env.AI_SERVICE_URL || 'http://localhost:3002'}/api/chat`,
           {
             prompt,
             conversationHistory,

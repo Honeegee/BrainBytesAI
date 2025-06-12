@@ -1,5 +1,46 @@
 {
+  "name": "brainbytes-ai",
+  "version": "1.0.0",
+  "description": "BrainBytesAI - Educational AI Platform with MongoDB Atlas",
+  "scripts": {
+    "dev": "docker-compose up --build",
+    "dev:detached": "docker-compose up -d --build",
+    "stop": "docker-compose down",
+    "clean": "docker-compose down -v --rmi all",
+    "test:atlas": "node scripts/test-atlas-docker-setup.js",
+    "test:atlas:windows": "scripts\\test-atlas-docker-setup.bat",
+    "test:db": "cd backend && node scripts/test-db-connection.js",
+    "test:db:staging": "cd backend && node scripts/test-db-connection.js staging",
+    "test:db:production": "cd backend && node scripts/test-db-connection.js production",
+    "test:cicd": "cd backend && node ../scripts/test-atlas-cicd.js",
+    "staging:up": "docker-compose -f docker-compose.staging.yml up --build",
+    "staging:down": "docker-compose -f docker-compose.staging.yml down",
+    "production:up": "docker-compose -f docker-compose.production.yml up --build",
+    "production:down": "docker-compose -f docker-compose.production.yml down",
+    "logs": "docker-compose logs -f",
+    "logs:backend": "docker-compose logs -f backend",
+    "logs:frontend": "docker-compose logs -f frontend",
+    "logs:ai-service": "docker-compose logs -f ai-service"
+  },
   "dependencies": {
     "react-hot-toast": "^2.5.2"
-  }
+  },
+  "devDependencies": {},
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/your-username/brainbytes-ai.git"
+  },
+  "keywords": [
+    "education",
+    "ai",
+    "mongodb-atlas",
+    "docker",
+    "nodejs",
+    "nextjs"
+  ],
+  "author": "BrainBytesAI Team",
+  "license": "MIT"
 }

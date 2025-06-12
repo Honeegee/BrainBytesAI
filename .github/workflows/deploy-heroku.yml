@@ -1,0 +1,580 @@
+name: Deploy to Heroku
+
+on:
+  workflow_run:
+    workflows: ["CI/CD Pipeline"]
+    types:
+      - completed
+    branches:
+      - main
+      - development
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+      force_deploy:
+        description: 'Force deployment (skip some checks)'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+
+jobs:
+  # Check if CI/CD passed (only for workflow_run trigger)
+  check-ci-cd:
+    name: Check CI/CD Status
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    if: github.event_name == 'workflow_run'
+    outputs:
+      should_proceed: ${{ steps.check.outputs.should_proceed }}
+    
+    steps:
+      - name: Check CI/CD workflow result
+        id: check
+        run: |
+          if [[ "${{ github.event.workflow_run.conclusion }}" == "success" ]]; then
+            echo "should_proceed=true" >> $GITHUB_OUTPUT
+            echo "✅ CI/CD pipeline passed, proceeding with deployment"
+          else
+            echo "should_proceed=false" >> $GITHUB_OUTPUT
+            echo "❌ CI/CD pipeline failed, skipping deployment"
+            exit 1
+          fi
+
+  # Determine deployment environment and settings
+  setup:
+    name: Setup Deployment
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: [check-ci-cd]
+    if: always() && (github.event_name == 'workflow_dispatch' || needs.check-ci-cd.outputs.should_proceed == 'true')
+    outputs:
+      environment: ${{ steps.determine-env.outputs.environment }}
+      frontend_app: ${{ steps.determine-env.outputs.frontend_app }}
+      backend_app: ${{ steps.determine-env.outputs.backend_app }}
+      ai_app: ${{ steps.determine-env.outputs.ai_app }}
+      should_deploy: ${{ steps.determine-env.outputs.should_deploy }}
+    
+    steps:
+      - name: Determine environment and apps
+        id: determine-env
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            environment="${{ github.event.inputs.environment }}"
+          elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            environment="production"
+          elif [[ "${{ github.ref }}" == "refs/heads/development" ]]; then
+            environment="staging"
+          else
+            environment="staging"
+          fi
+          
+          echo "environment=$environment" >> $GITHUB_OUTPUT
+          echo "should_deploy=true" >> $GITHUB_OUTPUT
+          
+          # Set Heroku app names based on environment
+          if [[ "$environment" == "production" ]]; then
+            echo "frontend_app=brainbytes-frontend" >> $GITHUB_OUTPUT
+            echo "backend_app=brainbytes-backend" >> $GITHUB_OUTPUT
+            echo "ai_app=brainbytes-ai-service" >> $GITHUB_OUTPUT
+          else
+            echo "frontend_app=brainbytes-frontend-staging" >> $GITHUB_OUTPUT
+            echo "backend_app=brainbytes-backend-staging" >> $GITHUB_OUTPUT
+            echo "ai_app=brainbytes-ai-service-staging" >> $GITHUB_OUTPUT
+          fi
+          
+          echo "🚀 Deploying to: $environment"
+
+  # Deploy Backend Service
+  deploy-backend:
+    name: Deploy Backend to Heroku
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: setup
+    if: needs.setup.outputs.should_deploy == 'true'
+    environment:
+      name: ${{ needs.setup.outputs.environment }}
+      url: https://${{ needs.setup.outputs.backend_app }}.herokuapp.com
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install Heroku CLI
+        run: |
+          curl https://cli-assets.heroku.com/install.sh | sh
+          heroku --version
+
+      - name: Configure Heroku environment variables
+        run: |
+          environment="${{ needs.setup.outputs.environment }}"
+          app_name="${{ needs.setup.outputs.backend_app }}"
+          
+          echo "Configuring environment variables for $app_name..."
+          
+          if [[ "$environment" == "production" ]]; then
+            # Production environment variables
+            heroku config:set \
+              NODE_ENV=production \
+              PORT=3000 \
+              FRONTEND_URL=https://${{ needs.setup.outputs.frontend_app }}.herokuapp.com \
+              DATABASE_URL="${{ secrets.PROD_DATABASE_URL }}" \
+              JWT_SECRET="${{ secrets.PROD_JWT_SECRET }}" \
+              SESSION_SECRET="${{ secrets.PROD_SESSION_SECRET }}" \
+              AI_API_KEY="${{ secrets.PROD_AI_API_KEY }}" \
+              REDIS_URL="${{ secrets.PROD_REDIS_URL }}" \
+              CORS_ORIGIN=https://${{ needs.setup.outputs.frontend_app }}.herokuapp.com \
+              RATE_LIMIT_REQUESTS=1000 \
+              RATE_LIMIT_WINDOW=900000 \
+              HELMET_ENABLED=true \
+              CSRF_PROTECTION=true \
+              SECURE_COOKIES=true \
+              HTTPS_ONLY=true \
+              -a $app_name
+          else
+            # Staging environment variables
+            heroku config:set \
+              NODE_ENV=staging \
+              PORT=3000 \
+              FRONTEND_URL=https://${{ needs.setup.outputs.frontend_app }}.herokuapp.com \
+              DATABASE_URL="${{ secrets.STAGING_DATABASE_URL }}" \
+              JWT_SECRET="${{ secrets.STAGING_JWT_SECRET }}" \
+              SESSION_SECRET="${{ secrets.STAGING_SESSION_SECRET }}" \
+              AI_API_KEY="${{ secrets.STAGING_AI_API_KEY }}" \
+              REDIS_URL="${{ secrets.STAGING_REDIS_URL }}" \
+              CORS_ORIGIN=https://${{ needs.setup.outputs.frontend_app }}.herokuapp.com \
+              RATE_LIMIT_REQUESTS=100 \
+              RATE_LIMIT_WINDOW=900000 \
+              -a $app_name
+          fi
+
+      - name: Deploy Backend to Heroku
+        run: |
+          app_name="${{ needs.setup.outputs.backend_app }}"
+          echo "Deploying backend to $app_name..."
+          
+          cd backend
+          
+          # Initialize git if not already initialized
+          if [ ! -d .git ]; then
+            git init
+            git config user.email "github-actions@users.noreply.github.com"
+            git config user.name "GitHub Actions"
+          fi
+          
+          # Add Heroku remote
+          heroku git:remote -a $app_name
+          
+          # Create Procfile for backend
+          cat > Procfile << EOF
+          web: npm start
+          EOF
+          
+          # Prepare for deployment
+          git add .
+          git commit -m "Deploy backend to Heroku - ${{ github.sha }}" || echo "No changes to commit"
+          
+          # Deploy to Heroku
+          git push heroku HEAD:main --force
+
+      - name: Verify Backend Deployment
+        run: |
+          app_name="${{ needs.setup.outputs.backend_app }}"
+          app_url="https://$app_name.herokuapp.com"
+          
+          echo "Verifying backend deployment at $app_url..."
+          
+          # Wait for deployment to complete
+          sleep 30
+          
+          # Check health endpoint
+          max_attempts=10
+          for i in $(seq 1 $max_attempts); do
+            echo "Health check attempt $i/$max_attempts..."
+            if curl -f "$app_url/health" > /dev/null 2>&1; then
+              echo "✅ Backend is healthy"
+              break
+            elif [ $i -eq $max_attempts ]; then
+              echo "❌ Backend health check failed after $max_attempts attempts"
+              heroku logs --tail -a $app_name
+              exit 1
+            else
+              echo "⏳ Backend not ready yet, waiting..."
+              sleep 15
+            fi
+          done
+
+  # Deploy Frontend Service
+  deploy-frontend:
+    name: Deploy Frontend to Heroku
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [setup, deploy-backend]
+    if: needs.setup.outputs.should_deploy == 'true'
+    environment:
+      name: ${{ needs.setup.outputs.environment }}
+      url: https://${{ needs.setup.outputs.frontend_app }}.herokuapp.com
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Heroku CLI
+        run: |
+          curl https://cli-assets.heroku.com/install.sh | sh
+
+      - name: Configure Frontend environment variables
+        run: |
+          environment="${{ needs.setup.outputs.environment }}"
+          app_name="${{ needs.setup.outputs.frontend_app }}"
+          
+          echo "Configuring frontend environment variables for $app_name..."
+          
+          heroku config:set \
+            NODE_ENV=$environment \
+            PORT=3000 \
+            NEXT_PUBLIC_API_URL=https://${{ needs.setup.outputs.backend_app }}.herokuapp.com \
+            NEXT_PUBLIC_FRONTEND_URL=https://$app_name.herokuapp.com \
+            -a $app_name
+
+      - name: Deploy Frontend to Heroku
+        run: |
+          app_name="${{ needs.setup.outputs.frontend_app }}"
+          echo "Deploying frontend to $app_name..."
+          
+          cd frontend
+          
+          # Initialize git if not already initialized
+          if [ ! -d .git ]; then
+            git init
+            git config user.email "github-actions@users.noreply.github.com"
+            git config user.name "GitHub Actions"
+          fi
+          
+          # Add Heroku remote
+          heroku git:remote -a $app_name
+          
+          # Create Procfile for frontend
+          cat > Procfile << EOF
+          web: npm run build && npm start
+          EOF
+          
+          # Prepare for deployment
+          git add .
+          git commit -m "Deploy frontend to Heroku - ${{ github.sha }}" || echo "No changes to commit"
+          
+          # Deploy to Heroku
+          git push heroku HEAD:main --force
+
+      - name: Verify Frontend Deployment
+        run: |
+          app_name="${{ needs.setup.outputs.frontend_app }}"
+          app_url="https://$app_name.herokuapp.com"
+          
+          echo "Verifying frontend deployment at $app_url..."
+          
+          # Wait for deployment to complete
+          sleep 45
+          
+          # Check if frontend is accessible
+          max_attempts=10
+          for i in $(seq 1 $max_attempts); do
+            echo "Frontend check attempt $i/$max_attempts..."
+            if curl -f "$app_url" > /dev/null 2>&1; then
+              echo "✅ Frontend is accessible"
+              break
+            elif [ $i -eq $max_attempts ]; then
+              echo "❌ Frontend accessibility check failed after $max_attempts attempts"
+              heroku logs --tail -a $app_name
+              exit 1
+            else
+              echo "⏳ Frontend not ready yet, waiting..."
+              sleep 15
+            fi
+          done
+
+  # Deploy AI Service
+  deploy-ai-service:
+    name: Deploy AI Service to Heroku
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [setup, deploy-backend]
+    if: needs.setup.outputs.should_deploy == 'true'
+    environment:
+      name: ${{ needs.setup.outputs.environment }}
+      url: https://${{ needs.setup.outputs.ai_app }}.herokuapp.com
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: ai-service/package-lock.json
+
+      - name: Install Heroku CLI
+        run: |
+          curl https://cli-assets.heroku.com/install.sh | sh
+
+      - name: Configure AI Service environment variables
+        run: |
+          environment="${{ needs.setup.outputs.environment }}"
+          app_name="${{ needs.setup.outputs.ai_app }}"
+          
+          echo "Configuring AI service environment variables for $app_name..."
+          
+          if [[ "$environment" == "production" ]]; then
+            heroku config:set \
+              NODE_ENV=production \
+              PORT=3000 \
+              AI_API_KEY="${{ secrets.PROD_AI_API_KEY }}" \
+              BACKEND_URL=https://${{ needs.setup.outputs.backend_app }}.herokuapp.com \
+              -a $app_name
+          else
+            heroku config:set \
+              NODE_ENV=staging \
+              PORT=3000 \
+              AI_API_KEY="${{ secrets.STAGING_AI_API_KEY }}" \
+              BACKEND_URL=https://${{ needs.setup.outputs.backend_app }}.herokuapp.com \
+              -a $app_name
+          fi
+
+      - name: Deploy AI Service to Heroku
+        run: |
+          app_name="${{ needs.setup.outputs.ai_app }}"
+          echo "Deploying AI service to $app_name..."
+          
+          cd ai-service
+          
+          # Initialize git if not already initialized
+          if [ ! -d .git ]; then
+            git init
+            git config user.email "github-actions@users.noreply.github.com"
+            git config user.name "GitHub Actions"
+          fi
+          
+          # Add Heroku remote
+          heroku git:remote -a $app_name
+          
+          # Create Procfile for AI service
+          cat > Procfile << EOF
+          web: npm start
+          EOF
+          
+          # Prepare for deployment
+          git add .
+          git commit -m "Deploy AI service to Heroku - ${{ github.sha }}" || echo "No changes to commit"
+          
+          # Deploy to Heroku
+          git push heroku HEAD:main --force
+
+      - name: Verify AI Service Deployment
+        run: |
+          app_name="${{ needs.setup.outputs.ai_app }}"
+          app_url="https://$app_name.herokuapp.com"
+          
+          echo "Verifying AI service deployment at $app_url..."
+          
+          # Wait for deployment to complete
+          sleep 30
+          
+          # Check health endpoint
+          max_attempts=10
+          for i in $(seq 1 $max_attempts); do
+            echo "AI service health check attempt $i/$max_attempts..."
+            if curl -f "$app_url/health" > /dev/null 2>&1; then
+              echo "✅ AI service is healthy"
+              break
+            elif [ $i -eq $max_attempts ]; then
+              echo "❌ AI service health check failed after $max_attempts attempts"
+              heroku logs --tail -a $app_name
+              exit 1
+            else
+              echo "⏳ AI service not ready yet, waiting..."
+              sleep 15
+            fi
+          done
+
+  # Post-deployment verification and notification
+  post-deployment:
+    name: Post-Deployment Verification
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [setup, deploy-backend, deploy-frontend, deploy-ai-service]
+    if: always() && needs.setup.outputs.should_deploy == 'true'
+    
+    steps:
+      - name: Install Heroku CLI
+        run: |
+          curl https://cli-assets.heroku.com/install.sh | sh
+
+      - name: Comprehensive Health Check
+        run: |
+          environment="${{ needs.setup.outputs.environment }}"
+          frontend_url="https://${{ needs.setup.outputs.frontend_app }}.herokuapp.com"
+          backend_url="https://${{ needs.setup.outputs.backend_app }}.herokuapp.com"
+          ai_url="https://${{ needs.setup.outputs.ai_app }}.herokuapp.com"
+          
+          echo "🔍 Performing comprehensive health check for $environment environment..."
+          
+          # Check all services
+          services=("Frontend:$frontend_url" "Backend:$backend_url/health" "AI Service:$ai_url/health")
+          failed_services=()
+          
+          for service in "${services[@]}"; do
+            name="${service%%:*}"
+            url="${service#*:}"
+            
+            echo "Checking $name at $url..."
+            if curl -f "$url" > /dev/null 2>&1; then
+              echo "✅ $name is healthy"
+            else
+              echo "❌ $name is not responding"
+              failed_services+=("$name")
+            fi
+          done
+          
+          # Report results
+          if [ ${#failed_services[@]} -eq 0 ]; then
+            echo "🎉 All services are healthy!"
+            echo "DEPLOYMENT_STATUS=success" >> $GITHUB_ENV
+          else
+            echo "💥 Failed services: ${failed_services[*]}"
+            echo "DEPLOYMENT_STATUS=failed" >> $GITHUB_ENV
+          fi
+
+      - name: Check Dyno Status
+        run: |
+          echo "📊 Checking dyno status..."
+          
+          apps=("${{ needs.setup.outputs.frontend_app }}" "${{ needs.setup.outputs.backend_app }}" "${{ needs.setup.outputs.ai_app }}")
+          
+          for app in "${apps[@]}"; do
+            echo "Checking dynos for $app:"
+            heroku ps -a $app
+            echo "---"
+          done
+
+      - name: Generate Deployment Report
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const environment = '${{ needs.setup.outputs.environment }}';
+            const deploymentStatus = process.env.DEPLOYMENT_STATUS || 'failed';
+            const frontendApp = '${{ needs.setup.outputs.frontend_app }}';
+            const backendApp = '${{ needs.setup.outputs.backend_app }}';
+            const aiApp = '${{ needs.setup.outputs.ai_app }}';
+            
+            const reportBody = `## 🚀 Heroku Deployment Report
+            
+            **Environment:** ${environment}
+            **Status:** ${deploymentStatus === 'success' ? '✅ Successful' : '❌ Failed'}
+            **Triggered by:** ${{ github.actor }}
+            **Commit:** ${context.sha.substring(0, 7)}
+            **Date:** ${new Date().toISOString()}
+            
+            ### 🔗 Application URLs
+            - **Frontend**: https://${frontendApp}.herokuapp.com
+            - **Backend API**: https://${backendApp}.herokuapp.com
+            - **AI Service**: https://${aiApp}.herokuapp.com
+            
+            ### 📊 Deployment Details
+            - **Frontend App**: ${frontendApp}
+            - **Backend App**: ${backendApp}
+            - **AI Service App**: ${aiApp}
+            - **Workflow Run**: [${context.runId}](${context.payload.repository.html_url}/actions/runs/${context.runId})
+            
+            ${deploymentStatus === 'success'
+              ? `### ✅ Deployment Successful
+              All services are running and responding to health checks.
+              
+              ### 🔍 Verification Steps Completed
+              - ✅ Backend health endpoint responding
+              - ✅ Frontend application accessible
+              - ✅ AI service health endpoint responding
+              - ✅ All dynos running
+              
+              ### 🎯 Next Steps
+              - Monitor application performance
+              - Verify functionality in ${environment} environment
+              - Check application logs if needed`
+              : `### ❌ Deployment Issues
+              Some services failed health checks or deployment steps.
+              
+              ### 🔧 Troubleshooting Steps
+              - Check Heroku application logs
+              - Verify environment variables
+              - Check dyno status
+              - Review deployment logs in GitHub Actions`}
+            
+            ### 📚 Useful Commands
+            \`\`\`bash
+            # Check application logs
+            heroku logs --tail -a ${backendApp}
+            heroku logs --tail -a ${frontendApp}
+            heroku logs --tail -a ${aiApp}
+            
+            # Check dyno status
+            heroku ps -a ${backendApp}
+            
+            # Access database
+            heroku config -a ${backendApp}
+            \`\`\`
+            
+            ---
+            *This report was automatically generated by the Heroku deployment workflow.*`;
+            
+            // Create deployment issue for tracking
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🚀 Heroku Deployment ${deploymentStatus === 'success' ? 'Completed' : 'Failed'} - ${environment}`,
+              body: reportBody,
+              labels: ['deployment', 'heroku', environment, deploymentStatus === 'success' ? 'success' : 'failure']
+            });
+            
+            console.log(`Deployment report created for ${environment} environment`);
+
+      - name: Notify deployment status
+        if: always()
+        run: |
+          environment="${{ needs.setup.outputs.environment }}"
+          status="${{ env.DEPLOYMENT_STATUS }}"
+          
+          if [[ "$status" == "success" ]]; then
+            echo "🎉 Deployment to $environment completed successfully!"
+            echo "Frontend: https://${{ needs.setup.outputs.frontend_app }}.herokuapp.com"
+            echo "Backend: https://${{ needs.setup.outputs.backend_app }}.herokuapp.com"
+            echo "AI Service: https://${{ needs.setup.outputs.ai_app }}.herokuapp.com"
+          else
+            echo "💥 Deployment to $environment failed!"
+            echo "Check the logs and deployment report for details."
+            exit 1
+          fi
