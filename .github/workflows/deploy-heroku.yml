@@ -116,6 +116,11 @@ jobs:
         procfile: "web: node server.js"
         usedocker: false
         dontautocreate: true
+      env:
+        HD_JWT_SECRET: ${{ secrets.STAGING_JWT_SECRET }}
+        HD_DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+        HD_SESSION_SECRET: ${{ secrets.STAGING_SESSION_SECRET }}
+        HD_AI_API_KEY: ${{ secrets.STAGING_AI_API_KEY }}
         
     # Deploy Frontend to Heroku
     - name: Deploy Frontend to Heroku
@@ -193,6 +198,12 @@ jobs:
         appdir: "backend"
         procfile: "web: node server.js"
         usedocker: false
+      env:
+        HD_JWT_SECRET: ${{ secrets.PRODUCTION_JWT_SECRET }}
+        HD_DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+        HD_SESSION_SECRET: ${{ secrets.PRODUCTION_SESSION_SECRET }}
+        HD_AI_API_KEY: ${{ secrets.PRODUCTION_AI_API_KEY }}
+        HD_REDIS_PASSWORD: ${{ secrets.PRODUCTION_REDIS_PASSWORD }}
         
     # Deploy Frontend to Heroku Production
     - name: Deploy Frontend to Heroku Production
@@ -203,6 +214,9 @@ jobs:
         heroku_email: ${{ secrets.HEROKU_EMAIL || secrets.HEROKU_API_KEY }}
         appdir: "frontend"
         usedocker: false
+      env:
+        HD_NEXT_PUBLIC_BACKEND_URL: "https://brainbytes-backend-production.herokuapp.com"
+        HD_NODE_ENV: "production"
         
     # Deploy AI Service to Heroku Production
     - name: Deploy AI Service to Heroku Production
