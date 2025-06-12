@@ -2,9 +2,9 @@ name: Code Quality & Security
 
 on:
   push:
-    branches: [ main, development, test-atlas-cicd ]
+    branches: [ main, development ]
   pull_request:
-    branches: [ main, development, test-atlas-cicd ]
+    branches: [ main, development ]
   schedule:
     # Run security scan daily at 2 AM UTC
     - cron: '0 2 * * *'

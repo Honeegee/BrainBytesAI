@@ -1,6 +1,7 @@
 name: Deploy to Heroku
 
 on:
+  # Trigger after CI/CD Pipeline completes
   workflow_run:
     workflows: ["CI/CD Pipeline"]
     types:
@@ -9,6 +10,7 @@ on:
       - main
       - development
       - test-atlas-cicd
+  # Manual trigger option
   workflow_dispatch:
     inputs:
       environment:

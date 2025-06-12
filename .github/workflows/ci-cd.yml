@@ -1,6 +1,7 @@
 name: CI/CD Pipeline
 
 on:
+  # Trigger after Code Quality workflow completes
   workflow_run:
     workflows: ["Code Quality & Security"]
     types:
@@ -8,7 +9,12 @@ on:
     branches:
       - main
       - development
-      - test-atlas-cicd
+   
+  # Also trigger directly on push (fallback if workflow_run fails)
+  push:
+    branches:
+      - main
+      - development
   workflow_dispatch:
     inputs:
       environment:
@@ -68,7 +74,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: [check-code-quality]
-    if: always() && (github.event_name == 'workflow_dispatch' || needs.check-code-quality.outputs.should_proceed == 'true')
+    if: always() && (github.event_name == 'workflow_dispatch' || github.event_name == 'push' || needs.check-code-quality.outputs.should_proceed == 'true')
     
     steps:
       - name: Checkout code
