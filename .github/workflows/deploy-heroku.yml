@@ -192,8 +192,8 @@ jobs:
             git config user.name "GitHub Actions"
           fi
           
-          # Add Heroku remote
-          heroku git:remote -a $app_name
+          # Add Heroku remote with API key authentication
+          git remote add heroku https://heroku:${{ env.HEROKU_API_KEY }}@git.heroku.com/$app_name.git
           
           # Create Procfile for backend
           cat > Procfile << EOF
@@ -204,7 +204,7 @@ jobs:
           git add .
           git commit -m "Deploy backend to Heroku - ${{ github.sha }}" || echo "No changes to commit"
           
-          # Deploy to Heroku
+          # Deploy to Heroku using API key authentication
           git push heroku HEAD:main --force
 
       - name: Verify Backend Deployment
@@ -288,8 +288,8 @@ jobs:
             git config user.name "GitHub Actions"
           fi
           
-          # Add Heroku remote
-          heroku git:remote -a $app_name
+          # Add Heroku remote with API key authentication
+          git remote add heroku https://heroku:${{ env.HEROKU_API_KEY }}@git.heroku.com/$app_name.git
           
           # Create Procfile for frontend
           cat > Procfile << EOF
@@ -393,8 +393,8 @@ jobs:
             git config user.name "GitHub Actions"
           fi
           
-          # Add Heroku remote
-          heroku git:remote -a $app_name
+          # Add Heroku remote with API key authentication
+          git remote add heroku https://heroku:${{ env.HEROKU_API_KEY }}@git.heroku.com/$app_name.git
           
           # Create Procfile for AI service
           cat > Procfile << EOF
