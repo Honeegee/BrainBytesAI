@@ -8,8 +8,14 @@ This guide explains how to configure your GitHub Actions CI/CD pipeline to work 
 
 ### **Updated Workflows**
 - [`ci-cd.yml`](../../.github/workflows/ci-cd.yml) - Updated to use Atlas for E2E and performance testing
+- [`deploy.yml`](../../.github/workflows/deploy.yml) - Updated deployment workflow to use environment variables from GitHub secrets
 - Removed local MongoDB service containers
 - Updated environment variables to use Atlas connection strings
+
+### **Docker Compose Configuration**
+- Created [`docker-compose.staging.yml`](../../docker-compose.staging.yml) - Staging-specific configuration using environment variables
+- Updated AI service configuration to use `STAGING_AI_API_KEY` from GitHub secrets
+- Removed dependency on `.env` files in deployment (kept for local development only)
 
 ## 🔐 **Required GitHub Repository Secrets**
 
@@ -51,10 +57,10 @@ Value: [Your Heroku API Key from account settings]
 
 #### **Other Deployment Secrets**
 ```bash
-Name: PROD_JWT_SECRET
+Name: PRODUCTION_JWT_SECRET
 Value: [Your production JWT secret - min 32 characters]
 
-Name: PROD_SESSION_SECRET
+Name: PRODUCTION_SESSION_SECRET
 Value: [Your production session secret - min 32 characters]
 
 Name: STAGING_JWT_SECRET
@@ -62,6 +68,20 @@ Value: [Your staging JWT secret - min 32 characters]
 
 Name: STAGING_SESSION_SECRET
 Value: [Your staging session secret - min 32 characters]
+```
+
+### **4. Add AI Service Secrets**
+
+#### **STAGING_AI_API_KEY**
+```bash
+Name: STAGING_AI_API_KEY
+Value: [Your Groq API key for staging environment]
+```
+
+#### **PRODUCTION_AI_API_KEY**
+```bash
+Name: PRODUCTION_AI_API_KEY
+Value: [Your Groq API key for production environment]
 ```
 
 ## 🗄️ **Atlas Database Structure**
