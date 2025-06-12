@@ -8,6 +8,7 @@ on:
     branches:
       - main
       - development
+      - test-atlas-cicd
   workflow_dispatch:
     inputs:
       environment:
@@ -344,15 +345,17 @@ jobs:
         uses: actions/cache@v4
         with:
           path: /tmp/.buildx-cache-${{ matrix.service }}
-          key: ${{ runner.os }}-buildx-${{ matrix.service }}-${{ github.sha }}
+          key: ${{ runner.os }}-buildx-${{ matrix.service }}-${{ hashFiles(format('{0}/package*.json', matrix.service)) }}
           restore-keys: |
             ${{ runner.os }}-buildx-${{ matrix.service }}-
+            ${{ runner.os }}-buildx-
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: ./${{ matrix.service }}
-          platforms: linux/amd64,linux/arm64
+          # Only build for amd64 to speed up builds (add arm64 only for production releases)
+          platforms: ${{ needs.setup.outputs.environment == 'production' && 'linux/amd64,linux/arm64' || 'linux/amd64' }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -360,6 +363,9 @@ jobs:
           cache-to: type=local,dest=/tmp/.buildx-cache-${{ matrix.service }}-new,mode=max
           build-args: |
             NODE_ENV=${{ needs.setup.outputs.environment == 'production' && 'production' || 'staging' }}
+          # Add build optimizations
+          provenance: false
+          sbom: false
 
       - name: Move cache
         run: |

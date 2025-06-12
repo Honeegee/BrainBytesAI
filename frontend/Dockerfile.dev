@@ -1,0 +1,30 @@
+# Development Dockerfile - optimized for fast rebuilds
+FROM node:18-alpine
+
+# Install dependencies needed for some npm packages
+RUN apk add --no-cache libc6-compat
+
+WORKDIR /app
+
+# Copy package files first for better caching
+COPY package*.json ./
+
+# Configure npm for faster installs
+RUN npm config set fetch-retry-mintimeout 20000 && \
+    npm config set fetch-retry-maxtimeout 120000 && \
+    npm config set fetch-timeout 300000
+
+# Install dependencies with optimizations
+RUN npm ci --ignore-scripts --prefer-offline --no-audit --no-fund
+
+# Copy app source
+COPY . .
+
+# Set environment variables for development
+ENV NODE_ENV=development
+ENV NEXT_TELEMETRY_DISABLED=1
+
+EXPOSE 3000
+
+# Start Next.js in development mode with hot reload
+CMD ["npm", "run", "dev"]
