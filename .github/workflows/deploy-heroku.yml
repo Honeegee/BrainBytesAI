@@ -1,10 +1,16 @@
 name: Deploy to Heroku
 
 on:
+  # Trigger after CI/CD Pipeline completes successfully
+  workflow_run:
+    workflows: ["CI/CD Pipeline"]
+    types:
+      - completed
+    branches:
+      - main
+      - development
   push:
-    branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
+    branches: [ main, development ]
   workflow_dispatch:
     inputs:
       environment:
@@ -25,9 +31,32 @@ env:
   NODE_VERSION: '18'
 
 jobs:
-  # Quality checks that must pass before deployment
+  # Check if CI/CD passed (only for workflow_run trigger)
+  check-ci-cd:
+    name: Check CI/CD Status
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    if: github.event_name == 'workflow_run'
+    outputs:
+      should_proceed: ${{ steps.check.outputs.should_proceed }}
+    
+    steps:
+      - name: Check CI/CD workflow result
+        id: check
+        run: |
+          if [[ "${{ github.event.workflow_run.conclusion }}" == "success" ]]; then
+            echo "should_proceed=true" >> $GITHUB_OUTPUT
+            echo "✅ CI/CD pipeline passed, proceeding with Heroku deployment"
+          else
+            echo "should_proceed=false" >> $GITHUB_OUTPUT
+            echo "❌ CI/CD pipeline failed, skipping Heroku deployment"
+            exit 1
+          fi
+
+  # Quality checks that must pass before deployment (for direct triggers)
   quality-checks:
     runs-on: ubuntu-latest
+    if: github.event_name != 'workflow_run'
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -56,8 +85,8 @@ jobs:
 
   # Deploy to Heroku staging
   deploy-staging:
-    needs: quality-checks
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging')
+    needs: [check-ci-cd, quality-checks]
+    if: always() && (needs.check-ci-cd.outputs.should_proceed == 'true' || (github.event_name != 'workflow_run' && needs.quality-checks.result == 'success')) && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/development' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging'))
     runs-on: ubuntu-latest
     environment: staging
     
@@ -81,6 +110,8 @@ jobs:
         heroku_email: ${{ secrets.HEROKU_EMAIL || secrets.HEROKU_API_KEY }}
         appdir: "backend"
         procfile: "web: node server.js"
+        usedocker: false
+        dontautocreate: true
         
     # Deploy Frontend to Heroku
     - name: Deploy Frontend to Heroku
@@ -90,6 +121,8 @@ jobs:
         heroku_app_name: "brainbytes-frontend-staging"
         heroku_email: ${{ secrets.HEROKU_EMAIL || secrets.HEROKU_API_KEY }}
         appdir: "frontend"
+        usedocker: false
+        dontautocreate: true
         
     # Deploy AI Service to Heroku (if exists)
     - name: Deploy AI Service to Heroku
@@ -100,6 +133,8 @@ jobs:
         heroku_app_name: "brainbytes-ai-service-staging"
         heroku_email: ${{ secrets.HEROKU_EMAIL || secrets.HEROKU_API_KEY }}
         appdir: "ai-service"
+        usedocker: false
+        dontautocreate: true
 
     # Health check after deployment
     - name: Health Check
@@ -122,8 +157,8 @@ jobs:
 
   # Deploy to Heroku production
   deploy-production:
-    needs: quality-checks
-    if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production'
+    needs: [check-ci-cd, quality-checks]
+    if: always() && (needs.check-ci-cd.outputs.should_proceed == 'true' || (github.event_name != 'workflow_run' && needs.quality-checks.result == 'success')) && github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production'
     runs-on: ubuntu-latest
     environment: production
     
@@ -147,6 +182,8 @@ jobs:
         heroku_email: ${{ secrets.HEROKU_EMAIL || secrets.HEROKU_API_KEY }}
         appdir: "backend"
         procfile: "web: node server.js"
+        usedocker: false
+        dontautocreate: true
         
     # Deploy Frontend to Heroku Production
     - name: Deploy Frontend to Heroku Production
@@ -156,6 +193,8 @@ jobs:
         heroku_app_name: "brainbytes-frontend-production"
         heroku_email: ${{ secrets.HEROKU_EMAIL || secrets.HEROKU_API_KEY }}
         appdir: "frontend"
+        usedocker: false
+        dontautocreate: true
         
     # Deploy AI Service to Heroku Production (if exists)
     - name: Deploy AI Service to Heroku Production
@@ -166,6 +205,8 @@ jobs:
         heroku_app_name: "brainbytes-ai-service-production"
         heroku_email: ${{ secrets.HEROKU_EMAIL || secrets.HEROKU_API_KEY }}
         appdir: "ai-service"
+        usedocker: false
+        dontautocreate: true
 
     # Health check after production deployment
     - name: Production Health Check
