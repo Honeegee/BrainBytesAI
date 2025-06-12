@@ -2,7 +2,7 @@
 const mongoose = require('mongoose');
 const { MongoMemoryServer } = require('mongodb-memory-server');
 
-mongoose.set('useCreateIndex', true); // Use createIndex instead of ensureIndex
+// Remove deprecated mongoose options - they are no longer needed in newer versions
 
 // Singleton pattern for MongoDB connection management
 class MongooseTestConnection {
@@ -27,12 +27,8 @@ class MongooseTestConnection {
       this.mongoServer = await MongoMemoryServer.create();
       const uri = this.mongoServer.getUri();
 
-      // Connect with specified options
-      await mongoose.connect(uri, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-        useFindAndModify: false,
-      });
+      // Connect with modern options (deprecated options removed)
+      await mongoose.connect(uri);
 
       this.isConnected = true;
       console.log('MongoDB Memory Server connected successfully');

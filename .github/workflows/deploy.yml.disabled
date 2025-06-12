@@ -8,6 +8,7 @@ on:
     branches:
       - main
       - development
+      - test-atlas-cicd
   workflow_dispatch:
     inputs:
       environment:
@@ -344,15 +345,17 @@ jobs:
         uses: actions/cache@v4
         with:
           path: /tmp/.buildx-cache-${{ matrix.service }}
-          key: ${{ runner.os }}-buildx-${{ matrix.service }}-${{ github.sha }}
+          key: ${{ runner.os }}-buildx-${{ matrix.service }}-${{ hashFiles(format('{0}/package*.json', matrix.service)) }}
           restore-keys: |
             ${{ runner.os }}-buildx-${{ matrix.service }}-
+            ${{ runner.os }}-buildx-
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: ./${{ matrix.service }}
-          platforms: linux/amd64,linux/arm64
+          # Only build for amd64 to speed up builds (add arm64 only for production releases)
+          platforms: ${{ needs.setup.outputs.environment == 'production' && 'linux/amd64,linux/arm64' || 'linux/amd64' }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -360,6 +363,9 @@ jobs:
           cache-to: type=local,dest=/tmp/.buildx-cache-${{ matrix.service }}-new,mode=max
           build-args: |
             NODE_ENV=${{ needs.setup.outputs.environment == 'production' && 'production' || 'staging' }}
+          # Add build optimizations
+          provenance: false
+          sbom: false
 
       - name: Move cache
         run: |
@@ -390,27 +396,17 @@ jobs:
 
       - name: Setup deployment environment
         run: |
-          # Set up environment variables for docker-compose
-          export STAGING_DATABASE_URL="${{ secrets.STAGING_DATABASE_URL || 'mongodb://mongo:27017/brainbytes_staging' }}"
-          export STAGING_JWT_SECRET="${{ secrets.STAGING_JWT_SECRET || 'staging_jwt_secret_default_12345' }}"
-          export STAGING_SESSION_SECRET="${{ secrets.STAGING_SESSION_SECRET || 'staging_session_secret_default_12345' }}"
-          export STAGING_MONGO_USER="${{ secrets.STAGING_MONGO_USER || '' }}"
-          export STAGING_MONGO_PASSWORD="${{ secrets.STAGING_MONGO_PASSWORD || '' }}"
-          export STAGING_AI_API_KEY="${{ secrets.STAGING_AI_API_KEY || 'test_api_key_placeholder' }}"
-          export GITHUB_REF_NAME="${{ github.ref_name }}"
-          
-          # Create staging environment variables file
-          cat > .env.staging << EOF
-          NODE_ENV=staging
-          API_URL=https://api-staging.brainbytes.app
-          FRONTEND_URL=https://staging.brainbytes.app
-          DATABASE_URL=$STAGING_DATABASE_URL
-          JWT_SECRET=$STAGING_JWT_SECRET
-          AI_API_KEY=$STAGING_AI_API_KEY
-          EOF
+          # Set up environment variables for GitHub Actions environment
+          echo "STAGING_DATABASE_URL=${{ secrets.STAGING_DATABASE_URL || 'mongodb://mongo:27017/brainbytes_staging' }}" >> $GITHUB_ENV
+          echo "STAGING_JWT_SECRET=${{ secrets.STAGING_JWT_SECRET || 'staging_jwt_secret_default_12345' }}" >> $GITHUB_ENV
+          echo "STAGING_SESSION_SECRET=${{ secrets.STAGING_SESSION_SECRET || 'staging_session_secret_default_12345' }}" >> $GITHUB_ENV
+          echo "STAGING_MONGO_USER=${{ secrets.STAGING_MONGO_USER || '' }}" >> $GITHUB_ENV
+          echo "STAGING_MONGO_PASSWORD=${{ secrets.STAGING_MONGO_PASSWORD || '' }}" >> $GITHUB_ENV
+          echo "STAGING_AI_API_KEY=${{ secrets.STAGING_AI_API_KEY || 'test_api_key_placeholder' }}" >> $GITHUB_ENV
+          echo "GITHUB_REF_NAME=${{ github.ref_name }}" >> $GITHUB_ENV
           
           echo "Environment variables set up for staging deployment"
-          echo "Branch: $GITHUB_REF_NAME"
+          echo "Branch: ${{ github.ref_name }}"
 
       - name: Deploy to staging server
         run: |
@@ -441,13 +437,13 @@ jobs:
           echo "📋 Starting staging deployment..."
           
           # Set environment variables for docker-compose
-          export STAGING_DATABASE_URL="\${STAGING_DATABASE_URL:-mongodb://mongo:27017/brainbytes_staging}"
-          export STAGING_JWT_SECRET="\${STAGING_JWT_SECRET:-staging_jwt_secret_default}"
-          export STAGING_SESSION_SECRET="\${STAGING_SESSION_SECRET:-staging_session_secret_default}"
-          export STAGING_MONGO_USER="\${STAGING_MONGO_USER:-staginguser}"
-          export STAGING_MONGO_PASSWORD="\${STAGING_MONGO_PASSWORD:-stagingpass}"
-          export STAGING_AI_API_KEY="\${STAGING_AI_API_KEY:-staging_ai_key_placeholder}"
-          export GITHUB_REF_NAME="\${GITHUB_REF_NAME:-development}"
+          export STAGING_DATABASE_URL="$STAGING_DATABASE_URL"
+          export STAGING_JWT_SECRET="$STAGING_JWT_SECRET"
+          export STAGING_SESSION_SECRET="$STAGING_SESSION_SECRET"
+          export STAGING_MONGO_USER="$STAGING_MONGO_USER"
+          export STAGING_MONGO_PASSWORD="$STAGING_MONGO_PASSWORD"
+          export STAGING_AI_API_KEY="$STAGING_AI_API_KEY"
+          export GITHUB_REF_NAME="$GITHUB_REF_NAME"
           
           # Check if staging config exists, otherwise use default
           if [ -f "docker-compose.staging.yml" ]; then
@@ -629,15 +625,16 @@ jobs:
 
       - name: Setup production environment
         run: |
-          # Create production environment variables
-          cat > .env.production << EOF
-          NODE_ENV=production
-          API_URL=https://api.brainbytes.app
-          FRONTEND_URL=https://brainbytes.app
-          DATABASE_URL=${{ secrets.PRODUCTION_DATABASE_URL }}
-          JWT_SECRET=${{ secrets.PRODUCTION_JWT_SECRET }}
-          AI_API_KEY=${{ secrets.PRODUCTION_AI_API_KEY }}
-          EOF
+          # Set up environment variables for GitHub Actions environment
+          echo "PRODUCTION_DATABASE_URL=${{ secrets.PRODUCTION_DATABASE_URL || 'mongodb://mongo:27017/brainbytes_production' }}" >> $GITHUB_ENV
+          echo "PRODUCTION_JWT_SECRET=${{ secrets.PRODUCTION_JWT_SECRET || 'production_jwt_secret_default_12345' }}" >> $GITHUB_ENV
+          echo "PRODUCTION_SESSION_SECRET=${{ secrets.PRODUCTION_SESSION_SECRET || 'production_session_secret_default_12345' }}" >> $GITHUB_ENV
+          echo "PRODUCTION_AI_API_KEY=${{ secrets.PRODUCTION_AI_API_KEY || 'production_ai_key_placeholder' }}" >> $GITHUB_ENV
+          echo "PRODUCTION_REDIS_PASSWORD=${{ secrets.PRODUCTION_REDIS_PASSWORD || 'redis_password_default_12345' }}" >> $GITHUB_ENV
+          echo "GITHUB_REF_NAME=${{ github.ref_name }}" >> $GITHUB_ENV
+          
+          echo "Environment variables set up for production deployment"
+          echo "Branch: ${{ github.ref_name }}"
 
       - name: Pre-deployment backup
         run: |
@@ -686,6 +683,14 @@ jobs:
           set -e
           
           echo "📋 Starting production deployment (Blue-Green)..."
+          
+          # Set environment variables for docker-compose
+          export PRODUCTION_DATABASE_URL="$PRODUCTION_DATABASE_URL"
+          export PRODUCTION_JWT_SECRET="$PRODUCTION_JWT_SECRET"
+          export PRODUCTION_SESSION_SECRET="$PRODUCTION_SESSION_SECRET"
+          export PRODUCTION_AI_API_KEY="$PRODUCTION_AI_API_KEY"
+          export PRODUCTION_REDIS_PASSWORD="$PRODUCTION_REDIS_PASSWORD"
+          export GITHUB_REF_NAME="$GITHUB_REF_NAME"
           
           # Check for production configs, fallback to default
           if [ -f "docker-compose.production.yml" ]; then

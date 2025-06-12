@@ -18,6 +18,21 @@ dist/
 .env.test.local
 .env.production.local
 
+# Backend environment files (contain sensitive Atlas credentials)
+backend/.env
+backend/.env.local
+backend/.env.staging
+backend/.env.production
+
+# AI Service environment files (contain sensitive API keys)
+ai-service/.env
+ai-service/.env.local
+ai-service/.env.production
+
+# Database backups and migrations
+backend/backup-*.json
+backend/mongodb-backup/
+
 # Logs
 npm-debug.log*
 yarn-debug.log*

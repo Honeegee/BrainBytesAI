@@ -79,12 +79,7 @@ beforeAll(async () => {
   const mongoUri = mongoServer.getUri();
 
   // Connect to the in-memory database
-  await mongoose.connect(mongoUri, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-    useFindAndModify: false,
-    useCreateIndex: true,
-  });
+  await mongoose.connect(mongoUri);
 
   // Create test user
   await UserProfile.create(testUser);

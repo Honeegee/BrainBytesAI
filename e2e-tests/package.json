@@ -11,6 +11,7 @@
     "test:health": "node run-health-check.js",
     "test:health-only": "node run-health-only.js",
     "test:simple": "set SKIP_WEBSERVER=true && set SKIP_AUTH_SETUP=true && playwright test simple-health-check.spec.js --project=health-check",
+    "test:simple-health": "node run-simple-health.js",
     "test:auth": "node run-auth-test.js",
     "test:setup": "set SKIP_WEBSERVER=true && playwright test --project=setup",
     "test:working": "node run-working-tests.js",

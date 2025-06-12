@@ -1,6 +1,7 @@
 name: CI/CD Pipeline
 
 on:
+  # Trigger after Code Quality workflow completes
   workflow_run:
     workflows: ["Code Quality & Security"]
     types:
@@ -8,7 +9,38 @@ on:
     branches:
       - main
       - development
+   
+  # Also trigger directly on push (fallback if workflow_run fails)
+  push:
+    branches:
+      - main
+      - development
   workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to test'
+        required: true
+        default: 'development'
+        type: choice
+        options:
+          - development
+          - staging
+          - test
+      run_performance_tests:
+        description: 'Run performance tests'
+        required: false
+        default: true
+        type: boolean
+      run_e2e_tests:
+        description: 'Run E2E tests'
+        required: false
+        default: true
+        type: boolean
+      skip_matrix_tests:
+        description: 'Skip matrix testing (faster run)'
+        required: false
+        default: false
+        type: boolean
 
 env:
   NODE_VERSION_MATRIX: '[18, 20, 22]'
@@ -42,7 +74,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: [check-code-quality]
-    if: always() && (github.event_name == 'workflow_dispatch' || needs.check-code-quality.outputs.should_proceed == 'true')
+    if: always() && (github.event_name == 'workflow_dispatch' || github.event_name == 'push' || needs.check-code-quality.outputs.should_proceed == 'true')
     
     steps:
       - name: Checkout code
@@ -83,7 +115,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     needs: setup
-    if: always() && needs.setup.result == 'success'
+    if: always() && needs.setup.result == 'success' && (github.event_name != 'workflow_dispatch' || github.event.inputs.skip_matrix_tests != 'true')
     
     strategy:
       matrix:
@@ -138,26 +170,15 @@ jobs:
             ./${{ matrix.service }}/test-results.xml
           retention-days: 7
 
-  # Job 3: Service Integration Testing
+  # Job 3: Service Integration Testing (Atlas-enabled)
   e2e-tests:
     name: E2e Tests
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: [setup]
-    if: always() && needs.setup.result == 'success'
+    if: always() && needs.setup.result == 'success' && (github.event_name != 'workflow_dispatch' || github.event.inputs.run_e2e_tests == 'true')
     
-    services:
-      mongo:
-        image: mongo:4.4
-        ports:
-          - 27017:27017
-        env:
-          MONGO_INITDB_DATABASE: brainbytes
-        options: >-
-          --health-cmd "echo 'db.runCommand(\"ping\").ok' | mongo localhost:27017/test --quiet"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 10
+    # No local MongoDB services - using Atlas
 
     steps:
       - name: Checkout code
@@ -202,52 +223,74 @@ jobs:
 
       - name: Start services
         run: |
-          # Start backend on port 3000
-          (cd backend && PORT=3000 MONGODB_URI=mongodb://localhost:27017/brainbytes JWT_SECRET=test_jwt_secret_key SESSION_SECRET=test_session_secret_key NODE_ENV=test npm start) &
+          # Create backend log file
+          mkdir -p logs
+          
+          # Start backend on port 3000 with Atlas
+          echo "Starting backend service..."
+          (cd backend && PORT=3000 DATABASE_URL="${{ secrets.TEST_DATABASE_URL }}" MONGODB_URI="${{ secrets.TEST_DATABASE_URL }}" JWT_SECRET=test_jwt_secret_key SESSION_SECRET=test_session_secret_key NODE_ENV=test npm start > ../logs/backend.log 2>&1) &
           BACKEND_PID=$!
           echo "BACKEND_PID=$BACKEND_PID" >> $GITHUB_ENV
+          echo "Backend started with PID: $BACKEND_PID"
           
           # Start AI service on port 3002
-          (cd ai-service && PORT=3002 GROQ_API_KEY=test_key_placeholder NODE_ENV=test npm start) &
+          echo "Starting AI service..."
+          (cd ai-service && PORT=3002 GROQ_API_KEY=test_key_placeholder NODE_ENV=test npm start > ../logs/ai-service.log 2>&1) &
           AI_SERVICE_PID=$!
           echo "AI_SERVICE_PID=$AI_SERVICE_PID" >> $GITHUB_ENV
+          echo "AI service started with PID: $AI_SERVICE_PID"
           
           # Start frontend on port 3001
-          (cd frontend && NEXT_PUBLIC_BACKEND_URL=http://localhost:3000 npm run build && PORT=3001 npm start) &
+          echo "Starting frontend service..."
+          (cd frontend && NEXT_PUBLIC_BACKEND_URL=http://localhost:3000 npm run build > ../logs/frontend-build.log 2>&1 && PORT=3001 npm start > ../logs/frontend.log 2>&1) &
           FRONTEND_PID=$!
           echo "FRONTEND_PID=$FRONTEND_PID" >> $GITHUB_ENV
+          echo "Frontend started with PID: $FRONTEND_PID"
           
-          # Wait for services to be ready
-          sleep 30
+          # Wait for services to be ready with better health checking
+          echo "Waiting for services to start..."
+          sleep 15
           
-          # Check if services are running
-          echo "Checking backend health..."
-          curl -f http://localhost:3000/api/health || echo "Backend not ready"
+          # Check backend health multiple times
+          for i in {1..10}; do
+            echo "Health check attempt $i/10..."
+            if curl -f http://localhost:3000/health; then
+              echo "✅ Backend is responding at http://localhost:3000/health"
+              break
+            elif curl -f http://localhost:3000/; then
+              echo "✅ Backend root endpoint is responding at http://localhost:3000/"
+              break
+            else
+              echo "⏳ Waiting for backend... (attempt $i/10)"
+              if [ $i -eq 10 ]; then
+                echo "❌ Backend health check failed after 10 attempts"
+                echo "Backend logs:"
+                cat logs/backend.log || echo "No backend logs found"
+                ps aux | grep -E "(node|npm)" | grep -v grep || echo "No Node processes found"
+              fi
+              sleep 3
+            fi
+          done
+          
+          # Check frontend
           echo "Checking frontend..."
-          curl -f http://localhost:3001 || echo "Frontend not ready"
+          curl -f http://localhost:3001 || echo "⚠️ Frontend not ready"
 
       - name: Run E2E tests with Playwright
         working-directory: ./e2e-tests
+        env:
+          BASE_URL: http://localhost:3000
+          FRONTEND_URL: http://localhost:3001
+          NODE_ENV: test
+          CI: true
         run: |
-          # Create a simple health check test
-          cat > tests/simple-health.spec.js << 'EOF'
-          const { test, expect } = require('@playwright/test');
-
-          test('Backend API is responding', async ({ request }) => {
-            const response = await request.get('http://localhost:3000/');
-            expect(response.status()).toBe(200);
-            const data = await response.json();
-            expect(data.message).toContain('BrainBytes API');
-          });
-
-          test('Frontend is responding', async ({ page }) => {
-            await page.goto('http://localhost:3001');
-            await expect(page).toHaveTitle(/BrainBytes/);
-          });
-          EOF
+          # List available test files
+          echo "Available test files:"
+          ls -la tests/
           
-          # Run the simple tests
-          npx playwright test tests/simple-health.spec.js
+          # Run the existing simple health test
+          echo "Running simple health check tests..."
+          npx playwright test tests/simple-health.spec.js --reporter=list
 
       - name: Upload E2E test results
         uses: actions/upload-artifact@v4
@@ -257,6 +300,7 @@ jobs:
           path: |
             ./e2e-tests/test-results/
             ./e2e-tests/playwright-report/
+            ./logs/
           retention-days: 7
 
       - name: Cleanup services
@@ -264,26 +308,15 @@ jobs:
         run: |
           kill $BACKEND_PID $AI_SERVICE_PID $FRONTEND_PID 2>/dev/null || true
 
-  # Job 4: Performance Testing
+  # Job 4: Performance Testing (Atlas-enabled)
   performance-test:
     name: Performance Testing
     runs-on: ubuntu-latest
     timeout-minutes: 20
     needs: [setup]
-    if: always() && needs.setup.result == 'success' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/development' || github.event_name == 'workflow_dispatch')
+    if: always() && needs.setup.result == 'success' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/development' || github.ref == 'refs/heads/test-atlas-cicd' || (github.event_name == 'workflow_dispatch' && github.event.inputs.run_performance_tests == 'true'))
     
-    services:
-      mongo:
-        image: mongo:4.4
-        ports:
-          - 27017:27017
-        env:
-          MONGO_INITDB_DATABASE: brainbytes
-        options: >-
-          --health-cmd "echo 'db.runCommand(\"ping\").ok' | mongo localhost:27017/test --quiet"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 10
+    # No local MongoDB services - using Atlas
     
     steps:
       - name: Checkout code
@@ -312,23 +345,53 @@ jobs:
 
       - name: Start services for performance testing
         run: |
-          # Start backend on port 3000
-          (cd backend && PORT=3000 MONGODB_URI=mongodb://localhost:27017/brainbytes JWT_SECRET=test_jwt_secret_key SESSION_SECRET=test_session_secret_key NODE_ENV=test npm start) &
+          # Create performance test log directory
+          mkdir -p logs
+          
+          # Start backend on port 3000 with Atlas
+          echo "Starting backend service for performance testing..."
+          (cd backend && PORT=3000 DATABASE_URL="${{ secrets.TEST_DATABASE_URL }}" MONGODB_URI="${{ secrets.TEST_DATABASE_URL }}" JWT_SECRET=test_jwt_secret_key SESSION_SECRET=test_session_secret_key NODE_ENV=test npm start > ../logs/perf-backend.log 2>&1) &
           BACKEND_PID=$!
           echo "BACKEND_PID=$BACKEND_PID" >> $GITHUB_ENV
+          echo "Backend started with PID: $BACKEND_PID"
           
           # Start AI service on port 3002
-          (cd ai-service && PORT=3002 GROQ_API_KEY=test_key_placeholder NODE_ENV=test npm start) &
+          echo "Starting AI service for performance testing..."
+          (cd ai-service && PORT=3002 GROQ_API_KEY=test_key_placeholder NODE_ENV=test npm start > ../logs/perf-ai-service.log 2>&1) &
           AI_SERVICE_PID=$!
           echo "AI_SERVICE_PID=$AI_SERVICE_PID" >> $GITHUB_ENV
+          echo "AI service started with PID: $AI_SERVICE_PID"
           
           # Start frontend on port 3001
-          (cd frontend && NEXT_PUBLIC_BACKEND_URL=http://localhost:3000 npm run build && PORT=3001 npm start) &
+          echo "Starting frontend service for performance testing..."
+          (cd frontend && NEXT_PUBLIC_BACKEND_URL=http://localhost:3000 npm run build > ../logs/perf-frontend-build.log 2>&1 && PORT=3001 npm start > ../logs/perf-frontend.log 2>&1) &
           FRONTEND_PID=$!
           echo "FRONTEND_PID=$FRONTEND_PID" >> $GITHUB_ENV
+          echo "Frontend started with PID: $FRONTEND_PID"
           
-          # Wait for services to be ready
-          sleep 30
+          # Wait for services to be ready with health checking
+          echo "Waiting for services to start for performance testing..."
+          sleep 15
+          
+          # Check backend health for performance testing
+          for i in {1..10}; do
+            echo "Performance test health check attempt $i/10..."
+            if curl -f http://localhost:3000/health; then
+              echo "✅ Backend is ready for performance testing"
+              break
+            elif curl -f http://localhost:3000/; then
+              echo "✅ Backend root endpoint is ready for performance testing"
+              break
+            else
+              echo "⏳ Waiting for backend... (attempt $i/10)"
+              if [ $i -eq 10 ]; then
+                echo "❌ Backend health check failed for performance testing"
+                echo "Performance backend logs:"
+                cat logs/perf-backend.log || echo "No performance backend logs found"
+              fi
+              sleep 3
+            fi
+          done
 
       - name: Run performance tests
         run: |
@@ -346,6 +409,7 @@ jobs:
           path: |
             performance-report.json
             performance-report.html
+            logs/perf-*.log
           retention-days: 7
 
       - name: Cleanup services
