@@ -58,11 +58,16 @@ services:
       dockerfile: Dockerfile.staging
     ports:
       - "3000:3000"
-    env_file:
-      - backend/.env.staging
     environment:
       - NODE_ENV=staging
-      - NODE_OPTIONS=--max_old_space_size=1024  
+      - NODE_OPTIONS=--max_old_space_size=1024
+      # Environment variables from GitHub secrets
+      - STAGING_DATABASE_URL=${STAGING_DATABASE_URL}
+      - SESSION_SECRET=${STAGING_SESSION_SECRET}
+      - JWT_SECRET=${STAGING_JWT_SECRET}
+      - FRONTEND_URL=http://localhost:3001
+      - AI_SERVICE_URL=http://localhost:3002
+      - PORT=3000
     deploy:
       resources:
         limits:
