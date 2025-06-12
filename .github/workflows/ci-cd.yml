@@ -9,12 +9,7 @@ on:
     branches:
       - main
       - development
-   
-  # Also trigger directly on push (fallback if workflow_run fails)
-  push:
-    branches:
-      - main
-      - development
+      - test-atlas-cicd
   workflow_dispatch:
     inputs:
       environment:
@@ -74,7 +69,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: [check-code-quality]
-    if: always() && (github.event_name == 'workflow_dispatch' || github.event_name == 'push' || needs.check-code-quality.outputs.should_proceed == 'true')
+    if: always() && (github.event_name == 'workflow_dispatch' || needs.check-code-quality.outputs.should_proceed == 'true')
     
     steps:
       - name: Checkout code
