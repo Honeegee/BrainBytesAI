@@ -195,7 +195,7 @@ app.use(apiRoutes.users, usersRouter);
 app.use(apiRoutes.materials, learningMaterialsRouter);
 
 // Error handling middleware
-app.use((err, req, res, next) => {
+app.use((err, req, res) => {
   console.error('Error:', err.message);
   console.error('Stack:', err.stack);
 

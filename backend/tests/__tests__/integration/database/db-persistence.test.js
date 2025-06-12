@@ -128,7 +128,7 @@ describe('Database Persistence Tests', () => {
     }
 
     // Save all messages
-    const savedMessages = await Message.insertMany(messages);
+    await Message.insertMany(messages);
     console.log(`${messageCount} test messages created in Atlas`);
 
     // Verify messages were saved

@@ -8,20 +8,19 @@ services:
     build: ./ai-service
     ports:
       - "3002:3002"
-    env_file:
-      - ai-service/.env
     environment:
       - NODE_ENV=staging
       - NODE_OPTIONS=--max_old_space_size=2048
+      - PORT=3002
+      - GROQ_API_KEY=${STAGING_AI_API_KEY}
+      - RATE_LIMIT_WINDOW=15
+      - RATE_LIMIT_MAX=50
     deploy:
       resources:
         limits:
           memory: 2G
         reservations:
           memory: 1G
-    volumes:
-      - ./ai-service:/usr/src/app
-      - /usr/src/app/node_modules
     networks:
       - app-network
     restart: unless-stopped
@@ -42,9 +41,6 @@ services:
           memory: 1G  
         reservations:
           memory: 512M  
-    volumes:
-      - ./frontend:/usr/src/app
-      - /usr/src/app/node_modules 
     networks:
       - app-network
     depends_on:
@@ -53,20 +49,15 @@ services:
 
   # Backend API container
   backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile.staging
+    build: ./backend
     ports:
       - "3000:3000"
     environment:
       - NODE_ENV=staging
       - NODE_OPTIONS=--max_old_space_size=1024
-      # Environment variables from GitHub secrets
-      - STAGING_DATABASE_URL=${STAGING_DATABASE_URL}
-      - SESSION_SECRET=${STAGING_SESSION_SECRET}
+      - DATABASE_URL=${STAGING_DATABASE_URL}
       - JWT_SECRET=${STAGING_JWT_SECRET}
-      - FRONTEND_URL=http://localhost:3001
-      - AI_SERVICE_URL=http://localhost:3002
+      - SESSION_SECRET=${STAGING_SESSION_SECRET}
       - PORT=3000
     deploy:
       resources:
@@ -74,9 +65,6 @@ services:
           memory: 1G  
         reservations:
           memory: 512M  
-    volumes:
-      - ./backend:/usr/src/app
-      - /usr/src/app/node_modules
     networks:
       - app-network
     depends_on:

@@ -24,6 +24,11 @@ backend/.env.local
 backend/.env.staging
 backend/.env.production
 
+# AI Service environment files (contain sensitive API keys)
+ai-service/.env
+ai-service/.env.local
+ai-service/.env.production
+
 # Database backups and migrations
 backend/backup-*.json
 backend/mongodb-backup/
