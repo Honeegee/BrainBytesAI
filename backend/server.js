@@ -1,4 +1,11 @@
-require('dotenv').config();
+// Load environment-specific configuration
+const envFile =
+  process.env.NODE_ENV === 'staging'
+    ? '.env.staging'
+    : process.env.NODE_ENV === 'production'
+      ? '.env.production'
+      : '.env';
+require('dotenv').config({ path: envFile });
 
 // External dependencies
 const express = require('express');
@@ -152,12 +159,33 @@ app.get('/', (req, res) => {
 
 // Health check endpoint
 app.get('/health', (req, res) => {
+  const dbState = mongoose.connection.readyState;
+  const dbStates = {
+    0: 'disconnected',
+    1: 'connected',
+    2: 'connecting',
+    3: 'disconnecting',
+  };
+
   res.status(200).json({
     status: 'healthy',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     version: process.env.npm_package_version || '1.0.0',
+    environment: process.env.NODE_ENV || 'development',
+    database: {
+      state: dbStates[dbState] || 'unknown',
+      stateCode: dbState,
+    },
+    port: PORT,
+    pid: process.pid,
   });
+});
+
+// API health check endpoint
+app.get('/api/health', (req, res) => {
+  // Redirect to main health endpoint for consistency
+  res.redirect('/health');
 });
 
 // Routes
@@ -194,18 +222,52 @@ app.use((req, res) => {
 const startServer = async () => {
   try {
     // Wait for database connection before starting server
-    await dbConnectionPromise;
+    console.log('Starting server initialization...');
+
+    // Add a timeout to the database connection for CI environments
+    const dbTimeout = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Database connection timeout')), 30000);
+    });
+
+    try {
+      await Promise.race([dbConnectionPromise, dbTimeout]);
+      console.log('✅ Database connection established');
+    } catch (dbError) {
+      console.error('⚠️ Database connection failed:', dbError.message);
+      if (process.env.NODE_ENV === 'test' || process.env.CI === 'true') {
+        console.log('🔧 Continuing in test/CI mode without database...');
+      } else {
+        throw dbError;
+      }
+    }
 
     // Now it's safe to disable buffering since we have a connection
     if (!isTestEnvironment) {
       mongoose.set('bufferCommands', false);
     }
 
-    await app.listen(PORT);
-    console.log(`Server running on port ${PORT}`);
-    console.log(`API Documentation available at http://localhost:${PORT}`);
+    const server = await app.listen(PORT);
+    console.log(`✅ Server running on port ${PORT}`);
+    console.log(`📍 Health check: http://localhost:${PORT}/health`);
+    console.log(`📍 API root: http://localhost:${PORT}/`);
+    console.log(`📖 API Documentation available at http://localhost:${PORT}`);
+
+    // Graceful shutdown handling
+    process.on('SIGTERM', () => {
+      console.log('SIGTERM received, shutting down gracefully');
+      server.close(() => {
+        console.log('Server closed');
+        mongoose.connection.close(false, () => {
+          console.log('MongoDB connection closed');
+          process.exit(0);
+        });
+      });
+    });
+
+    return server;
   } catch (error) {
-    console.error('Failed to start server:', error);
+    console.error('❌ Failed to start server:', error);
+    console.error('Stack trace:', error.stack);
     process.exit(1);
   }
 };

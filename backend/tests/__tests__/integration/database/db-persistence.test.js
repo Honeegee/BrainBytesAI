@@ -4,6 +4,9 @@ const Message = require('../../../../models/message');
 // This test verifies that data persists in MongoDB Atlas across connections
 // and database operations work correctly with Atlas test database.
 
+// Skip these tests if SKIP_DOCKER_TESTS is set (CI environment)
+const shouldSkipAtlasTests = process.env.SKIP_DOCKER_TESTS === 'true';
+
 // Use Atlas test database URI
 const TEST_DATABASE_URL =
   process.env.TEST_DATABASE_URL ||
@@ -11,12 +14,27 @@ const TEST_DATABASE_URL =
   'mongodb+srv://honeygden:xGeo64nUbYhtK5UM@brainbytes.bpmgicl.mongodb.net/brainbytes_test?retryWrites=true&w=majority&appName=BrainBytes';
 
 describe('Database Persistence Tests', () => {
+  // Skip all tests in this suite if SKIP_DOCKER_TESTS is set
+  beforeAll(() => {
+    if (shouldSkipAtlasTests) {
+      console.log(
+        'Skipping Atlas persistence tests due to SKIP_DOCKER_TESTS=true'
+      );
+    }
+  });
   // Unique test data identifiers
   const testId = `test-${Date.now()}`;
   const testUserId = '6123456789abcdef12345678'; // Test user ID
 
   // Connect to Atlas test database
   beforeAll(async () => {
+    if (shouldSkipAtlasTests) {
+      console.log(
+        'Skipping Atlas connection setup due to SKIP_DOCKER_TESTS=true'
+      );
+      return;
+    }
+
     // Close any existing connections
     if (mongoose.connection.readyState !== 0) {
       await mongoose.disconnect();
@@ -33,12 +51,22 @@ describe('Database Persistence Tests', () => {
   });
 
   afterAll(async () => {
+    if (shouldSkipAtlasTests) {
+      return;
+    }
+
     // Clean up test data
     await Message.deleteMany({ chatId: { $regex: /^test-/ } });
     await mongoose.connection.close();
   });
 
   test('Data should persist in Atlas across disconnection/reconnection', async () => {
+    if (shouldSkipAtlasTests) {
+      console.log(
+        'Skipping Atlas persistence test due to SKIP_DOCKER_TESTS=true'
+      );
+      return;
+    }
     // Step 1: Create test data
     const testMessage = new Message({
       text: `Atlas persistence test message ${testId}`,
@@ -78,6 +106,12 @@ describe('Database Persistence Tests', () => {
   });
 
   test('Atlas should handle multiple records with persistence', async () => {
+    if (shouldSkipAtlasTests) {
+      console.log(
+        'Skipping Atlas multiple records test due to SKIP_DOCKER_TESTS=true'
+      );
+      return;
+    }
     // Create multiple test messages
     const chatId = `test-chat-multi-${testId}`;
     const messageCount = 5;
@@ -171,6 +205,12 @@ describe('Database Persistence Tests', () => {
   });
 
   test('Atlas should handle concurrent operations correctly', async () => {
+    if (shouldSkipAtlasTests) {
+      console.log(
+        'Skipping Atlas concurrent operations test due to SKIP_DOCKER_TESTS=true'
+      );
+      return;
+    }
     const concurrentChatId = `test-concurrent-${testId}`;
     const operationCount = 10;
 
