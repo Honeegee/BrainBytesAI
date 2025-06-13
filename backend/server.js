@@ -43,8 +43,23 @@ mongoose.set('debug', false); // Disable debug mode in production
 fs.mkdirSync(uploadDir, { recursive: true });
 
 // CORS configuration - Must be first
+const getAllowedOrigins = () => {
+  const origins = [
+    'http://localhost:3001', // Development
+    'https://brainbytes-frontend-production-03d1e6b6b158.herokuapp.com', // Production
+    'https://brainbytes-frontend-staging.herokuapp.com', // Staging
+  ];
+  
+  // Add environment-specific frontend URL if provided
+  if (process.env.FRONTEND_URL) {
+    origins.push(process.env.FRONTEND_URL);
+  }
+  
+  return origins;
+};
+
 const corsOptions = {
-  origin: process.env.FRONTEND_URL || 'http://localhost:3001',
+  origin: getAllowedOrigins(),
   credentials: true,
   methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'x-requested-with'],
