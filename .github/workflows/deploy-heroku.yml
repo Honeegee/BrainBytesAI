@@ -144,6 +144,9 @@ jobs:
         appdir: "ai-service"
         usedocker: false
         dontautocreate: true
+      env:
+        HD_GROQ_API_KEY: ${{ secrets.STAGING_AI_API_KEY }}
+        HD_NODE_ENV: "staging"
 
     # Health check after deployment
     - name: Health Check
@@ -153,6 +156,12 @@ jobs:
         
         echo "Testing backend health..."
         curl -f https://brainbytes-backend-staging.herokuapp.com/health || echo "Backend health check failed"
+        
+        echo "Testing AI service health..."
+        curl -f https://brainbytes-ai-service-staging.herokuapp.com/health || echo "AI service health check failed"
+        
+        echo "Testing AI service API connection..."
+        curl -f https://brainbytes-ai-service-staging.herokuapp.com/api/test || echo "AI service API test failed"
         
         echo "Testing frontend..."
         curl -f https://brainbytes-frontend-staging.herokuapp.com || echo "Frontend health check failed"
@@ -229,6 +238,9 @@ jobs:
         heroku_email: ${{ secrets.HEROKU_EMAIL || secrets.HEROKU_API_KEY }}
         appdir: "ai-service"
         usedocker: false
+      env:
+        HD_GROQ_API_KEY: ${{ secrets.PRODUCTION_AI_API_KEY }}
+        HD_NODE_ENV: "production"
 
     # Health check after production deployment
     - name: Production Health Check
@@ -238,6 +250,12 @@ jobs:
         
         echo "Testing production backend health..."
         curl -f https://brainbytes-backend-production.herokuapp.com/health || echo "Production backend health check failed"
+        
+        echo "Testing production AI service health..."
+        curl -f https://brainbytes-ai-production.herokuapp.com/health || echo "Production AI service health check failed"
+        
+        echo "Testing production AI service API connection..."
+        curl -f https://brainbytes-ai-production.herokuapp.com/api/test || echo "Production AI service API test failed"
         
         echo "Testing production frontend..."
         curl -f https://brainbytes-frontend-production.herokuapp.com || echo "Production frontend health check failed"
