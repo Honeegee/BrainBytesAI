@@ -159,7 +159,8 @@ npm run test:all
 
 # Code quality checks
 npm run lint:all
-npm run format:all
+npm run prettier:all
+npm run audit:all
 ```
 
 ### Testing Strategy
@@ -180,6 +181,36 @@ Our comprehensive testing approach includes:
 - **Testing**: Comprehensive test coverage required
 - **Security**: Regular vulnerability scanning
 - **Documentation**: Inline comments and README updates
+
+### Available Scripts
+
+| Command | Description | Usage |
+|---------|-------------|-------|
+| [`npm run test:all`](package.json) | Run all tests across services | Runs unit, integration, and e2e tests |
+| [`npm run lint:all`](package.json) | Lint all code across services | Checks code style and potential issues |
+| [`npm run prettier:all`](package.json) | Check code formatting across services | Validates Prettier formatting compliance |
+| [`npm run prettier:fix:all`](package.json) | Fix code formatting across services | Automatically formats code with Prettier |
+| [`npm run audit:all`](package.json) | Security audit all services | Checks for security vulnerabilities |
+
+#### Prettier Commands
+
+```bash
+# Check formatting across all services
+npm run prettier:all
+
+# Fix formatting issues across all services
+npm run prettier:fix:all
+
+# Individual service formatting
+npm run prettier:frontend    # Check frontend formatting
+npm run prettier:backend     # Check backend formatting
+npm run prettier:ai-service  # Check AI service formatting
+
+# Individual service formatting fixes
+npm run prettier:fix:frontend    # Fix frontend formatting
+npm run prettier:fix:backend     # Fix backend formatting
+npm run prettier:fix:ai-service  # Fix AI service formatting
+```
 
 ## 📊 Performance Benchmarks
 
@@ -209,6 +240,7 @@ Our comprehensive testing approach includes:
    ```bash
    npm run test:all
    npm run lint:all
+   npm run prettier:all
    npm run audit:all
    ```
 

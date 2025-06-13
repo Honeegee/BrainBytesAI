@@ -188,7 +188,7 @@ app.get('/health', (req, res) => {
     status: 'healthy',
     apiKeyConfigured,
     environment: process.env.NODE_ENV || 'development',
-    port: PORT
+    port: PORT,
   });
 });
 
@@ -197,7 +197,7 @@ app.get('/api/test', async (req, res) => {
     if (!process.env.GROQ_API_KEY) {
       return res.status(500).json({
         error: 'GROQ_API_KEY not configured',
-        configured: false
+        configured: false,
       });
     }
 
@@ -207,7 +207,7 @@ app.get('/api/test', async (req, res) => {
       {
         model: 'deepseek-r1-distill-llama-70b',
         messages: [{ role: 'user', content: 'Hello' }],
-        max_tokens: 10
+        max_tokens: 10,
       },
       {
         headers: {
@@ -221,14 +221,14 @@ app.get('/api/test', async (req, res) => {
     res.json({
       status: 'API connection successful',
       configured: true,
-      model: 'deepseek-r1-distill-llama-70b'
+      model: 'deepseek-r1-distill-llama-70b',
     });
   } catch (error) {
     console.error('API test failed:', error.response?.data || error.message);
     res.status(500).json({
       error: 'API connection failed',
       configured: !!process.env.GROQ_API_KEY,
-      details: error.response?.data?.error || error.message
+      details: error.response?.data?.error || error.message,
     });
   }
 });
