@@ -215,7 +215,7 @@ jobs:
         appdir: "frontend"
         usedocker: false
       env:
-        HD_NEXT_PUBLIC_BACKEND_URL: "https://brainbytes-backend-production.herokuapp.com"
+        HD_NEXT_PUBLIC_BACKEND_URL: "https://brainbytes-backend-production-d355616d0f1f.herokuapp.com"
         HD_NODE_ENV: "production"
         
     # Deploy AI Service to Heroku Production

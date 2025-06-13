@@ -43,23 +43,32 @@ mongoose.set('debug', false); // Disable debug mode in production
 fs.mkdirSync(uploadDir, { recursive: true });
 
 // CORS configuration - Must be first
-const getAllowedOrigins = () => {
-  const origins = [
-    'http://localhost:3001', // Development
-    'https://brainbytes-frontend-production-03d1e6b6b158.herokuapp.com', // Production
-    'https://brainbytes-frontend-staging.herokuapp.com', // Staging
-  ];
-  
-  // Add environment-specific frontend URL if provided
-  if (process.env.FRONTEND_URL) {
-    origins.push(process.env.FRONTEND_URL);
-  }
-  
-  return origins;
-};
-
 const corsOptions = {
-  origin: getAllowedOrigins(),
+  origin: function (origin, callback) {
+    // Allow requests with no origin (mobile apps, postman, etc.)
+    if (!origin) return callback(null, true);
+    
+    const allowedOrigins = [
+      'http://localhost:3001', // Development
+      'http://localhost:3000', // Development backend
+    ];
+    
+    // Allow all brainbytes heroku apps (handles dynamic URLs)
+    const isHerokuApp = origin.includes('brainbytes-frontend-production') && origin.includes('.herokuapp.com');
+    const isStagingApp = origin.includes('brainbytes-frontend-staging') && origin.includes('.herokuapp.com');
+    const isAllowedOrigin = allowedOrigins.includes(origin);
+    
+    // Add environment-specific frontend URL if provided
+    const envFrontendUrl = process.env.FRONTEND_URL;
+    const isEnvUrl = envFrontendUrl && origin === envFrontendUrl;
+    
+    if (isAllowedOrigin || isHerokuApp || isStagingApp || isEnvUrl) {
+      callback(null, true);
+    } else {
+      console.log(`CORS blocked origin: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'x-requested-with'],
