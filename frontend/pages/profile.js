@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import api from '../lib/api';
 import Layout from '../components/Layout';
 import withAuth from '../components/withAuth';
@@ -147,13 +148,15 @@ function Profile() {
             <label htmlFor='avatar-upload' className='cursor-pointer'>
               {profile.avatarPreview || profile.avatar ? (
                 <div className='relative w-24 h-24 sm:w-32 sm:h-32 rounded-full overflow-hidden group-hover:opacity-80 transition-opacity'>
-                  <img
+                  <Image
                     src={
                       profile.avatarPreview ||
                       `${process.env.NEXT_PUBLIC_BACKEND_URL}${profile.avatar}`
                     }
                     alt='Profile Avatar'
                     className='w-full h-full object-cover'
+                    width={128}
+                    height={128}
                   />
                   <div className='absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity'>
                     <svg

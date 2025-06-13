@@ -121,6 +121,7 @@ jobs:
         HD_DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
         HD_SESSION_SECRET: ${{ secrets.STAGING_SESSION_SECRET }}
         HD_AI_API_KEY: ${{ secrets.STAGING_AI_API_KEY }}
+        HD_AI_SERVICE_URL: "https://brainbytes-ai-service-staging.herokuapp.com"
         
     # Deploy Frontend to Heroku
     - name: Deploy Frontend to Heroku
@@ -204,6 +205,7 @@ jobs:
         HD_SESSION_SECRET: ${{ secrets.PRODUCTION_SESSION_SECRET }}
         HD_AI_API_KEY: ${{ secrets.PRODUCTION_AI_API_KEY }}
         HD_REDIS_PASSWORD: ${{ secrets.PRODUCTION_REDIS_PASSWORD }}
+        HD_AI_SERVICE_URL: "https://brainbytes-ai-production.herokuapp.com"
         
     # Deploy Frontend to Heroku Production
     - name: Deploy Frontend to Heroku Production

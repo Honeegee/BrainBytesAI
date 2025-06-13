@@ -273,9 +273,16 @@ router.post('/', async (req, res) => {
 
     // Call AI service with better error handling
     try {
+      const aiServiceUrl = process.env.AI_SERVICE_URL || 'http://localhost:3002';
+      
+      // Check if AI service URL is reachable
+      if (!aiServiceUrl || aiServiceUrl === 'http://ai-service:3002') {
+        throw new Error('AI service is not available in this environment');
+      }
+
       openAiResponse = await axios
         .post(
-          `${process.env.AI_SERVICE_URL || 'http://localhost:3002'}/api/chat`,
+          `${aiServiceUrl}/api/chat`,
           {
             prompt,
             conversationHistory,
@@ -292,6 +299,7 @@ router.post('/', async (req, res) => {
             status: error.response?.status,
             data: error.response?.data,
             message: error.message,
+            url: aiServiceUrl,
           });
           throw new Error(`AI service connection failed: ${error.message}`);
         });
@@ -319,7 +327,20 @@ router.post('/', async (req, res) => {
       });
     } catch (error) {
       console.error('AI service error:', error);
-      throw new Error(error.message || 'Failed to get AI response');
+      
+      // Provide fallback response when AI service is unavailable
+      aiMessage = new Message({
+        text: 'I apologize, but the AI service is currently unavailable. Please try again later, or contact support if this issue persists.',
+        subject: req.body.subject || '',
+        chatId: req.body.chatId,
+        userId,
+        isAiResponse: true,
+        createdAt: new Date(),
+        sentiment: {
+          score: 0,
+          label: 'neutral',
+        },
+      });
     }
     await aiMessage.save();
 

@@ -200,36 +200,83 @@ router.post('/subjects', async (req, res) => {
   try {
     // Check MongoDB connection state
     if (mongoose.connection.readyState !== 1) {
-      throw new Error('Database connection is not ready');
+      return res.status(503).json({
+        error: 'Database connection is not ready',
+        code: 'DB_CONNECTION_ERROR'
+      });
     }
 
     const { subject } = req.body;
     if (!subject) {
-      return res.status(400).json({ error: 'Subject name is required' });
+      return res.status(400).json({
+        error: 'Subject name is required',
+        code: 'MISSING_SUBJECT_NAME'
+      });
     }
 
-    // Check if subject already exists for this user
+    // Trim and validate subject name
+    const trimmedSubject = subject.trim();
+    if (!trimmedSubject) {
+      return res.status(400).json({
+        error: 'Subject name cannot be empty',
+        code: 'EMPTY_SUBJECT_NAME'
+      });
+    }
+
+    // Check if subject already exists for this user (case-insensitive)
     const existingSubjects = await LearningMaterial.distinct('subject', {
       userId: req.user._id,
     });
-    if (existingSubjects.includes(subject)) {
-      return res.status(400).json({ error: 'Subject already exists' });
+    
+    const subjectExists = existingSubjects.some(
+      existingSubject => existingSubject.toLowerCase() === trimmedSubject.toLowerCase()
+    );
+    
+    if (subjectExists) {
+      return res.status(409).json({
+        error: 'Subject already exists',
+        code: 'SUBJECT_EXISTS'
+      });
     }
 
     // Create a placeholder learning material to establish the subject
     const learningMaterial = new LearningMaterial({
       userId: req.user._id,
-      subject,
+      subject: trimmedSubject,
       topic: 'Introduction',
-      content: `Welcome to ${subject}`,
+      content: `Welcome to ${trimmedSubject}`,
       resourceType: 'definition',
       difficulty: 'beginner',
     });
     await learningMaterial.save();
 
-    res.status(201).json({ message: 'Subject created successfully', subject });
+    res.status(201).json({
+      message: 'Subject created successfully',
+      subject: trimmedSubject,
+      code: 'SUCCESS'
+    });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('Error creating subject:', error);
+    
+    // Handle specific MongoDB errors
+    if (error.code === 11000) {
+      return res.status(409).json({
+        error: 'Subject already exists',
+        code: 'DUPLICATE_KEY'
+      });
+    }
+    
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({
+        error: error.message,
+        code: 'VALIDATION_ERROR'
+      });
+    }
+    
+    res.status(500).json({
+      error: 'Internal server error while creating subject',
+      code: 'INTERNAL_ERROR'
+    });
   }
 });
 

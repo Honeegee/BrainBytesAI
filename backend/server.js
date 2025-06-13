@@ -46,7 +46,9 @@ fs.mkdirSync(uploadDir, { recursive: true });
 const corsOptions = {
   origin: function (origin, callback) {
     // Allow requests with no origin (mobile apps, postman, etc.)
-    if (!origin) return callback(null, true);
+    if (!origin) {
+      return callback(null, true);
+    }
     
     const allowedOrigins = [
       'http://localhost:3001', // Development
