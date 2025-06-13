@@ -9,7 +9,7 @@ const nextConfig = {
   // output: 'standalone',
   // Disable telemetry for faster builds
   experimental: {
-    instrumentationHook: false,
+    // instrumentationHook is no longer needed - removed deprecated option
   },
   // Optimize for production builds
   compiler: {
