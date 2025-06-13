@@ -49,21 +49,25 @@ const corsOptions = {
     if (!origin) {
       return callback(null, true);
     }
-    
+
     const allowedOrigins = [
       'http://localhost:3001', // Development
       'http://localhost:3000', // Development backend
     ];
-    
+
     // Allow all brainbytes heroku apps (handles dynamic URLs)
-    const isHerokuApp = origin.includes('brainbytes-frontend-production') && origin.includes('.herokuapp.com');
-    const isStagingApp = origin.includes('brainbytes-frontend-staging') && origin.includes('.herokuapp.com');
+    const isHerokuApp =
+      origin.includes('brainbytes-frontend-production') &&
+      origin.includes('.herokuapp.com');
+    const isStagingApp =
+      origin.includes('brainbytes-frontend-staging') &&
+      origin.includes('.herokuapp.com');
     const isAllowedOrigin = allowedOrigins.includes(origin);
-    
+
     // Add environment-specific frontend URL if provided
     const envFrontendUrl = process.env.FRONTEND_URL;
     const isEnvUrl = envFrontendUrl && origin === envFrontendUrl;
-    
+
     if (isAllowedOrigin || isHerokuApp || isStagingApp || isEnvUrl) {
       callback(null, true);
     } else {

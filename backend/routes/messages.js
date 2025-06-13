@@ -273,8 +273,9 @@ router.post('/', async (req, res) => {
 
     // Call AI service with better error handling
     try {
-      const aiServiceUrl = process.env.AI_SERVICE_URL || 'http://localhost:3002';
-      
+      const aiServiceUrl =
+        process.env.AI_SERVICE_URL || 'http://localhost:3002';
+
       // Check if AI service URL is reachable
       if (!aiServiceUrl || aiServiceUrl === 'http://ai-service:3002') {
         throw new Error('AI service is not available in this environment');
@@ -327,7 +328,7 @@ router.post('/', async (req, res) => {
       });
     } catch (error) {
       console.error('AI service error:', error);
-      
+
       // Provide fallback response when AI service is unavailable
       aiMessage = new Message({
         text: 'I apologize, but the AI service is currently unavailable. Please try again later, or contact support if this issue persists.',

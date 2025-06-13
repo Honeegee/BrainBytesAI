@@ -202,7 +202,7 @@ router.post('/subjects', async (req, res) => {
     if (mongoose.connection.readyState !== 1) {
       return res.status(503).json({
         error: 'Database connection is not ready',
-        code: 'DB_CONNECTION_ERROR'
+        code: 'DB_CONNECTION_ERROR',
       });
     }
 
@@ -210,7 +210,7 @@ router.post('/subjects', async (req, res) => {
     if (!subject) {
       return res.status(400).json({
         error: 'Subject name is required',
-        code: 'MISSING_SUBJECT_NAME'
+        code: 'MISSING_SUBJECT_NAME',
       });
     }
 
@@ -219,7 +219,7 @@ router.post('/subjects', async (req, res) => {
     if (!trimmedSubject) {
       return res.status(400).json({
         error: 'Subject name cannot be empty',
-        code: 'EMPTY_SUBJECT_NAME'
+        code: 'EMPTY_SUBJECT_NAME',
       });
     }
 
@@ -227,15 +227,16 @@ router.post('/subjects', async (req, res) => {
     const existingSubjects = await LearningMaterial.distinct('subject', {
       userId: req.user._id,
     });
-    
+
     const subjectExists = existingSubjects.some(
-      existingSubject => existingSubject.toLowerCase() === trimmedSubject.toLowerCase()
+      existingSubject =>
+        existingSubject.toLowerCase() === trimmedSubject.toLowerCase()
     );
-    
+
     if (subjectExists) {
       return res.status(409).json({
         error: 'Subject already exists',
-        code: 'SUBJECT_EXISTS'
+        code: 'SUBJECT_EXISTS',
       });
     }
 
@@ -253,29 +254,29 @@ router.post('/subjects', async (req, res) => {
     res.status(201).json({
       message: 'Subject created successfully',
       subject: trimmedSubject,
-      code: 'SUCCESS'
+      code: 'SUCCESS',
     });
   } catch (error) {
     console.error('Error creating subject:', error);
-    
+
     // Handle specific MongoDB errors
     if (error.code === 11000) {
       return res.status(409).json({
         error: 'Subject already exists',
-        code: 'DUPLICATE_KEY'
+        code: 'DUPLICATE_KEY',
       });
     }
-    
+
     if (error.name === 'ValidationError') {
       return res.status(400).json({
         error: error.message,
-        code: 'VALIDATION_ERROR'
+        code: 'VALIDATION_ERROR',
       });
     }
-    
+
     res.status(500).json({
       error: 'Internal server error while creating subject',
-      code: 'INTERNAL_ERROR'
+      code: 'INTERNAL_ERROR',
     });
   }
 });
