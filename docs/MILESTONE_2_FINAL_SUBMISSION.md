@@ -384,7 +384,6 @@ scripts/final-validation.bat
 1. **Clone Repository**:
    ```bash
    git clone https://github.com/Honeegee/BrainBytesAI.git
-   cd BrainBytesAI
    ```
 
 2. **Environment Setup**:
