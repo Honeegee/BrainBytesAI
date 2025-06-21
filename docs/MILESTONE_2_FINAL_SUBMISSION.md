@@ -68,7 +68,7 @@ Our CI/CD implementation consists of three interconnected workflows:
 **File:** [`.github/workflows/code-quality.yml`](.github/workflows/code-quality.yml)
 
 **Triggers:**
-- Push to main, develop, development, test-atlas-cicd branches
+- Push to main, development branches
 - Pull requests to main/develop branches
 - Manual workflow dispatch
 
@@ -140,14 +140,14 @@ graph LR
 ### Heroku Platform Configuration
 
 #### Production Environment
-- **Frontend**: [https://brainbytes-frontend-production.herokuapp.com](https://brainbytes-frontend-production.herokuapp.com)
-- **Backend**: [https://brainbytes-backend-production.herokuapp.com](https://brainbytes-backend-production.herokuapp.com)
-- **AI Service**: [https://brainbytes-ai-production.herokuapp.com](https://brainbytes-ai-production.herokuapp.com)
+- **Frontend**: [https://brainbytes-frontend-production-03d1e6b6b158.herokuapp.com](https://brainbytes-frontend-production-03d1e6b6b158.herokuapp.com)
+- **Backend**: [https://brainbytes-backend-production-d355616d0f1f.herokuapp.com](https://brainbytes-backend-production-d355616d0f1f.herokuapp.com)
+- **AI Service**: [https://brainbytes-ai-production-3833f742ba79.herokuapp.com](https://brainbytes-ai-production-3833f742ba79.herokuapp.com)
 
 #### Staging Environment
-- **Frontend**: [https://brainbytes-frontend-staging.herokuapp.com](https://brainbytes-frontend-staging.herokuapp.com)
-- **Backend**: [https://brainbytes-backend-staging.herokuapp.com](https://brainbytes-backend-staging.herokuapp.com)
-- **AI Service**: [https://brainbytes-ai-staging.herokuapp.com](https://brainbytes-ai-staging.herokuapp.com)
+- **Frontend**: [https://brainbytes-frontend-staging-7593f4655363.herokuapp.com](https://brainbytes-frontend-staging-7593f4655363.herokuapp.com)
+- **Backend**: [https://brainbytes-backend-staging-de872da2939f.herokuapp.com](https://brainbytes-backend-staging-de872da2939f.herokuapp.com)
+- **AI Service**: [https://brainbytes-ai-service-staging-4b75c77cf53a.herokuapp.com](https://brainbytes-ai-service-staging-4b75c77cf53a.herokuapp.com)
 
 ### Database Configuration
 
@@ -302,10 +302,10 @@ scripts/final-validation.bat
 ## 📚 Documentation Deliverables
 
 ### Architecture Documentation
-- **[System Architecture](docs/diagrams/systemArchitecture.md)**: Complete system design
-- **[Application Flow](docs/diagrams/applicationFlow.md)**: User interaction flows
-- **[Data Flow](docs/diagrams/dataFlow.md)**: Information architecture
-- **[Network Topology](docs/diagrams/networkTopology.md)**: Infrastructure layout
+- **[System Architecture](diagrams/systemArchitecture.md)**: Complete system design
+- **[Application Flow](diagrams/applicationFlow.md)**: User interaction flows
+- **[Data Flow](diagrams/dataFlow.md)**: Information architecture
+- **[Network Topology](diagrams/networkTopology.md)**: Infrastructure layout
 
 ### Pipeline Documentation
 - **[CI/CD Documentation](docs/deployment/CI_CD_DOCUMENTATION.md)**: Complete pipeline guide
@@ -386,8 +386,8 @@ scripts/final-validation.bat
 
 1. **Access Live Application**:
    ```
-   Production Frontend: https://brainbytes-frontend-production.herokuapp.com
-   Production API: https://brainbytes-backend-production.herokuapp.com
+   Production Frontend: https://brainbytes-frontend-production-03d1e6b6b158.herokuapp.com
+   Production API: https://brainbytes-backend-production-d355616d0f1f.herokuapp.com
    ```
 
 2. **Test User Account**:
@@ -398,7 +398,7 @@ scripts/final-validation.bat
 
 3. **API Health Check**:
    ```bash
-   curl https://brainbytes-backend-production.herokuapp.com/health
+   curl https://brainbytes-backend-production-d355616d0f1f.herokuapp.com/health
    ```
 
 ### Local Development Setup

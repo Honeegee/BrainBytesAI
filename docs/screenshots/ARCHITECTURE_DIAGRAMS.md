@@ -125,15 +125,15 @@ graph TB
     
     subgraph "Heroku Platform"
         subgraph "Production Apps"
-            P_FE[🌐 Frontend Production<br/>brainbytes-frontend-production.herokuapp.com<br/>Port 80/443]
-            P_BE[⚙️ Backend Production<br/>brainbytes-backend-production.herokuapp.com<br/>Port 80/443]
-            P_AI[🤖 AI Service Production<br/>brainbytes-ai-production.herokuapp.com<br/>Port 80/443]
+            P_FE[🌐 Frontend Production<br/>brainbytes-frontend-production-03d1e6b6b158.herokuapp.com<br/>Port 80/443]
+            P_BE[⚙️ Backend Production<br/>brainbytes-backend-production-d355616d0f1f.herokuapp.com<br/>Port 80/443]
+            P_AI[🤖 AI Service Production<br/>brainbytes-ai-production-3833f742ba79.herokuapp.com<br/>Port 80/443]
         end
         
         subgraph "Staging Apps"
-            S_FE[🌐 Frontend Staging<br/>brainbytes-frontend-staging.herokuapp.com<br/>Port 80/443]
-            S_BE[⚙️ Backend Staging<br/>brainbytes-backend-staging.herokuapp.com<br/>Port 80/443]
-            S_AI[🤖 AI Service Staging<br/>brainbytes-ai-service-staging.herokuapp.com<br/>Port 80/443]
+            S_FE[🌐 Frontend Staging<br/>brainbytes-frontend-staging-7593f4655363.herokuapp.com<br/>Port 80/443]
+            S_BE[⚙️ Backend Staging<br/>brainbytes-backend-staging-de872da2939f.herokuapp.com<br/>Port 80/443]
+            S_AI[🤖 AI Service Staging<br/>brainbytes-ai-service-staging-4b75c77cf53a.herokuapp.com<br/>Port 80/443]
         end
     end
     
@@ -294,14 +294,14 @@ graph TB
     EDGE -->|Traffic Distribution<br/>Geographic Routing| ROUTER
     
     %% Production Routing
-    ROUTER -->|brainbytes-frontend-production.herokuapp.com<br/>HTTPS| P_DYNO_FE
-    ROUTER -->|brainbytes-backend-production.herokuapp.com<br/>HTTPS| P_DYNO_BE
-    ROUTER -->|brainbytes-ai-production.herokuapp.com<br/>HTTPS| P_DYNO_AI
+    ROUTER -->|brainbytes-frontend-production-03d1e6b6b158.herokuapp.com<br/>HTTPS| P_DYNO_FE
+    ROUTER -->|brainbytes-backend-production-d355616d0f1f.herokuapp.com<br/>HTTPS| P_DYNO_BE
+    ROUTER -->|brainbytes-ai-production-3833f742ba79.herokuapp.com<br/>HTTPS| P_DYNO_AI
     
     %% Staging Routing
-    ROUTER -->|brainbytes-frontend-staging.herokuapp.com<br/>HTTPS| S_DYNO_FE
-    ROUTER -->|brainbytes-backend-staging.herokuapp.com<br/>HTTPS| S_DYNO_BE
-    ROUTER -->|brainbytes-ai-service-staging.herokuapp.com<br/>HTTPS| S_DYNO_AI
+    ROUTER -->|brainbytes-frontend-staging-7593f4655363.herokuapp.com<br/>HTTPS| S_DYNO_FE
+    ROUTER -->|brainbytes-backend-staging-de872da2939f.herokuapp.com<br/>HTTPS| S_DYNO_BE
+    ROUTER -->|brainbytes-ai-service-staging-4b75c77cf53a.herokuapp.com<br/>HTTPS| S_DYNO_AI
     
     %% Production Internal Communication
     P_DYNO_FE -->|REST API Calls<br/>Internal Heroku Network| P_DYNO_BE
@@ -358,7 +358,7 @@ sequenceDiagram
     
     Note over U,GROQ: User Chat Interaction Flow
     
-    U->>+CDN: HTTPS Request<br/>brainbytes-frontend-production.herokuapp.com
+    U->>+CDN: HTTPS Request<br/>brainbytes-frontend-production-03d1e6b6b158.herokuapp.com
     CDN->>+FE: Route to Frontend Dyno
     FE->>-CDN: Serve React App<br/>(Static Assets)
     CDN->>-U: Frontend Application<br/>(Cached at Edge)

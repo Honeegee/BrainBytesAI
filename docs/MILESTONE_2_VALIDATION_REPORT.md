@@ -49,9 +49,9 @@
 | **Security Configuration** | ✅ | HTTPS, JWT, environment variables |
 
 #### Live Environments:
-- ✅ **Production Frontend**: https://brainbytes-frontend-production.herokuapp.com
-- ✅ **Production Backend**: https://brainbytes-backend-production.herokuapp.com  
-- ✅ **Production AI Service**: https://brainbytes-ai-production.herokuapp.com
+- ✅ **Production Frontend**: https://brainbytes-frontend-production-03d1e6b6b158.herokuapp.com
+- ✅ **Production Backend**: https://brainbytes-backend-production-d355616d0f1f.herokuapp.com
+- ✅ **Production AI Service**: https://brainbytes-ai-production-3833f742ba79.herokuapp.com
 - ✅ **Staging Environment**: Fully deployed and functional
 
 ### ✅ Documentation
@@ -167,15 +167,15 @@ bash scripts/final-validation.sh
 ### Production Environment Health Check
 ```bash
 # Frontend Health Check
-curl -I https://brainbytes-frontend-production.herokuapp.com
+curl -I https://brainbytes-frontend-production-03d1e6b6b158.herokuapp.com
 # Response: HTTP/2 200 ✅
 
 # Backend Health Check  
-curl https://brainbytes-backend-production.herokuapp.com/health
+curl https://brainbytes-backend-production-d355616d0f1f.herokuapp.com/health
 # Response: {"status":"healthy","timestamp":"2025-06-21T06:57:00.000Z"} ✅
 
 # AI Service Health Check
-curl https://brainbytes-ai-production.herokuapp.com/health  
+curl https://brainbytes-ai-production-3833f742ba79.herokuapp.com/health
 # Response: {"status":"healthy","service":"ai-service"} ✅
 ```
 
@@ -301,7 +301,7 @@ curl https://brainbytes-ai-production.herokuapp.com/health
 
 ### For Evaluators
 1. **Review Final Submission**: [MILESTONE_2_FINAL_SUBMISSION.md](docs/MILESTONE_2_FINAL_SUBMISSION.md)
-2. **Access Live Application**: https://brainbytes-frontend-production.herokuapp.com
+2. **Access Live Application**: https://brainbytes-frontend-production-03d1e6b6b158.herokuapp.com
 3. **Review GitHub Actions**: https://github.com/Honeegee/BrainBytesAI/actions
 4. **Examine Documentation**: [Documentation Index](docs/DOCUMENTATION_INDEX.md)
 

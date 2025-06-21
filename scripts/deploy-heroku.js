@@ -89,14 +89,14 @@ class HerokuDeploymentHelper {
         
         const apps = {
             staging: {
-                frontend: 'brainbytes-frontend-staging',
-                backend: 'brainbytes-backend-staging',
-                ai: 'brainbytes-ai-service-staging'
+                frontend: 'brainbytes-frontend-staging-7593f4655363',
+                backend: 'brainbytes-backend-staging-de872da2939f',
+                ai: 'brainbytes-ai-service-staging-4b75c77cf53a'
             },
             production: {
-                frontend: 'brainbytes-frontend',
-                backend: 'brainbytes-backend',
-                ai: 'brainbytes-ai-service'
+                frontend: 'brainbytes-frontend-production-03d1e6b6b158',
+                backend: 'brainbytes-backend-production-d355616d0f1f',
+                ai: 'brainbytes-ai-production-3833f742ba79'
             }
         };
 

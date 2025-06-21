@@ -110,7 +110,7 @@ jobs:
       uses: akhileshns/heroku-deploy@v3.13.15
       with:
         heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
-        heroku_app_name: "brainbytes-backend-staging"
+        heroku_app_name: "brainbytes-backend-staging-de872da2939f"
         heroku_email: ${{ secrets.HEROKU_EMAIL || secrets.HEROKU_API_KEY }}
         appdir: "backend"
         procfile: "web: node server.js"
@@ -121,14 +121,14 @@ jobs:
         HD_DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
         HD_SESSION_SECRET: ${{ secrets.STAGING_SESSION_SECRET }}
         HD_AI_API_KEY: ${{ secrets.STAGING_AI_API_KEY }}
-        HD_AI_SERVICE_URL: "https://brainbytes-ai-service-staging.herokuapp.com"
+        HD_AI_SERVICE_URL: "https://brainbytes-ai-service-staging-4b75c77cf53a.herokuapp.com"
         
     # Deploy Frontend to Heroku
     - name: Deploy Frontend to Heroku
       uses: akhileshns/heroku-deploy@v3.13.15
       with:
         heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
-        heroku_app_name: "brainbytes-frontend-staging"
+        heroku_app_name: "brainbytes-frontend-staging-7593f4655363"
         heroku_email: ${{ secrets.HEROKU_EMAIL || secrets.HEROKU_API_KEY }}
         appdir: "frontend"
         usedocker: false
@@ -139,7 +139,7 @@ jobs:
       uses: akhileshns/heroku-deploy@v3.13.15
       with:
         heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
-        heroku_app_name: "brainbytes-ai-service-staging"
+        heroku_app_name: "brainbytes-ai-service-staging-4b75c77cf53a"
         heroku_email: ${{ secrets.HEROKU_EMAIL || secrets.HEROKU_API_KEY }}
         appdir: "ai-service"
         usedocker: false
@@ -155,24 +155,24 @@ jobs:
         sleep 60
         
         echo "Testing backend health..."
-        curl -f https://brainbytes-backend-staging.herokuapp.com/health || echo "Backend health check failed"
+        curl -f https://brainbytes-backend-staging-de872da2939f.herokuapp.com/health || echo "Backend health check failed"
         
         echo "Testing AI service health..."
-        curl -f https://brainbytes-ai-service-staging.herokuapp.com/health || echo "AI service health check failed"
+        curl -f https://brainbytes-ai-service-staging-4b75c77cf53a.herokuapp.com/health || echo "AI service health check failed"
         
         echo "Testing AI service API connection..."
-        curl -f https://brainbytes-ai-service-staging.herokuapp.com/api/test || echo "AI service API test failed"
+        curl -f https://brainbytes-ai-service-staging-4b75c77cf53a.herokuapp.com/api/test || echo "AI service API test failed"
         
         echo "Testing frontend..."
-        curl -f https://brainbytes-frontend-staging.herokuapp.com || echo "Frontend health check failed"
+        curl -f https://brainbytes-frontend-staging-7593f4655363.herokuapp.com || echo "Frontend health check failed"
 
     # Notify on success
     - name: Deployment Success
       run: |
         echo "✅ Staging Deployment Successful!"
-        echo "Backend: https://brainbytes-backend-staging.herokuapp.com"
-        echo "Frontend: https://brainbytes-frontend-staging.herokuapp.com"
-        echo "AI Service: https://brainbytes-ai-service-staging.herokuapp.com"
+        echo "Backend: https://brainbytes-backend-staging-de872da2939f.herokuapp.com"
+        echo "Frontend: https://brainbytes-frontend-staging-7593f4655363.herokuapp.com"
+        echo "AI Service: https://brainbytes-ai-service-staging-4b75c77cf53a.herokuapp.com"
 
   # Deploy to Heroku production
   deploy-production:
@@ -203,7 +203,7 @@ jobs:
       uses: akhileshns/heroku-deploy@v3.13.15
       with:
         heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
-        heroku_app_name: "brainbytes-backend-production"
+        heroku_app_name: "brainbytes-backend-production-d355616d0f1f"
         heroku_email: ${{ secrets.HEROKU_EMAIL || secrets.HEROKU_API_KEY }}
         appdir: "backend"
         procfile: "web: node server.js"
@@ -221,7 +221,7 @@ jobs:
       uses: akhileshns/heroku-deploy@v3.13.15
       with:
         heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
-        heroku_app_name: "brainbytes-frontend-production"
+        heroku_app_name: "brainbytes-frontend-production-03d1e6b6b158"
         heroku_email: ${{ secrets.HEROKU_EMAIL || secrets.HEROKU_API_KEY }}
         appdir: "frontend"
         usedocker: false
@@ -234,7 +234,7 @@ jobs:
       uses: akhileshns/heroku-deploy@v3.13.15
       with:
         heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
-        heroku_app_name: "brainbytes-ai-production"
+        heroku_app_name: "brainbytes-ai-production-3833f742ba79"
         heroku_email: ${{ secrets.HEROKU_EMAIL || secrets.HEROKU_API_KEY }}
         appdir: "ai-service"
         usedocker: false
@@ -249,21 +249,21 @@ jobs:
         sleep 60
         
         echo "Testing production backend health..."
-        curl -f https://brainbytes-backend-production.herokuapp.com/health || echo "Production backend health check failed"
+        curl -f https://brainbytes-backend-production-d355616d0f1f.herokuapp.com/health || echo "Production backend health check failed"
         
         echo "Testing production AI service health..."
-        curl -f https://brainbytes-ai-production.herokuapp.com/health || echo "Production AI service health check failed"
+        curl -f https://brainbytes-ai-production-3833f742ba79.herokuapp.com/health || echo "Production AI service health check failed"
         
         echo "Testing production AI service API connection..."
-        curl -f https://brainbytes-ai-production.herokuapp.com/api/test || echo "Production AI service API test failed"
+        curl -f https://brainbytes-ai-production-3833f742ba79.herokuapp.com/api/test || echo "Production AI service API test failed"
         
         echo "Testing production frontend..."
-        curl -f https://brainbytes-frontend-production.herokuapp.com || echo "Production frontend health check failed"
+        curl -f https://brainbytes-frontend-production-03d1e6b6b158.herokuapp.com || echo "Production frontend health check failed"
 
     # Notify on production success
     - name: Production Deployment Success
       run: |
         echo "🚀 Production Deployment Successful!"
-        echo "Backend: https://brainbytes-backend-production.herokuapp.com"
-        echo "Frontend: https://brainbytes-frontend-production.herokuapp.com"
-        echo "AI Service: https://brainbytes-ai-production.herokuapp.com"
+        echo "Backend: https://brainbytes-backend-production-d355616d0f1f.herokuapp.com"
+        echo "Frontend: https://brainbytes-frontend-production-03d1e6b6b158.herokuapp.com"
+        echo "AI Service: https://brainbytes-ai-production-3833f742ba79.herokuapp.com"
