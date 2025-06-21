@@ -1,0 +1,122 @@
+<testsuites id="" name="" tests="14" failures="0" skipped="9" errors="0" time="7.347027999999999">
+<testsuite name="health-check.spec.js" timestamp="2025-06-21T05:57:22.788Z" hostname="health-check" tests="7" failures="0" skipped="7" time="22.656" errors="0">
+<testcase name="Health Check Tests › application loads successfully" classname="health-check.spec.js" time="3.24">
+<properties>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Health Check Tests › login page is accessible" classname="health-check.spec.js" time="3.22">
+<properties>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Health Check Tests › signup page is accessible" classname="health-check.spec.js" time="3.319">
+<properties>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Health Check Tests › navigation between pages works" classname="health-check.spec.js" time="3.237">
+<properties>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Health Check Tests › application responds to basic interactions" classname="health-check.spec.js" time="3.289">
+<properties>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Health Check Tests › error handling - invalid route" classname="health-check.spec.js" time="3.219">
+<properties>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Health Check Tests › responsive design basics" classname="health-check.spec.js" time="3.132">
+<properties>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="simple-health-check.spec.js" timestamp="2025-06-21T05:57:22.788Z" hostname="health-check" tests="3" failures="0" skipped="1" time="3.552" errors="0">
+<testcase name="Simple Health Check › server connectivity check" classname="simple-health-check.spec.js" time="3.275">
+<properties>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Simple Health Check › configuration validation" classname="simple-health-check.spec.js" time="0.007">
+<system-out>
+<![CDATA[📋 Test Configuration:
+   Base URL: http://localhost:3000
+   Environment: development
+   Skip WebServer: true
+✅ Configuration is valid
+]]>
+</system-out>
+</testcase>
+<testcase name="Simple Health Check › playwright installation check" classname="simple-health-check.spec.js" time="0.27">
+<system-out>
+<![CDATA[✅ Playwright is working correctly
+]]>
+</system-out>
+</testcase>
+</testsuite>
+<testsuite name="simple-health.spec.js" timestamp="2025-06-21T05:57:22.788Z" hostname="health-check" tests="4" failures="0" skipped="1" time="2.864" errors="0">
+<testcase name="Simple Health Check › Backend API is responding" classname="simple-health.spec.js" time="0.051">
+<system-out>
+<![CDATA[⚠️  Backend server is not reachable, creating mock auth state
+🔧 Creating mock authentication state...
+✅ Mock authentication state created successfully
+]]>
+</system-out>
+</testcase>
+<testcase name="Simple Health Check › Frontend service availability" classname="simple-health.spec.js" time="2.586">
+<properties>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Simple Health Check › Environment configuration check" classname="simple-health.spec.js" time="0.008">
+<system-out>
+<![CDATA[📋 Test Environment Configuration:
+   backendURL: http://localhost:3000
+   frontendURL: http://localhost:3001
+   environment: test
+   ci: false
+   skipWebServer: true
+✅ Environment configuration is valid
+]]>
+</system-out>
+</testcase>
+<testcase name="Simple Health Check › Basic test framework functionality" classname="simple-health.spec.js" time="0.219">
+<system-out>
+<![CDATA[✅ Test framework is functioning correctly
+]]>
+</system-out>
+</testcase>
+</testsuite>
+</testsuites>

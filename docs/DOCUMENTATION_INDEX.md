@@ -26,7 +26,13 @@ docs/
 │   └── Comprehensive_testing_doc.md # Testing documentation index
 │
 ├── 🚀 deployment/                  # DevOps & Deployment
-│   └── CI_CD_DOCUMENTATION.md      # GitHub Actions & pipelines
+│   ├── CI_CD_DOCUMENTATION.md      # GitHub Actions & pipelines
+│   ├── HEROKU_SETUP.md             # Heroku platform setup guide
+│   ├── COMPREHENSIVE_DEPLOYMENT_PLAN.md # Complete deployment strategy
+│   ├── ARCHITECTURE_DIAGRAM.md     # System architecture & diagrams
+│   ├── OPERATIONAL_RUNBOOK.md      # Operations & maintenance guide
+│   ├── HOMEWORK_COMPLETION_SUMMARY.md # Implementation status assessment
+│   └── MILESTONE_2_FINAL_SUBMISSION.md # Final submission document
 │
 ├── 📊 project/                     # Project Management
 │   └── task-distribution.md        # Roadmap & task assignments
@@ -64,10 +70,12 @@ docs/
 3. **[Performance Testing](testing/PERFORMANCE_TESTING.md)** - AI service performance
 
 ### 🚀 **DevOps Engineer**
-1. **[CI/CD Documentation](deployment/CI_CD_DOCUMENTATION.md)** - Pipeline management
-2. **[Setup Guide](guides/SETUP.md)** - Infrastructure setup
-3. **[Performance Testing](testing/PERFORMANCE_TESTING.md)** - Load testing setup
-4. **[Testing Guide](testing/TESTING_GUIDE.md)** - Test automation
+1. **[Comprehensive Deployment Plan](deployment/COMPREHENSIVE_DEPLOYMENT_PLAN.md)** - Complete deployment strategy
+2. **[CI/CD Documentation](deployment/CI_CD_DOCUMENTATION.md)** - Pipeline management
+3. **[Operational Runbook](deployment/OPERATIONAL_RUNBOOK.md)** - Daily operations & incident response
+4. **[Heroku Setup Guide](deployment/HEROKU_SETUP.md)** - Platform-specific setup
+5. **[Architecture Diagrams](deployment/ARCHITECTURE_DIAGRAM.md)** - System architecture visualization
+6. **[Performance Testing](testing/PERFORMANCE_TESTING.md)** - Load testing setup
 
 ### 🧪 **QA Engineer**
 1. **[Testing Guide](testing/TESTING_GUIDE.md)** - Complete testing strategy
@@ -105,7 +113,15 @@ docs/
 ### 🚀 **Deployment & Operations**
 | Document | Purpose | Audience |
 |----------|---------|----------|
+| **[Milestone 2 Final Submission](MILESTONE_2_FINAL_SUBMISSION.md)** | Complete final submission for Milestone 2 | Mentors, Evaluators |
+| **[Milestone 2 Validation Report](MILESTONE_2_VALIDATION_REPORT.md)** | Comprehensive validation and compliance verification | Evaluators, QA |
+| **[Milestone 2 Submission Checklist](MILESTONE_2_SUBMISSION_CHECKLIST.md)** | Pre-submission verification and readiness check | Team, Evaluators |
+| **[Comprehensive Deployment Plan](deployment/COMPREHENSIVE_DEPLOYMENT_PLAN.md)** | Complete deployment strategy with Philippine considerations | DevOps, Project Managers |
 | **[CI/CD Documentation](deployment/CI_CD_DOCUMENTATION.md)** | GitHub Actions, pipeline management | DevOps, Developers |
+| **[Heroku Setup Guide](deployment/HEROKU_SETUP.md)** | Platform setup and configuration | DevOps, Developers |
+| **[Architecture Diagrams](deployment/ARCHITECTURE_DIAGRAM.md)** | System architecture and data flow | All technical staff |
+| **[Operational Runbook](deployment/OPERATIONAL_RUNBOOK.md)** | Daily operations, incident response, monitoring | DevOps, SRE, Operations |
+| **[Homework Completion Summary](deployment/HOMEWORK_COMPLETION_SUMMARY.md)** | Implementation status and assessment | Project Managers, Mentors |
 
 ### 📊 **Project Management**
 | Document | Purpose | Audience |
@@ -132,14 +148,23 @@ docs/
 1. [Performance Testing](testing/PERFORMANCE_TESTING.md) - Load testing guide
 2. [Testing Guide](testing/TESTING_GUIDE.md#performance-testing) - Performance testing section
 
+### **Milestone 2 Submission**
+1. [Milestone 2 Final Submission](MILESTONE_2_FINAL_SUBMISSION.md) - Complete final submission document
+2. [Milestone 2 Validation Report](MILESTONE_2_VALIDATION_REPORT.md) - Comprehensive validation results
+3. [Milestone 2 Submission Checklist](MILESTONE_2_SUBMISSION_CHECKLIST.md) - Pre-submission verification
+
 ### **Deployment & CI/CD**
-1. [CI/CD Documentation](deployment/CI_CD_DOCUMENTATION.md) - Pipeline setup
-2. [Setup Guide](guides/SETUP.md) - Production deployment
+1. [Comprehensive Deployment Plan](deployment/COMPREHENSIVE_DEPLOYMENT_PLAN.md) - Complete strategy
+2. [CI/CD Documentation](deployment/CI_CD_DOCUMENTATION.md) - Pipeline setup
+3. [Heroku Setup Guide](deployment/HEROKU_SETUP.md) - Platform configuration
+4. [Architecture Diagrams](deployment/ARCHITECTURE_DIAGRAM.md) - System visualization
+5. [Operational Runbook](deployment/OPERATIONAL_RUNBOOK.md) - Operations guide
 
 ### **Troubleshooting**
-1. [Testing Guide](testing/TESTING_GUIDE.md#troubleshooting) - Test issues
-2. [CI/CD Documentation](deployment/CI_CD_DOCUMENTATION.md#troubleshooting) - Pipeline issues
-3. [Setup Guide](guides/SETUP.md) - Environment issues
+1. [Operational Runbook](deployment/OPERATIONAL_RUNBOOK.md#troubleshooting-guide) - Complete troubleshooting guide
+2. [Testing Guide](testing/TESTING_GUIDE.md#troubleshooting) - Test issues
+3. [CI/CD Documentation](deployment/CI_CD_DOCUMENTATION.md#troubleshooting) - Pipeline issues
+4. [Setup Guide](guides/SETUP.md) - Environment issues
 
 ## 🔄 Document Maintenance
 
