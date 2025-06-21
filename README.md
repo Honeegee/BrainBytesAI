@@ -112,19 +112,22 @@ curl http://localhost:3001
 ## 📚 Documentation
 
 > **📊 [Complete Documentation Index](docs/DOCUMENTATION_INDEX.md)** - Navigate all project documentation
+>
+
 
 ### 🚀 Getting Started
-- **[Setup Guide](guides/SETUP.md)** - Complete installation and configuration
+- **[Setup Guide](docs/guides/SETUP.md)** - Complete installation and configuration
 - **[Project README](README.md)** - This overview document
 
 ### 🔧 Technical References
-- **[API Documentation](technical/API.md)** - Comprehensive API reference
-- **[Database Schema](technical/DATABASE.md)** - Database design and models
-- **[AI Integration](technical/AI_INTEGRATION.md)** - AI service implementation
+- **[API Documentation](docs/technical/API.md)** - Comprehensive API reference
+- **[Database Schema](docs/technical/DATABASE.md)** - Database design and models
+- **[AI Integration](docs/technical/AI_INTEGRATION.md)** - AI service implementation
 
 ### 🧪 Testing & Quality
-- **[Testing Guide](testing/TESTING_GUIDE.md)** - Complete testing strategy
-- **[Performance Testing](testing/PERFORMANCE_TESTING.md)** - Load testing guide
+- **[Testing Guide](docs/testing/TESTING_GUIDE.md)** - Complete testing strategy
+- **[Performance Testing](docs/testing/PERFORMANCE_TESTING.md)** - Load testing guide
+- **[Comprehensive Testing](docs/testing/Comprehensive_testing_doc.md)** - Complete testing documentation
 
 ### 🚀 Deployment & Operations
 - **[Comprehensive Deployment Plan](docs/deployment/COMPREHENSIVE_DEPLOYMENT_PLAN.md)** - Complete deployment strategy
@@ -133,9 +136,15 @@ curl http://localhost:3001
 - **[Architecture Diagrams](docs/deployment/ARCHITECTURE_DIAGRAM.md)** - System architecture visualization
 - **[Operational Runbook](docs/deployment/OPERATIONAL_RUNBOOK.md)** - Operations & maintenance
 
+### 📊 System Diagrams
+- **[System Architecture](docs/diagrams/systemArchitecture.md)** - Complete system design
+- **[Data Flow](docs/diagrams/dataFlow.md)** - Information architecture
+- **[Network Topology](docs/diagrams/networkTopology.md)** - Infrastructure layout
+- **[CI/CD Pipeline](docs/diagrams/cicdPipeline.md)** - Pipeline visualization
+- **[Technology Stack](docs/diagrams/technologyStack.md)** - Tech stack overview
 
 ### 📊 Project Management
-- **[Task Distribution](project/task-distribution.md)** - Roadmap and assignments
+- **[Task Distribution](docs/project/task-distribution.md)** - Roadmap and assignments
 
 ## 👥 Development Team
 
@@ -298,14 +307,17 @@ scripts/final-validation.bat
 - 🟢 **Heroku Deployment**: Production & staging environments operational
 - 🟢 **CI/CD Pipeline**: 3-workflow GitHub Actions pipeline operational
 - 🟢 **Security**: Automated scanning and JWT authentication implemented
-- 🟢 **Documentation**: Comprehensive documentation (3,142+ lines)
+- 🟢 **Documentation**: Comprehensive documentation (3,142+ lines) 
 - 🟡 **Philippine Optimizations**: Documented roadmap, basic responsive design implemented
 
+
+
 ### Implementation Breakdown
-- ✅ **Cloud Environment**: Heroku deployment with MongoDB Atlas (75% complete)
+- ✅ **Cloud Environment**: Heroku deployment with MongoDB Atlas (100% complete)
 - ✅ **Security Hardening**: Automated vulnerability scanning
 - ✅ **CI/CD Pipeline**: Matrix testing, E2E tests, deployment automation
-- ✅ **Documentation**: Architecture diagrams, operational procedures
+- ✅ **Documentation**: Architecture diagrams, operational procedures, accessible via GitHub Pages
+- ✅ **Documentation Accessibility**: All technical docs now properly accessible
 - ⚠️ **Philippine-Specific Features**: Planned enhancements (PWA, offline capability, advanced mobile optimization)
 
 ## 📞 Support
@@ -325,10 +337,12 @@ This project is licensed under the **MIT License** - see the [LICENSE](../LICENS
 ## 🔗 Links
 
 ### Live Environments
-- **🚀 Production Frontend**: [https://brainbytes-frontend-production.herokuapp.com](https://brainbytes-frontend-production.herokuapp.com)
-- **🔧 Production Backend**: [https://brainbytes-backend-production.herokuapp.com](https://brainbytes-backend-production.herokuapp.com)
-- **🤖 Production AI Service**: [https://brainbytes-ai-production.herokuapp.com](https://brainbytes-ai-production.herokuapp.com)
-- **🧪 Staging Environment**: [Staging URLs](docs/deployment/HEROKU_SETUP.md#key-urls)
+- **🚀 Production Frontend**: [https://brainbytes-frontend-production-03d1e6b6b158.herokuapp.com](https://brainbytes-frontend-production-03d1e6b6b158.herokuapp.com)
+- **🔧 Production Backend**: [https://brainbytes-backend-production-d355616d0f1f.herokuapp.com](https://brainbytes-backend-production-d355616d0f1f.herokuapp.com)
+- **🤖 Production AI Service**: [https://brainbytes-ai-production-3833f742ba79.herokuapp.com](https://brainbytes-ai-production-3833f742ba79.herokuapp.com)
+- **🧪 Staging Frontend**: [https://brainbytes-frontend-staging-7593f4655363.herokuapp.com](https://brainbytes-frontend-staging-7593f4655363.herokuapp.com)
+- **🧪 Staging Backend**: [https://brainbytes-backend-staging-de872da2939f.herokuapp.com](https://brainbytes-backend-staging-de872da2939f.herokuapp.com)
+- **🧪 Staging AI Service**: [https://brainbytes-ai-service-staging-4b75c77cf53a.herokuapp.com](https://brainbytes-ai-service-staging-4b75c77cf53a.herokuapp.com)
 
 ### Documentation & Development
 - **🎓 Milestone 2 Final Submission**: [docs/MILESTONE_2_FINAL_SUBMISSION.md](docs/MILESTONE_2_FINAL_SUBMISSION.md)

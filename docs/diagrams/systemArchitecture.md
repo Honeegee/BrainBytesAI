@@ -3,7 +3,7 @@
 ## High-Level Application Flow Diagram
 
 ```mermaid
-graph TB
+graph LR
     subgraph "User Layer"
         U[👤 Users<br/>Philippines Focus]
     end
