@@ -51,7 +51,7 @@ BrainBytes is an innovative AI-powered tutoring platform designed to provide acc
 
 ## 🏛️ Architecture
 
-![System Architecture](architecture.png)
+![System Architecture](docs/architecture.png)
 
 The architecture follows a microservices pattern with three main components:
 - **Frontend Service** (Port 3001): Next.js React application
