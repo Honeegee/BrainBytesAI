@@ -202,7 +202,7 @@ app.get('/api/test', async (req, res) => {
     }
 
     // Test API connection with a simple request
-    const testResponse = await axios.post(
+    await axios.post(
       'https://api.groq.com/openai/v1/chat/completions',
       {
         model: 'deepseek-r1-distill-llama-70b',
@@ -243,9 +243,9 @@ app.get('/', (req, res) => {
     endpoints: {
       health: '/health',
       chat: '/api/chat',
-      test: '/api/test'
+      test: '/api/test',
     },
-    message: 'AI service is running. Use /api/chat for chat functionality.'
+    message: 'AI service is running. Use /api/chat for chat functionality.',
   });
 });
 
