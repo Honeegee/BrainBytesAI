@@ -1,5 +1,77 @@
 {
+  "name": "brainbytes-ai",
+  "version": "1.0.0",
+  "description": "BrainBytesAI - Educational AI Platform with MongoDB Atlas",
+  "scripts": {
+    "dev": "docker-compose up --build",
+    "dev:detached": "docker-compose up -d --build",
+    "stop": "docker-compose down",
+    "clean": "docker-compose down -v --rmi all",
+    "test:atlas": "node scripts/test-atlas-docker-setup.js",
+    "test:atlas:windows": "scripts\\test-atlas-docker-setup.bat",
+    "test:db": "cd backend && node scripts/test-db-connection.js",
+    "test:db:staging": "cd backend && node scripts/test-db-connection.js staging",
+    "test:db:production": "cd backend && node scripts/test-db-connection.js production",
+    "test:cicd": "cd backend && node ../scripts/test-atlas-cicd.js",
+    "staging:up": "docker-compose -f docker-compose.staging.yml up --build",
+    "staging:down": "docker-compose -f docker-compose.staging.yml down",
+    "production:up": "docker-compose -f docker-compose.production.yml up --build",
+    "production:down": "docker-compose -f docker-compose.production.yml down",
+    "logs": "docker-compose logs -f",
+    "logs:backend": "docker-compose logs -f backend",
+    "logs:frontend": "docker-compose logs -f frontend",
+    "logs:ai-service": "docker-compose logs -f ai-service",
+    "lint:all": "npm run lint:frontend && npm run lint:backend && npm run lint:ai-service",
+    "lint:frontend": "cd frontend && npm run lint",
+    "lint:backend": "cd backend && npm run lint",
+    "lint:ai-service": "cd ai-service && npm run lint",
+    "lint:fix:all": "npm run lint:fix:frontend && npm run lint:fix:backend && npm run lint:fix:ai-service",
+    "lint:fix:frontend": "cd frontend && npm run lint:fix",
+    "lint:fix:backend": "cd backend && npm run lint:fix",
+    "lint:fix:ai-service": "cd ai-service && npm run lint:fix",
+    "prettier:all": "npm run prettier:frontend && npm run prettier:backend && npm run prettier:ai-service",
+    "prettier:frontend": "cd frontend && npm run format:check",
+    "prettier:backend": "cd backend && npm run format:check",
+    "prettier:ai-service": "cd ai-service && npm run format:check",
+    "prettier:fix:all": "npm run prettier:fix:frontend && npm run prettier:fix:backend && npm run prettier:fix:ai-service",
+    "prettier:fix:frontend": "cd frontend && npm run format",
+    "prettier:fix:backend": "cd backend && npm run format",
+    "prettier:fix:ai-service": "cd ai-service && npm run format",
+    "test:all": "npm run test:frontend && npm run test:backend && npm run test:ai-service && npm run test:e2e",
+    "test:frontend": "cd frontend && npm run test",
+    "test:backend": "cd backend && npm run test",
+    "test:ai-service": "cd ai-service && npm run test",
+    "test:e2e": "cd e2e-tests && npm run test",
+    "test:all:coverage": "npm run test:frontend:coverage && npm run test:backend:coverage && npm run test:ai-service:coverage",
+    "test:frontend:coverage": "cd frontend && npm run test:coverage",
+    "test:backend:coverage": "cd backend && npm run test:coverage",
+    "test:ai-service:coverage": "cd ai-service && npm run test:coverage",
+    "audit:all": "npm run audit:backend && npm run audit:ai-service",
+    "audit:backend": "cd backend && npm run security:audit",
+    "audit:ai-service": "cd ai-service && npm run security:audit",
+    "audit:fix:all": "npm run audit:fix:backend && npm run audit:fix:ai-service",
+    "audit:fix:backend": "cd backend && npm run security:fix",
+    "audit:fix:ai-service": "cd ai-service && npm run security:fix"
+  },
   "dependencies": {
     "react-hot-toast": "^2.5.2"
-  }
+  },
+  "devDependencies": {},
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/your-username/brainbytes-ai.git"
+  },
+  "keywords": [
+    "education",
+    "ai",
+    "mongodb-atlas",
+    "docker",
+    "nodejs",
+    "nextjs"
+  ],
+  "author": "BrainBytesAI Team",
+  "license": "MIT"
 }

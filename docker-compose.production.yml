@@ -99,44 +99,11 @@ services:
     networks:
       - app-network
     depends_on:
-      - mongo
       - ai-service
+      - redis
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-
-  # MongoDB container with replica set for production
-  mongo:
-    image: mongo:4.4
-    command: mongod --replSet rs0 --bind_ip_all
-    ports:
-     - "27017:27017"
-    environment:
-      - MONGO_INITDB_DATABASE=brainbytes_production
-      - MONGO_INITDB_ROOT_USERNAME=${PRODUCTION_MONGO_USER}
-      - MONGO_INITDB_ROOT_PASSWORD=${PRODUCTION_MONGO_PASSWORD}
-    deploy:
-      resources:
-        limits:
-          memory: 4G 
-        reservations:
-          memory: 2G
-    volumes:
-      - mongo-production-data:/data/db
-      - mongo-config:/data/configdb
-    networks:
-      - app-network
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -202,11 +169,7 @@ services:
         max-size: "10m"
         max-file: "3"
 
-# Define volumes for persistent data
+# Define volumes for persistent data (MongoDB now uses Atlas)
 volumes:
-  mongo-production-data:
-    driver: local
-  mongo-config:
-    driver: local
   redis-production-data:
     driver: local

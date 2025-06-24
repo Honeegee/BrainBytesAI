@@ -1,0 +1,17 @@
+FROM node:18-alpine
+
+WORKDIR /usr/src/app
+
+# Install dependencies
+COPY package*.json ./
+RUN npm install
+
+# Copy app source
+COPY . .
+
+# Set environment variables for staging
+ENV NODE_ENV=staging
+ENV PORT=3000
+
+# Add error handling for node process
+CMD ["sh", "-c", "node server.js || (echo 'Node process crashed' && exit 1)"]

@@ -123,7 +123,7 @@ function Chat() {
 
     // Cleanup interval on unmount
     return () => clearInterval(interval);
-  }, [activeChatId, router]);
+  }, [activeChatId, router, chatSubjects]);
 
   useEffect(() => {
     let mounted = true;
@@ -198,7 +198,7 @@ function Chat() {
     return () => {
       mounted = false;
     };
-  }, [refreshSubjectsKey]);
+  }, [refreshSubjectsKey, activeChatId, selectedSubject]);
 
   // Refresh subjects list every 30 seconds
   useEffect(() => {
@@ -307,7 +307,7 @@ function Chat() {
         isFirstMessage: isNewChat,
       };
 
-      console.log('Sending message with data:', messageData); // Debug log
+      // console.log('Sending message with data:', messageData); // Debug log
 
       // Send message to backend
       const response = await api.post(`/api/messages`, messageData);

@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import Image from 'next/image';
 
 /**
  * Converts markdown text to HTML with enhanced formatting options
@@ -762,7 +763,7 @@ const ThemedMarkdownContent = ({ text, theme = 'dark', config = {} }) => {
     // This is a simplified approach - a more robust solution would modify markdownToHtml
 
     return html;
-  }, [text, theme]);
+  }, [text]);
 
   // Additional classes based on configuration
   const containerClasses = [
@@ -1021,10 +1022,12 @@ const CompleteChatMessage = ({
       <div className='flex items-center mb-2'>
         {avatar && (
           <div className='w-8 h-8 rounded-full overflow-hidden mr-3'>
-            <img
+            <Image
               src={avatar}
               alt={`${sender}'s avatar`}
               className='w-full h-full object-cover'
+              width={32}
+              height={32}
             />
           </div>
         )}

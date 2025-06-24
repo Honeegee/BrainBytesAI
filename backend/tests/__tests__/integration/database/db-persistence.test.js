@@ -1,83 +1,75 @@
 const mongoose = require('mongoose');
-const { exec } = require('child_process');
-const util = require('util');
-const execPromise = util.promisify(exec);
 const Message = require('../../../../models/message');
 
-// This test verifies that data persists in MongoDB across container restarts
-// Note: This test requires Docker to be running and the database container to be up
+// This test verifies that data persists in MongoDB Atlas across connections
+// and database operations work correctly with Atlas test database.
 
-// Connection URI from environment or use default
-const MONGODB_URI =
-  process.env.MONGODB_URI || 'mongodb://localhost:27017/brainbytes';
+// Skip these tests if SKIP_DOCKER_TESTS is set (CI environment)
+const shouldSkipAtlasTests = process.env.SKIP_DOCKER_TESTS === 'true';
 
-// Helper to restart the MongoDB container
-async function restartMongoContainer() {
-  try {
-    console.log('Finding MongoDB container...');
-    const { stdout: containerId } = await execPromise(
-      'docker ps -q --filter "name=mongodb"'
-    );
-
-    if (!containerId.trim()) {
-      throw new Error(
-        'MongoDB container not found. Make sure it is running with a name containing "mongodb"'
-      );
-    }
-
-    console.log(`Restarting MongoDB container ${containerId.trim()}...`);
-    await execPromise(`docker restart ${containerId.trim()}`);
-
-    // Wait for MongoDB to restart (adjust timing as needed)
-    console.log('Waiting for MongoDB to restart...');
-    await new Promise(resolve => setTimeout(resolve, 5000));
-
-    return true;
-  } catch (error) {
-    console.error('Error restarting MongoDB container:', error);
-    return false;
-  }
-}
+// Use Atlas test database URI
+const TEST_DATABASE_URL =
+  process.env.TEST_DATABASE_URL ||
+  process.env.DATABASE_URL ||
+  'mongodb+srv://honeygden:xGeo64nUbYhtK5UM@brainbytes.bpmgicl.mongodb.net/brainbytes_test?retryWrites=true&w=majority&appName=BrainBytes';
 
 describe('Database Persistence Tests', () => {
-  // Skip all tests if SKIP_DOCKER_TESTS is set
-  if (process.env.SKIP_DOCKER_TESTS) {
-    test.skip('Skipping all Docker-dependent tests', () => {
+  // Skip all tests in this suite if SKIP_DOCKER_TESTS is set
+  beforeAll(() => {
+    if (shouldSkipAtlasTests) {
       console.log(
-        'SKIP_DOCKER_TESTS is set, skipping database persistence tests'
+        'Skipping Atlas persistence tests due to SKIP_DOCKER_TESTS=true'
       );
-    });
-    return;
-  }
-
+    }
+  });
   // Unique test data identifiers
   const testId = `test-${Date.now()}`;
-  const testUserId = '6123456789abcdef12345678'; // Must match a user ID in your DB or create one
+  const testUserId = '6123456789abcdef12345678'; // Test user ID
 
-  // Connect to the actual database (not in-memory)
+  // Connect to Atlas test database
   beforeAll(async () => {
-    await mongoose.connect(MONGODB_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-      useFindAndModify: false,
-      useCreateIndex: true,
-      serverSelectionTimeoutMS: 5000, // 5 seconds timeout
+    if (shouldSkipAtlasTests) {
+      console.log(
+        'Skipping Atlas connection setup due to SKIP_DOCKER_TESTS=true'
+      );
+      return;
+    }
+
+    // Close any existing connections
+    if (mongoose.connection.readyState !== 0) {
+      await mongoose.disconnect();
+    }
+
+    await mongoose.connect(TEST_DATABASE_URL, {
+      serverSelectionTimeoutMS: 10000, // 10 seconds timeout for Atlas
     });
+
+    console.log('Connected to Atlas test database for persistence tests');
 
     // Clean up any previous test data
     await Message.deleteMany({ chatId: { $regex: /^test-/ } });
   });
 
   afterAll(async () => {
+    if (shouldSkipAtlasTests) {
+      return;
+    }
+
     // Clean up test data
     await Message.deleteMany({ chatId: { $regex: /^test-/ } });
     await mongoose.connection.close();
   });
 
-  test('Data should persist across MongoDB container restarts', async () => {
+  test('Data should persist in Atlas across disconnection/reconnection', async () => {
+    if (shouldSkipAtlasTests) {
+      console.log(
+        'Skipping Atlas persistence test due to SKIP_DOCKER_TESTS=true'
+      );
+      return;
+    }
     // Step 1: Create test data
     const testMessage = new Message({
-      text: `Persistence test message ${testId}`,
+      text: `Atlas persistence test message ${testId}`,
       chatId: `test-chat-${testId}`,
       userId: testUserId,
       isAiResponse: false,
@@ -92,41 +84,34 @@ describe('Database Persistence Tests', () => {
     expect(savedMessage).toBeTruthy();
     expect(savedMessage.text).toEqual(testMessage.text);
 
-    // Step 2: Restart MongoDB container
-    console.log('Restarting MongoDB container...');
-    const restarted = await restartMongoContainer();
+    // Step 2: Disconnect and reconnect to Atlas to simulate connection reset
+    console.log('Disconnecting from Atlas...');
+    await mongoose.connection.close();
 
-    // Skip the rest of the test if container restart failed
-    if (!restarted) {
-      console.warn('Container restart failed, skipping verification');
-      return;
-    }
+    console.log('Reconnecting to Atlas...');
+    await mongoose.connect(TEST_DATABASE_URL, {
+      serverSelectionTimeoutMS: 10000,
+    });
 
-    // Step 3: Reconnect to MongoDB after restart
-    try {
-      await mongoose.connection.close();
-      await mongoose.connect(MONGODB_URI, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-        useFindAndModify: false,
-        useCreateIndex: true,
-        serverSelectionTimeoutMS: 10000, // Longer timeout after restart
-      });
-    } catch (error) {
-      console.error('Failed to reconnect to MongoDB after restart:', error);
-      throw error;
-    }
-
-    // Step 4: Verify data still exists after restart
+    // Step 3: Verify data still exists after reconnection
     const retrievedMessage = await Message.findById(testMessage._id);
     expect(retrievedMessage).toBeTruthy();
     expect(retrievedMessage.text).toEqual(testMessage.text);
+    expect(retrievedMessage.chatId).toEqual(testMessage.chatId);
+    expect(retrievedMessage.userId).toEqual(testMessage.userId);
+
     console.log(
-      'Successfully verified data persistence across container restart'
+      'Successfully verified data persistence across Atlas reconnection'
     );
   });
 
-  test('MongoDB should handle multiple records with persistence', async () => {
+  test('Atlas should handle multiple records with persistence', async () => {
+    if (shouldSkipAtlasTests) {
+      console.log(
+        'Skipping Atlas multiple records test due to SKIP_DOCKER_TESTS=true'
+      );
+      return;
+    }
     // Create multiple test messages
     const chatId = `test-chat-multi-${testId}`;
     const messageCount = 5;
@@ -144,48 +129,126 @@ describe('Database Persistence Tests', () => {
 
     // Save all messages
     await Message.insertMany(messages);
-    console.log(`${messageCount} test messages created`);
+    console.log(`${messageCount} test messages created in Atlas`);
 
     // Verify messages were saved
-    const savedMessages = await Message.find({ chatId }).sort({ createdAt: 1 });
-    expect(savedMessages.length).toEqual(messageCount);
+    const initialMessages = await Message.find({ chatId }).sort({
+      createdAt: 1,
+    });
+    expect(initialMessages.length).toEqual(messageCount);
 
-    // Restart MongoDB container
-    const restarted = await restartMongoContainer();
-    if (!restarted) {
-      console.warn('Container restart failed, skipping verification');
-      return;
-    }
-
-    // Reconnect to MongoDB after restart
+    // Test Atlas transaction and rollback capabilities
+    const session = await mongoose.startSession();
     try {
-      await mongoose.connection.close();
-      await mongoose.connect(MONGODB_URI, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-        useFindAndModify: false,
-        useCreateIndex: true,
-        serverSelectionTimeoutMS: 10000,
+      await session.withTransaction(async () => {
+        // Add another message in transaction
+        const transactionMessage = new Message({
+          text: `Transaction test message for ${testId}`,
+          chatId,
+          userId: testUserId,
+          isAiResponse: false,
+          createdAt: new Date(),
+        });
+        await transactionMessage.save({ session });
+
+        // Verify transaction message exists within transaction
+        const transactionMessages = await Message.find({ chatId }).session(
+          session
+        );
+        expect(transactionMessages.length).toEqual(messageCount + 1);
       });
-    } catch (error) {
-      console.error('Failed to reconnect to MongoDB after restart:', error);
-      throw error;
+    } finally {
+      await session.endSession();
     }
 
-    // Verify all messages still exist after restart
+    // Verify transaction was committed
+    const finalMessages = await Message.find({ chatId }).sort({ createdAt: 1 });
+    expect(finalMessages.length).toEqual(messageCount + 1);
+
+    // Disconnect and reconnect to test persistence across connections
+    await mongoose.connection.close();
+    await mongoose.connect(TEST_DATABASE_URL, {
+      serverSelectionTimeoutMS: 10000,
+    });
+
+    // Verify all messages still exist after reconnection
     const retrievedMessages = await Message.find({ chatId }).sort({
       createdAt: 1,
     });
-    expect(retrievedMessages.length).toEqual(messageCount);
+    expect(retrievedMessages.length).toEqual(messageCount + 1);
 
-    // Check each message's content
+    // Separate original messages from transaction message
+    const originalMessages = retrievedMessages.filter(msg =>
+      msg.text.includes('Multi-persistence test message')
+    );
+    const transactionMessages = retrievedMessages.filter(msg =>
+      msg.text.includes('Transaction test message')
+    );
+
+    expect(originalMessages.length).toEqual(messageCount);
+    expect(transactionMessages.length).toEqual(1);
+
+    // Check each original message's content
     for (let i = 0; i < messageCount; i++) {
-      expect(retrievedMessages[i].text).toEqual(messages[i].text);
-      expect(retrievedMessages[i].isAiResponse).toEqual(
+      expect(originalMessages[i].text).toEqual(messages[i].text);
+      expect(originalMessages[i].isAiResponse).toEqual(
         messages[i].isAiResponse
       );
     }
 
-    console.log('Successfully verified multi-message persistence');
+    // Check transaction message
+    expect(transactionMessages[0].text).toContain('Transaction test message');
+
+    console.log(
+      'Successfully verified multi-message persistence and transactions in Atlas'
+    );
+  });
+
+  test('Atlas should handle concurrent operations correctly', async () => {
+    if (shouldSkipAtlasTests) {
+      console.log(
+        'Skipping Atlas concurrent operations test due to SKIP_DOCKER_TESTS=true'
+      );
+      return;
+    }
+    const concurrentChatId = `test-concurrent-${testId}`;
+    const operationCount = 10;
+
+    // Create concurrent write operations
+    const writePromises = [];
+    for (let i = 0; i < operationCount; i++) {
+      writePromises.push(
+        Message.create({
+          text: `Concurrent message ${i} for ${testId}`,
+          chatId: concurrentChatId,
+          userId: testUserId,
+          isAiResponse: i % 3 === 0,
+          createdAt: new Date(Date.now() + i * 100),
+        })
+      );
+    }
+
+    // Execute all writes concurrently
+    const results = await Promise.all(writePromises);
+    expect(results.length).toEqual(operationCount);
+
+    // Verify all messages were saved correctly
+    const concurrentMessages = await Message.find({
+      chatId: concurrentChatId,
+    }).sort({ createdAt: 1 });
+    expect(concurrentMessages.length).toEqual(operationCount);
+
+    // Test concurrent reads
+    const readPromises = [];
+    for (let i = 0; i < 5; i++) {
+      readPromises.push(Message.find({ chatId: concurrentChatId }));
+    }
+
+    const readResults = await Promise.all(readPromises);
+    readResults.forEach(result => {
+      expect(result.length).toEqual(operationCount);
+    });
+
+    console.log('Successfully verified concurrent operations in Atlas');
   });
 });

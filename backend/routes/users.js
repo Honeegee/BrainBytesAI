@@ -41,7 +41,7 @@ router.get('/:userId/activity', async (req, res) => {
 
     // Get recent messages
     const recentMessages = await Message.find({
-      userId: mongoose.Types.ObjectId(req.user._id),
+      userId: new mongoose.Types.ObjectId(req.user._id),
       isAiResponse: false, // Only show user messages in recent activity
     })
       .sort({ createdAt: -1 })
@@ -50,7 +50,7 @@ router.get('/:userId/activity', async (req, res) => {
 
     // Get user's learning materials grouped by subject
     const learningMaterials = await LearningMaterial.aggregate([
-      { $match: { userId: mongoose.Types.ObjectId(req.user._id) } },
+      { $match: { userId: new mongoose.Types.ObjectId(req.user._id) } },
       {
         $group: {
           _id: '$subject',

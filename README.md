@@ -2,7 +2,11 @@
 
 [![CI/CD Pipeline](https://github.com/Honeegee/BrainBytesAI/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/Honeegee/BrainBytesAI/actions/workflows/ci-cd.yml)
 [![Code Quality & Security](https://github.com/Honeegee/BrainBytesAI/actions/workflows/code-quality.yml/badge.svg)](https://github.com/Honeegee/BrainBytesAI/actions/workflows/code-quality.yml)
-[![Deploy to Environments](https://github.com/Honeegee/BrainBytesAI/actions/workflows/deploy.yml/badge.svg)](https://github.com/Honeegee/BrainBytesAI/actions/workflows/deploy.yml)
+[![Deploy to Heroku](https://github.com/Honeegee/BrainBytesAI/actions/workflows/deploy-heroku.yml/badge.svg)](https://github.com/Honeegee/BrainBytesAI/actions/workflows/deploy-heroku.yml)
+
+> **🎓 Milestone 2: CI/CD Implementation and Cloud Deployment - COMPLETE**
+> **📋 [Final Submission Document](docs/MILESTONE_2_FINAL_SUBMISSION.md)**
+> **🔍 Run Validation**: `bash scripts/final-validation.sh` or `scripts/final-validation.bat`
 
 ## 📋 Overview
 
@@ -40,13 +44,14 @@ BrainBytes is an innovative AI-powered tutoring platform designed to provide acc
 ### Infrastructure
 - **Containerization**: Docker with multi-stage builds
 - **Orchestration**: Docker Compose
-- **Cloud Platform**: Amazon Web Services (AWS)
-- **CI/CD**: GitHub Actions
-- **Monitoring**: Prometheus & Grafana
+- **Cloud Platform**: Heroku (Production & Staging)
+- **Database**: MongoDB Atlas (Asia-Pacific region)
+- **CI/CD**: GitHub Actions (3-workflow pipeline)
+- **Security**: Automated vulnerability scanning
 
 ## 🏛️ Architecture
 
-![System Architecture](architecture.png)
+![System Architecture](docs/architecture.png)
 
 The architecture follows a microservices pattern with three main components:
 - **Frontend Service** (Port 3001): Next.js React application
@@ -106,26 +111,40 @@ curl http://localhost:3001
 
 ## 📚 Documentation
 
-> **📊 [Complete Documentation Index](DOCUMENTATION_INDEX.md)** - Navigate all project documentation
+> **📊 [Complete Documentation Index](docs/DOCUMENTATION_INDEX.md)** - Navigate all project documentation
+>
+
 
 ### 🚀 Getting Started
-- **[Setup Guide](guides/SETUP.md)** - Complete installation and configuration
+- **[Setup Guide](docs/guides/SETUP.md)** - Complete installation and configuration
 - **[Project README](README.md)** - This overview document
 
 ### 🔧 Technical References
-- **[API Documentation](technical/API.md)** - Comprehensive API reference
-- **[Database Schema](technical/DATABASE.md)** - Database design and models
-- **[AI Integration](technical/AI_INTEGRATION.md)** - AI service implementation
+- **[API Documentation](docs/technical/API.md)** - Comprehensive API reference
+- **[Database Schema](docs/technical/DATABASE.md)** - Database design and models
+- **[AI Integration](docs/technical/AI_INTEGRATION.md)** - AI service implementation
 
 ### 🧪 Testing & Quality
-- **[Testing Guide](testing/TESTING_GUIDE.md)** - Complete testing strategy
-- **[Performance Testing](testing/PERFORMANCE_TESTING.md)** - Load testing guide
+- **[Testing Guide](docs/testing/TESTING_GUIDE.md)** - Complete testing strategy
+- **[Performance Testing](docs/testing/PERFORMANCE_TESTING.md)** - Load testing guide
+- **[Comprehensive Testing](docs/testing/Comprehensive_testing_doc.md)** - Complete testing documentation
 
 ### 🚀 Deployment & Operations
-- **[CI/CD Documentation](deployment/CI_CD_DOCUMENTATION.md)** - GitHub Actions workflows
+- **[Comprehensive Deployment Plan](docs/deployment/COMPREHENSIVE_DEPLOYMENT_PLAN.md)** - Complete deployment strategy
+- **[CI/CD Documentation](docs/deployment/CI_CD_DOCUMENTATION.md)** - GitHub Actions workflows
+- **[Heroku Setup Guide](docs/deployment/HEROKU_SETUP.md)** - Platform-specific setup
+- **[Architecture Diagrams](docs/deployment/ARCHITECTURE_DIAGRAM.md)** - System architecture visualization
+- **[Operational Runbook](docs/deployment/OPERATIONAL_RUNBOOK.md)** - Operations & maintenance
+
+### 📊 System Diagrams
+- **[System Architecture](docs/diagrams/systemArchitecture.md)** - Complete system design
+- **[Data Flow](docs/diagrams/dataFlow.md)** - Information architecture
+- **[Network Topology](docs/diagrams/networkTopology.md)** - Infrastructure layout
+- **[CI/CD Pipeline](docs/diagrams/cicdPipeline.md)** - Pipeline visualization
+- **[Technology Stack](docs/diagrams/technologyStack.md)** - Tech stack overview
 
 ### 📊 Project Management
-- **[Task Distribution](project/task-distribution.md)** - Roadmap and assignments
+- **[Task Distribution](docs/project/task-distribution.md)** - Roadmap and assignments
 
 ## 👥 Development Team
 
@@ -159,7 +178,8 @@ npm run test:all
 
 # Code quality checks
 npm run lint:all
-npm run format:all
+npm run prettier:all
+npm run audit:all
 ```
 
 ### Testing Strategy
@@ -180,6 +200,36 @@ Our comprehensive testing approach includes:
 - **Testing**: Comprehensive test coverage required
 - **Security**: Regular vulnerability scanning
 - **Documentation**: Inline comments and README updates
+
+### Available Scripts
+
+| Command | Description | Usage |
+|---------|-------------|-------|
+| [`npm run test:all`](package.json) | Run all tests across services | Runs unit, integration, and e2e tests |
+| [`npm run lint:all`](package.json) | Lint all code across services | Checks code style and potential issues |
+| [`npm run prettier:all`](package.json) | Check code formatting across services | Validates Prettier formatting compliance |
+| [`npm run prettier:fix:all`](package.json) | Fix code formatting across services | Automatically formats code with Prettier |
+| [`npm run audit:all`](package.json) | Security audit all services | Checks for security vulnerabilities |
+
+#### Prettier Commands
+
+```bash
+# Check formatting across all services
+npm run prettier:all
+
+# Fix formatting issues across all services
+npm run prettier:fix:all
+
+# Individual service formatting
+npm run prettier:frontend    # Check frontend formatting
+npm run prettier:backend     # Check backend formatting
+npm run prettier:ai-service  # Check AI service formatting
+
+# Individual service formatting fixes
+npm run prettier:fix:frontend    # Fix frontend formatting
+npm run prettier:fix:backend     # Fix backend formatting
+npm run prettier:fix:ai-service  # Fix AI service formatting
+```
 
 ## 📊 Performance Benchmarks
 
@@ -209,6 +259,7 @@ Our comprehensive testing approach includes:
    ```bash
    npm run test:all
    npm run lint:all
+   npm run prettier:all
    npm run audit:all
    ```
 
@@ -240,21 +291,34 @@ Our comprehensive testing approach includes:
 ### Reporting Security Issues
 For security vulnerabilities, please email: **security@brainbytes.app**
 
-## 📈 Project Status
 
-### Current Status
-- 🟢 **Development**: Active feature development
-- 🟢 **Testing**: Comprehensive test coverage (80%+)
-- 🟢 **CI/CD**: Automated pipeline operational
-- 🟢 **Documentation**: Complete and up-to-date
-- 🟢 **Performance**: Meeting all benchmarks
 
-### Recent Updates
-- ✅ Complete documentation reorganization
-- ✅ Enhanced testing strategy implementation
-- ✅ Performance optimization completed
-- ✅ Security audit passed
-- ✅ CI/CD pipeline enhanced
+### **🔍 Pre-Submission Validation**
+```bash
+# Linux/macOS
+bash scripts/final-validation.sh
+
+# Windows
+scripts/final-validation.bat
+```
+
+### Current Implementation Status
+- 🟢 **Core Platform**: Fully implemented and deployed
+- 🟢 **Heroku Deployment**: Production & staging environments operational
+- 🟢 **CI/CD Pipeline**: 3-workflow GitHub Actions pipeline operational
+- 🟢 **Security**: Automated scanning and JWT authentication implemented
+- 🟢 **Documentation**: Comprehensive documentation (3,142+ lines) 
+- 🟡 **Philippine Optimizations**: Documented roadmap, basic responsive design implemented
+
+
+
+### Implementation Breakdown
+- ✅ **Cloud Environment**: Heroku deployment with MongoDB Atlas (100% complete)
+- ✅ **Security Hardening**: Automated vulnerability scanning
+- ✅ **CI/CD Pipeline**: Matrix testing, E2E tests, deployment automation
+- ✅ **Documentation**: Architecture diagrams, operational procedures, accessible via GitHub Pages
+- ✅ **Documentation Accessibility**: All technical docs now properly accessible
+- ⚠️ **Philippine-Specific Features**: Planned enhancements (PWA, offline capability, advanced mobile optimization)
 
 ## 📞 Support
 
@@ -264,10 +328,7 @@ For security vulnerabilities, please email: **security@brainbytes.app**
 - **💬 Discussions**: Use [GitHub Discussions](https://github.com/Honeegee/BrainBytesAI/discussions) for questions
 - **📧 Email**: team@brainbytes.app
 
-### Community
-- **Discord Server**: [Join our community](https://discord.gg/brainbytes) (Coming Soon)
-- **Twitter**: [@BrainBytesAI](https://twitter.com/brainbytesai) (Coming Soon)
-- **Blog**: [Development Blog](https://blog.brainbytes.app) (Coming Soon)
+
 
 ## 📄 License
 
@@ -275,10 +336,20 @@ This project is licensed under the **MIT License** - see the [LICENSE](../LICENS
 
 ## 🔗 Links
 
-- **🏠 Homepage**: [https://brainbytes.app](https://brainbytes.app) (Coming Soon)
-- **📊 GitHub**: [https://github.com/Honeegee/BrainBytesAI](https://github.com/Honeegee/BrainBytesAI)
-- **📋 Documentation**: [Documentation Index](DOCUMENTATION_INDEX.md)
-- **🚀 Live Demo**: [https://demo.brainbytes.app](https://demo.brainbytes.app) (Coming Soon)
+### Live Environments
+- **🚀 Production Frontend**: [https://brainbytes-frontend-production-03d1e6b6b158.herokuapp.com](https://brainbytes-frontend-production-03d1e6b6b158.herokuapp.com)
+- **🔧 Production Backend**: [https://brainbytes-backend-production-d355616d0f1f.herokuapp.com](https://brainbytes-backend-production-d355616d0f1f.herokuapp.com)
+- **🤖 Production AI Service**: [https://brainbytes-ai-production-3833f742ba79.herokuapp.com](https://brainbytes-ai-production-3833f742ba79.herokuapp.com)
+- **🧪 Staging Frontend**: [https://brainbytes-frontend-staging-7593f4655363.herokuapp.com](https://brainbytes-frontend-staging-7593f4655363.herokuapp.com)
+- **🧪 Staging Backend**: [https://brainbytes-backend-staging-de872da2939f.herokuapp.com](https://brainbytes-backend-staging-de872da2939f.herokuapp.com)
+- **🧪 Staging AI Service**: [https://brainbytes-ai-service-staging-4b75c77cf53a.herokuapp.com](https://brainbytes-ai-service-staging-4b75c77cf53a.herokuapp.com)
+
+### Documentation & Development
+- **🎓 Milestone 2 Final Submission**: [docs/MILESTONE_2_FINAL_SUBMISSION.md](docs/MILESTONE_2_FINAL_SUBMISSION.md)
+- **📊 GitHub Repository**: [https://github.com/Honeegee/BrainBytesAI](https://github.com/Honeegee/BrainBytesAI)
+- **📋 Complete Documentation**: [Documentation Index](docs/DOCUMENTATION_INDEX.md)
+- **⚙️ GitHub Actions**: [CI/CD Workflows](https://github.com/Honeegee/BrainBytesAI/actions)
+
 
 ---
 

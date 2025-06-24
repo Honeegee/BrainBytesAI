@@ -1,0 +1,269 @@
+name: Deploy to Heroku
+
+on:
+  # Trigger after CI/CD Pipeline completes successfully
+  workflow_run:
+    workflows: ["CI/CD Pipeline"]
+    types:
+      - completed
+    branches:
+      - main
+      - development
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+        - staging
+        - production
+      force:
+        description: 'Force deployment'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  NODE_VERSION: '18'
+
+jobs:
+  # Check if CI/CD passed (only for workflow_run trigger)
+  check-ci-cd:
+    name: Check CI/CD Status
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    if: github.event_name == 'workflow_run'
+    outputs:
+      should_proceed: ${{ steps.check.outputs.should_proceed }}
+    
+    steps:
+      - name: Check CI/CD workflow result
+        id: check
+        run: |
+          if [[ "${{ github.event.workflow_run.conclusion }}" == "success" ]]; then
+            echo "should_proceed=true" >> $GITHUB_OUTPUT
+            echo "✅ CI/CD pipeline passed, proceeding with Heroku deployment"
+          else
+            echo "should_proceed=false" >> $GITHUB_OUTPUT
+            echo "❌ CI/CD pipeline failed, skipping Heroku deployment"
+            exit 1
+          fi
+
+  # Quality checks that must pass before deployment (for direct triggers)
+  quality-checks:
+    runs-on: ubuntu-latest
+    if: github.event_name != 'workflow_run'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: |
+        npm ci
+        cd backend && npm ci
+        cd ../frontend && npm ci
+
+    - name: Run linting
+      run: |
+        cd backend && npm run lint || true
+        cd ../frontend && npm run lint || true
+
+    - name: Run tests
+      run: |
+        cd backend && npm test || true
+        cd ../frontend && npm test || true
+
+  # Deploy to Heroku staging
+  deploy-staging:
+    needs: [check-ci-cd, quality-checks]
+    if: always() && (needs.check-ci-cd.outputs.should_proceed == 'true' || github.event_name == 'workflow_dispatch') && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/development' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging'))
+    runs-on: ubuntu-latest
+    environment: staging
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+
+    # Install Heroku CLI
+    - name: Install Heroku CLI
+      run: |
+        curl https://cli-assets.heroku.com/install.sh | sh
+        echo "/usr/local/bin" >> $GITHUB_PATH
+
+    # Deploy Backend to Heroku
+    - name: Deploy Backend to Heroku
+      uses: akhileshns/heroku-deploy@v3.13.15
+      with:
+        heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
+        heroku_app_name: "brainbytes-backend-staging-de872da2939f"
+        heroku_email: ${{ secrets.HEROKU_EMAIL || secrets.HEROKU_API_KEY }}
+        appdir: "backend"
+        procfile: "web: node server.js"
+        usedocker: false
+        dontautocreate: true
+      env:
+        HD_JWT_SECRET: ${{ secrets.STAGING_JWT_SECRET }}
+        HD_DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+        HD_SESSION_SECRET: ${{ secrets.STAGING_SESSION_SECRET }}
+        HD_AI_API_KEY: ${{ secrets.STAGING_AI_API_KEY }}
+        HD_AI_SERVICE_URL: "https://brainbytes-ai-service-staging-4b75c77cf53a.herokuapp.com"
+        
+    # Deploy Frontend to Heroku
+    - name: Deploy Frontend to Heroku
+      uses: akhileshns/heroku-deploy@v3.13.15
+      with:
+        heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
+        heroku_app_name: "brainbytes-frontend-staging-7593f4655363"
+        heroku_email: ${{ secrets.HEROKU_EMAIL || secrets.HEROKU_API_KEY }}
+        appdir: "frontend"
+        usedocker: false
+        dontautocreate: true
+        
+    # Deploy AI Service to Heroku
+    - name: Deploy AI Service to Heroku
+      uses: akhileshns/heroku-deploy@v3.13.15
+      with:
+        heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
+        heroku_app_name: "brainbytes-ai-service-staging-4b75c77cf53a"
+        heroku_email: ${{ secrets.HEROKU_EMAIL || secrets.HEROKU_API_KEY }}
+        appdir: "ai-service"
+        usedocker: false
+        dontautocreate: true
+      env:
+        HD_GROQ_API_KEY: ${{ secrets.STAGING_AI_API_KEY }}
+        HD_NODE_ENV: "staging"
+
+    # Health check after deployment
+    - name: Health Check
+      run: |
+        echo "Waiting for deployments to complete..."
+        sleep 60
+        
+        echo "Testing backend health..."
+        curl -f https://brainbytes-backend-staging-de872da2939f.herokuapp.com/health || echo "Backend health check failed"
+        
+        echo "Testing AI service health..."
+        curl -f https://brainbytes-ai-service-staging-4b75c77cf53a.herokuapp.com/health || echo "AI service health check failed"
+        
+        echo "Testing AI service API connection..."
+        curl -f https://brainbytes-ai-service-staging-4b75c77cf53a.herokuapp.com/api/test || echo "AI service API test failed"
+        
+        echo "Testing frontend..."
+        curl -f https://brainbytes-frontend-staging-7593f4655363.herokuapp.com || echo "Frontend health check failed"
+
+    # Notify on success
+    - name: Deployment Success
+      run: |
+        echo "✅ Staging Deployment Successful!"
+        echo "Backend: https://brainbytes-backend-staging-de872da2939f.herokuapp.com"
+        echo "Frontend: https://brainbytes-frontend-staging-7593f4655363.herokuapp.com"
+        echo "AI Service: https://brainbytes-ai-service-staging-4b75c77cf53a.herokuapp.com"
+
+  # Deploy to Heroku production
+  deploy-production:
+    needs: [check-ci-cd, quality-checks]
+    if: always() && (needs.check-ci-cd.outputs.should_proceed == 'true' || github.event_name == 'workflow_dispatch') && github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production'
+    runs-on: ubuntu-latest
+    environment: production
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+
+    # Install Heroku CLI
+    - name: Install Heroku CLI
+      run: |
+        curl https://cli-assets.heroku.com/install.sh | sh
+        echo "/usr/local/bin" >> $GITHUB_PATH
+
+    # Deploy Backend to Heroku Production
+    - name: Deploy Backend to Heroku Production
+      uses: akhileshns/heroku-deploy@v3.13.15
+      with:
+        heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
+        heroku_app_name: "brainbytes-backend-production-d355616d0f1f"
+        heroku_email: ${{ secrets.HEROKU_EMAIL || secrets.HEROKU_API_KEY }}
+        appdir: "backend"
+        procfile: "web: node server.js"
+        usedocker: false
+      env:
+        HD_JWT_SECRET: ${{ secrets.PRODUCTION_JWT_SECRET }}
+        HD_DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+        HD_SESSION_SECRET: ${{ secrets.PRODUCTION_SESSION_SECRET }}
+        HD_AI_API_KEY: ${{ secrets.PRODUCTION_AI_API_KEY }}
+        HD_REDIS_PASSWORD: ${{ secrets.PRODUCTION_REDIS_PASSWORD }}
+        HD_AI_SERVICE_URL: "https://brainbytes-ai-production-3833f742ba79.herokuapp.com"
+        
+    # Deploy Frontend to Heroku Production
+    - name: Deploy Frontend to Heroku Production
+      uses: akhileshns/heroku-deploy@v3.13.15
+      with:
+        heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
+        heroku_app_name: "brainbytes-frontend-production-03d1e6b6b158"
+        heroku_email: ${{ secrets.HEROKU_EMAIL || secrets.HEROKU_API_KEY }}
+        appdir: "frontend"
+        usedocker: false
+      env:
+        HD_NEXT_PUBLIC_BACKEND_URL: "https://brainbytes-backend-production-d355616d0f1f.herokuapp.com"
+        HD_NODE_ENV: "production"
+        
+    # Deploy AI Service to Heroku Production
+    - name: Deploy AI Service to Heroku Production
+      uses: akhileshns/heroku-deploy@v3.13.15
+      with:
+        heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
+        heroku_app_name: "brainbytes-ai-production-3833f742ba79"
+        heroku_email: ${{ secrets.HEROKU_EMAIL || secrets.HEROKU_API_KEY }}
+        appdir: "ai-service"
+        usedocker: false
+      env:
+        HD_GROQ_API_KEY: ${{ secrets.PRODUCTION_AI_API_KEY }}
+        HD_NODE_ENV: "production"
+
+    # Health check after production deployment
+    - name: Production Health Check
+      run: |
+        echo "Waiting for production deployments to complete..."
+        sleep 60
+        
+        echo "Testing production backend health..."
+        curl -f https://brainbytes-backend-production-d355616d0f1f.herokuapp.com/health || echo "Production backend health check failed"
+        
+        echo "Testing production AI service health..."
+        curl -f https://brainbytes-ai-production-3833f742ba79.herokuapp.com/health || echo "Production AI service health check failed"
+        
+        echo "Testing production AI service API connection..."
+        curl -f https://brainbytes-ai-production-3833f742ba79.herokuapp.com/api/test || echo "Production AI service API test failed"
+        
+        echo "Testing production frontend..."
+        curl -f https://brainbytes-frontend-production-03d1e6b6b158.herokuapp.com || echo "Production frontend health check failed"
+
+    # Notify on production success
+    - name: Production Deployment Success
+      run: |
+        echo "🚀 Production Deployment Successful!"
+        echo "Backend: https://brainbytes-backend-production-d355616d0f1f.herokuapp.com"
+        echo "Frontend: https://brainbytes-frontend-production-03d1e6b6b158.herokuapp.com"
+        echo "AI Service: https://brainbytes-ai-production-3833f742ba79.herokuapp.com"

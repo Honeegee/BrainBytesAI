@@ -183,7 +183,54 @@ Casual or vague responses.`,
 });
 
 app.get('/health', (req, res) => {
-  res.json({ status: 'healthy' });
+  const apiKeyConfigured = !!process.env.GROQ_API_KEY;
+  res.json({
+    status: 'healthy',
+    apiKeyConfigured,
+    environment: process.env.NODE_ENV || 'development',
+    port: PORT,
+  });
+});
+
+app.get('/api/test', async (req, res) => {
+  try {
+    if (!process.env.GROQ_API_KEY) {
+      return res.status(500).json({
+        error: 'GROQ_API_KEY not configured',
+        configured: false,
+      });
+    }
+
+    // Test API connection with a simple request
+    const testResponse = await axios.post(
+      'https://api.groq.com/openai/v1/chat/completions',
+      {
+        model: 'deepseek-r1-distill-llama-70b',
+        messages: [{ role: 'user', content: 'Hello' }],
+        max_tokens: 10,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        timeout: 10000,
+      }
+    );
+
+    res.json({
+      status: 'API connection successful',
+      configured: true,
+      model: 'deepseek-r1-distill-llama-70b',
+    });
+  } catch (error) {
+    console.error('API test failed:', error.response?.data || error.message);
+    res.status(500).json({
+      error: 'API connection failed',
+      configured: !!process.env.GROQ_API_KEY,
+      details: error.response?.data?.error || error.message,
+    });
+  }
 });
 
 app.listen(PORT, () => {

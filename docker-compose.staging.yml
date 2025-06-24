@@ -5,16 +5,16 @@ networks:
 services:
   # AI Service container
   ai-service:
-    image: ghcr.io/honeegee/brainbytesai/ai-service:${GITHUB_REF_NAME:-development}
-    build:
-      context: ./ai-service
-      dockerfile: Dockerfile
+    build: ./ai-service
     ports:
       - "3002:3002"
     environment:
       - NODE_ENV=staging
       - NODE_OPTIONS=--max_old_space_size=2048
-      - API_KEY=${STAGING_AI_API_KEY}
+      - PORT=3002
+      - GROQ_API_KEY=${STAGING_AI_API_KEY}
+      - RATE_LIMIT_WINDOW=15
+      - RATE_LIMIT_MAX=50
     deploy:
       resources:
         limits:
@@ -24,25 +24,17 @@ services:
     networks:
       - app-network
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3002/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
 
   # Frontend container
   frontend:
-    image: ghcr.io/honeegee/brainbytesai/frontend:${GITHUB_REF_NAME:-development}
-    build:
+    build: 
       context: ./frontend
       dockerfile: Dockerfile
     ports:
       - "3001:3000"
     environment:
       - NODE_ENV=staging
-      - NODE_OPTIONS=--max_old_space_size=1024
-      - NEXT_PUBLIC_API_URL=https://api-staging.brainbytes.app
-      - NEXT_PUBLIC_FRONTEND_URL=https://staging.brainbytes.app
+      - NODE_OPTIONS=--max_old_space_size=1024  
     deploy:
       resources:
         limits:
@@ -53,28 +45,20 @@ services:
       - app-network
     depends_on:
       - backend
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+    restart: unless-stopped  
 
   # Backend API container
   backend:
-    image: ghcr.io/honeegee/brainbytesai/backend:${GITHUB_REF_NAME:-development}
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
+    build: ./backend
     ports:
       - "3000:3000"
     environment:
       - NODE_ENV=staging
       - NODE_OPTIONS=--max_old_space_size=1024
-      - DATABASE_URL=${STAGING_DATABASE_URL:-mongodb://mongo:27017/brainbytes_staging}
-      - MONGODB_URI=${STAGING_DATABASE_URL:-mongodb://mongo:27017/brainbytes_staging}
-      - JWT_SECRET=${STAGING_JWT_SECRET:-staging_jwt_secret_default_12345}
-      - SESSION_SECRET=${STAGING_SESSION_SECRET:-staging_session_secret_default_12345}
+      - DATABASE_URL=${STAGING_DATABASE_URL}
+      - JWT_SECRET=${STAGING_JWT_SECRET}
+      - SESSION_SECRET=${STAGING_SESSION_SECRET}
+      - PORT=3000
     deploy:
       resources:
         limits:
@@ -84,40 +68,9 @@ services:
     networks:
       - app-network
     depends_on:
-      - mongo
       - ai-service
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
 
-  # MongoDB container
-  mongo:
-    image: mongo:4.4
-    ports:
-     - "27017:27017"
-    environment:
-      - MONGO_INITDB_DATABASE=brainbytes_staging
-    deploy:
-      resources:
-        limits:
-          memory: 1G 
-        reservations:
-          memory: 512M  
-    volumes:
-      - mongo-staging-data:/data/db
-    networks:
-      - app-network
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-# Define volumes for persistent data
-volumes:
-  mongo-staging-data:
-    driver: local
+# All services now connect to MongoDB Atlas
+# No local volumes needed for database
+volumes: {}

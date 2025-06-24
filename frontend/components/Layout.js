@@ -1,4 +1,5 @@
 import Head from 'next/head';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
@@ -61,7 +62,13 @@ export default function Layout({ children, darkMode = false }) {
       >
         <nav className='w-full px-4 py-3 flex items-center justify-between'>
           <Link href='/' className='flex items-center space-x-2'>
-            <img src='/logo.png' alt='BrainBytes' className='h-8 w-auto' />
+            <Image
+              src='/logo.png'
+              alt='BrainBytes'
+              className='h-8 w-auto'
+              width={32}
+              height={32}
+            />
             <h1
               className={`text-xl font-semibold ${darkMode ? 'text-text-light' : 'text-gray-900'}`}
             >
