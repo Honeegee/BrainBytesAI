@@ -208,6 +208,7 @@ jobs:
         appdir: "backend"
         procfile: "web: node server.js"
         usedocker: false
+        dontautocreate: true
       env:
         HD_JWT_SECRET: ${{ secrets.PRODUCTION_JWT_SECRET }}
         HD_DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
@@ -225,6 +226,7 @@ jobs:
         heroku_email: ${{ secrets.HEROKU_EMAIL || secrets.HEROKU_API_KEY }}
         appdir: "frontend"
         usedocker: false
+        dontautocreate: true
       env:
         HD_NEXT_PUBLIC_BACKEND_URL: "https://brainbytes-backend-production-d355616d0f1f.herokuapp.com"
         HD_NODE_ENV: "production"
@@ -238,6 +240,7 @@ jobs:
         heroku_email: ${{ secrets.HEROKU_EMAIL || secrets.HEROKU_API_KEY }}
         appdir: "ai-service"
         usedocker: false
+        dontautocreate: true
       env:
         HD_GROQ_API_KEY: ${{ secrets.PRODUCTION_AI_API_KEY }}
         HD_NODE_ENV: "production"
