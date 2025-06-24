@@ -233,6 +233,22 @@ app.get('/api/test', async (req, res) => {
   }
 });
 
+// Add root route to provide service information
+app.get('/', (req, res) => {
+  res.json({
+    service: 'BrainBytes AI Service',
+    version: '1.0.0',
+    status: 'running',
+    environment: process.env.NODE_ENV || 'development',
+    endpoints: {
+      health: '/health',
+      chat: '/api/chat',
+      test: '/api/test'
+    },
+    message: 'AI service is running. Use /api/chat for chat functionality.'
+  });
+});
+
 app.listen(PORT, () => {
   console.log(`AI service running on port ${PORT}`);
 });
