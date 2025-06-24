@@ -110,7 +110,7 @@ jobs:
       uses: akhileshns/heroku-deploy@v3.13.15
       with:
         heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
-        heroku_app_name: "brainbytes-backend-staging-de872da2939f"
+        heroku_app_name: "brainbytes-backend-staging"
         heroku_email: ${{ secrets.HEROKU_EMAIL || secrets.HEROKU_API_KEY }}
         appdir: "backend"
         procfile: "web: node server.js"
@@ -128,7 +128,7 @@ jobs:
       uses: akhileshns/heroku-deploy@v3.13.15
       with:
         heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
-        heroku_app_name: "brainbytes-frontend-staging-7593f4655363"
+        heroku_app_name: "brainbytes-frontend-staging"
         heroku_email: ${{ secrets.HEROKU_EMAIL || secrets.HEROKU_API_KEY }}
         appdir: "frontend"
         usedocker: false
@@ -139,7 +139,7 @@ jobs:
       uses: akhileshns/heroku-deploy@v3.13.15
       with:
         heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
-        heroku_app_name: "brainbytes-ai-service-staging-4b75c77cf53a"
+        heroku_app_name: "brainbytes-ai-service-staging"
         heroku_email: ${{ secrets.HEROKU_EMAIL || secrets.HEROKU_API_KEY }}
         appdir: "ai-service"
         usedocker: false
@@ -203,7 +203,7 @@ jobs:
       uses: akhileshns/heroku-deploy@v3.13.15
       with:
         heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
-        heroku_app_name: "brainbytes-backend-production-d355616d0f1f"
+        heroku_app_name: "brainbytes-backend-production"
         heroku_email: ${{ secrets.HEROKU_EMAIL || secrets.HEROKU_API_KEY }}
         appdir: "backend"
         procfile: "web: node server.js"
@@ -222,7 +222,7 @@ jobs:
       uses: akhileshns/heroku-deploy@v3.13.15
       with:
         heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
-        heroku_app_name: "brainbytes-frontend-production-03d1e6b6b158"
+        heroku_app_name: "brainbytes-frontend-production"
         heroku_email: ${{ secrets.HEROKU_EMAIL || secrets.HEROKU_API_KEY }}
         appdir: "frontend"
         usedocker: false
@@ -236,7 +236,7 @@ jobs:
       uses: akhileshns/heroku-deploy@v3.13.15
       with:
         heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
-        heroku_app_name: "brainbytes-ai-production-3833f742ba79"
+        heroku_app_name: "brainbytes-ai-production"
         heroku_email: ${{ secrets.HEROKU_EMAIL || secrets.HEROKU_API_KEY }}
         appdir: "ai-service"
         usedocker: false
