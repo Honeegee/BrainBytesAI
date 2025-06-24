@@ -202,7 +202,7 @@ app.get('/api/test', async (req, res) => {
     }
 
     // Test API connection with a simple request
-    const testResponse = await axios.post(
+    await axios.post(
       'https://api.groq.com/openai/v1/chat/completions',
       {
         model: 'deepseek-r1-distill-llama-70b',
@@ -231,6 +231,22 @@ app.get('/api/test', async (req, res) => {
       details: error.response?.data?.error || error.message,
     });
   }
+});
+
+// Add root route to provide service information
+app.get('/', (req, res) => {
+  res.json({
+    service: 'BrainBytes AI Service',
+    version: '1.0.0',
+    status: 'running',
+    environment: process.env.NODE_ENV || 'development',
+    endpoints: {
+      health: '/health',
+      chat: '/api/chat',
+      test: '/api/test',
+    },
+    message: 'AI service is running. Use /api/chat for chat functionality.',
+  });
 });
 
 app.listen(PORT, () => {
