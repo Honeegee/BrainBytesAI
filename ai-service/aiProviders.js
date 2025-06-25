@@ -262,7 +262,9 @@ async function callAI(messages, options = {}) {
 
   for (const providerName of providerPriority) {
     const provider = providers[providerName];
-    if (!provider) continue;
+    if (!provider) {
+      continue;
+    }
 
     const config = provider.getConfig();
     if (!config.enabled && providerName !== 'ollama') {

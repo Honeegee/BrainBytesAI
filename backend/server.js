@@ -28,7 +28,6 @@ const { connectDatabase } = require('./config/database');
 const {
   register,
   collectHttpMetrics,
-  updateActiveSessions,
   updateDbConnections,
 } = require('./middleware/metrics');
 const messagesRouter = require('./routes/messages');
