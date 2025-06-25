@@ -1,0 +1,292 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "BrainBytesAI - Heroku Monitoring",
+    "tags": ["brainbytes", "heroku", "education", "ai"],
+    "timezone": "browser",
+    "schemaVersion": 30,
+    "version": 1,
+    "refresh": "30s",
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "panels": [
+      {
+        "id": 1,
+        "title": "Service Health Overview",
+        "type": "stat",
+        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 0},
+        "targets": [
+          {
+            "expr": "up{job=~\"brainbytes-.*\"}",
+            "legendFormat": "{{job}} - {{environment}}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "thresholds"},
+            "thresholds": {
+              "steps": [
+                {"color": "red", "value": 0},
+                {"color": "green", "value": 1}
+              ]
+            },
+            "mappings": [
+              {"options": {"0": {"text": "Down"}}, "type": "value"},
+              {"options": {"1": {"text": "Up"}}, "type": "value"}
+            ]
+          }
+        }
+      },
+      {
+        "id": 2,
+        "title": "HTTP Request Rate",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+        "targets": [
+          {
+            "expr": "sum(rate(brainbytes_http_requests_total[5m])) by (environment, job)",
+            "legendFormat": "{{environment}} - {{job}}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "reqps",
+            "color": {"mode": "palette-classic"}
+          }
+        }
+      },
+      {
+        "id": 3,
+        "title": "HTTP Response Time (95th Percentile)",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(brainbytes_http_request_duration_seconds_bucket[5m])) by (le, environment, job))",
+            "legendFormat": "{{environment}} - {{job}}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "s",
+            "color": {"mode": "palette-classic"}
+          }
+        }
+      },
+      {
+        "id": 4,
+        "title": "AI Response Performance",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(brainbytes_ai_response_time_seconds_bucket[5m])) by (le, subject, environment))",
+            "legendFormat": "{{environment}} - {{subject}}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "s",
+            "color": {"mode": "palette-classic"}
+          }
+        }
+      },
+      {
+        "id": 5,
+        "title": "Database Connection Status",
+        "type": "stat",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
+        "targets": [
+          {
+            "expr": "brainbytes_db_connections_active",
+            "legendFormat": "{{environment}} - Active Connections",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "thresholds"},
+            "thresholds": {
+              "steps": [
+                {"color": "red", "value": 0},
+                {"color": "yellow", "value": 1},
+                {"color": "green", "value": 2}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 6,
+        "title": "Tutoring Sessions (Last Hour)",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 0, "y": 24},
+        "targets": [
+          {
+            "expr": "increase(brainbytes_tutoring_sessions_total[1h])",
+            "legendFormat": "{{environment}} - {{subject}}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"},
+            "unit": "short"
+          }
+        }
+      },
+      {
+        "id": 7,
+        "title": "Questions Asked (Last Hour)",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 6, "y": 24},
+        "targets": [
+          {
+            "expr": "increase(brainbytes_questions_total[1h])",
+            "legendFormat": "{{environment}} - {{subject}}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"},
+            "unit": "short"
+          }
+        }
+      },
+      {
+        "id": 8,
+        "title": "Mobile Platform Usage",
+        "type": "piechart",
+        "gridPos": {"h": 4, "w": 6, "x": 12, "y": 24},
+        "targets": [
+          {
+            "expr": "sum(increase(brainbytes_mobile_requests_total[1h])) by (platform)",
+            "legendFormat": "{{platform}}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"},
+            "unit": "short"
+          }
+        }
+      },
+      {
+        "id": 9,
+        "title": "Memory Usage",
+        "type": "timeseries",
+        "gridPos": {"h": 4, "w": 6, "x": 18, "y": 24},
+        "targets": [
+          {
+            "expr": "process_resident_memory_bytes / 1024 / 1024",
+            "legendFormat": "{{environment}} - {{job}} (MB)",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "MB",
+            "color": {"mode": "palette-classic"}
+          }
+        }
+      },
+      {
+        "id": 10,
+        "title": "Error Rate",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 28},
+        "targets": [
+          {
+            "expr": "sum(rate(brainbytes_http_requests_total{status_code=~\"4..|5..\"}[5m])) by (environment, status_code)",
+            "legendFormat": "{{environment}} - {{status_code}}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "reqps",
+            "color": {"mode": "palette-classic"}
+          }
+        }
+      },
+      {
+        "id": 11,
+        "title": "Response Size Distribution",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 28},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(brainbytes_response_size_bytes_bucket[5m])) by (le, environment, endpoint))",
+            "legendFormat": "{{environment}} - {{endpoint}}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "bytes",
+            "color": {"mode": "palette-classic"}
+          }
+        }
+      },
+      {
+        "id": 12,
+        "title": "Database Operation Performance",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 36},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(brainbytes_db_operation_duration_seconds_bucket[5m])) by (le, operation, collection, environment))",
+            "legendFormat": "{{environment}} - {{operation}} ({{collection}})",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "s",
+            "color": {"mode": "palette-classic"}
+          }
+        }
+      }
+    ],
+    "annotations": {
+      "list": [
+        {
+          "builtIn": 1,
+          "datasource": "-- Grafana --",
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations & Alerts",
+          "type": "dashboard"
+        }
+      ]
+    },
+    "templating": {
+      "list": [
+        {
+          "current": {"text": "All", "value": "$__all"},
+          "hide": 0,
+          "includeAll": true,
+          "label": "Environment",
+          "multi": true,
+          "name": "environment",
+          "options": [],
+          "query": "label_values(brainbytes_http_requests_total, environment)",
+          "refresh": 1,
+          "regex": "",
+          "sort": 0,
+          "type": "query"
+        }
+      ]
+    }
+  },
+  "overwrite": true
+}

@@ -26,8 +26,8 @@ This service handles AI-related functionality for the BrainBytes AI application.
 The service is containerized using Docker. Environment variables are loaded from:
 
 - Development: `ai-service/.env` (local file)
-- Staging: GitHub secrets passed as environment variables (via `docker-compose.staging.yml`)
-- Production: GitHub secrets passed as environment variables
+- Staging: Heroku config vars for staging apps
+- Production: Heroku config vars for production apps
 
 ## Configuration
 
@@ -54,8 +54,8 @@ npm start
 # Development
 docker-compose up ai-service
 
-# Staging
-docker-compose -f docker-compose.staging.yml up ai-service
+# Local Development Only
+docker-compose up ai-service
 ```
 
 The service will be available at `http://localhost:3002`.

@@ -180,13 +180,10 @@ curl http://localhost:3001
 npm run install:all
 
 # Start development servers with hot reload
-docker-compose -f docker-compose.dev.yml up
+docker-compose up
 
 # Start with monitoring (Prometheus + metrics)
 docker-compose up -d
-# Or use the convenience script:
-# Windows: scripts/start-monitoring.bat
-# Linux/macOS: scripts/start-monitoring.sh
 
 # Generate test metrics data
 cd monitoring && npm run simulate

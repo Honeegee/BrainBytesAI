@@ -213,7 +213,7 @@ monitoring-network: Prometheus ↔ Exporters ↔ Alertmanager
 #### **Port Mapping**
 ```
 Application Ports:
-- Frontend: 80 (via nginx)
+- Frontend: 3000 (direct)
 - Backend: 3000/metrics
 - AI Service: 8090/metrics
 

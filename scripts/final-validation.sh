@@ -103,8 +103,8 @@ for file in "${docker_files[@]}"; do
     fi
 done
 
-# Check docker-compose files
-compose_files=("docker-compose.yml" "docker-compose.staging.yml" "docker-compose.production.yml")
+# Check docker-compose files (only development)
+compose_files=("docker-compose.yml")
 for file in "${compose_files[@]}"; do
     if [ -f "$file" ]; then
         print_status "PASS" "$file exists"

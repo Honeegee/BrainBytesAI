@@ -19,11 +19,11 @@ This guide will help you complete the Grafana homework assignment by setting up 
 # For development
 docker-compose up -d grafana
 
-# For staging  
-docker-compose -f docker-compose.staging.yml up -d grafana
+# For local development only
+docker-compose up -d grafana
 
-# For production
-docker-compose -f docker-compose.production.yml up -d grafana
+# For staging/production - use Heroku monitoring setup
+# See: monitoring/heroku/README.md
 ```
 
 **🌐 Access Grafana:**

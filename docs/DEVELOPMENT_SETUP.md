@@ -110,21 +110,21 @@ brainbytes_active_sessions
 ### Services Not Starting
 ```bash
 # Check service logs
-docker-compose logs nginx
+docker-compose logs frontend
 docker-compose logs backend
 docker-compose logs prometheus
 
 # Restart specific service
-docker-compose restart nginx
+docker-compose restart frontend
 ```
 
-### Nginx Configuration Issues
+### Frontend Issues
 ```bash
-# Test nginx configuration
-docker-compose exec nginx nginx -t
+# Check frontend status
+docker-compose ps frontend
 
-# Reload nginx configuration
-docker-compose exec nginx nginx -s reload
+# View frontend logs
+docker-compose logs -f frontend
 ```
 
 ### Metrics Not Appearing

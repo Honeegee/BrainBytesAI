@@ -39,7 +39,7 @@ brainbytesai-ai-service-1  Up
 brainbytesai-frontend-1    Up
 cadvisor                   Up
 node-exporter              Up
-nginx-proxy                Up
+frontend                   Up
 ```
 
 ### **Step 3: Wait for System Initialization**
