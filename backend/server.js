@@ -29,7 +29,7 @@ const {
   register,
   collectHttpMetrics,
   updateActiveSessions,
-  updateDbConnections
+  updateDbConnections,
 } = require('./middleware/metrics');
 const messagesRouter = require('./routes/messages');
 const usersRouter = require('./routes/users');

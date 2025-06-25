@@ -8,7 +8,7 @@ const {
   collectAiMetrics,
   recordAiResponse,
   recordAiError,
-  recordSubjectRequest
+  recordSubjectRequest,
 } = require('./metrics');
 require('dotenv').config();
 
@@ -88,7 +88,7 @@ app.post('/api/chat', async (req, res) => {
       // Record metrics for predefined response
       recordAiResponse(commonResponse.response, 'predefined', subject);
       recordSubjectRequest(subject || 'general', 'unknown');
-      
+
       return res.json({
         response: commonResponse.response,
         metadata: {
@@ -159,7 +159,7 @@ Casual or vague responses.`,
 
     // Call AI using the new provider system
     const aiResult = await callAI(messages, {
-      subject: subject || 'general'
+      subject: subject || 'general',
     });
 
     const rawResponse = aiResult?.choices?.[0]?.message?.content;
@@ -179,33 +179,38 @@ Casual or vague responses.`,
     };
 
     const finalResponse = cleanResponse(rawResponse);
-    
+
     // Record metrics for AI response
     recordAiResponse(finalResponse, aiResult.model || 'unknown', subject);
     recordSubjectRequest(subject || 'general', 'unknown');
-    
+
     res.json({
       response: finalResponse,
       metadata: {
         model: aiResult.model || 'unknown',
         provider: aiResult.provider || 'unknown',
-        timestamp: new Date().toISOString()
-      }
+        timestamp: new Date().toISOString(),
+      },
     });
   } catch (error) {
     console.error('Error in /api/chat:', error.message);
-    
+
     // Record error metrics
-    recordAiError(error.message.includes('timeout') ? 'timeout' : 'api_error', 'deepseek-r1-distill-llama-70b');
-    
+    recordAiError(
+      error.message.includes('timeout') ? 'timeout' : 'api_error',
+      'deepseek-r1-distill-llama-70b'
+    );
+
     res.status(500).json({ error: error.message });
   }
 });
 
 app.get('/health', (req, res) => {
   const providersStatus = getProvidersStatus();
-  const hasAnyProvider = Object.values(providersStatus).some(p => p.enabled && p.configured);
-  
+  const hasAnyProvider = Object.values(providersStatus).some(
+    p => p.enabled && p.configured
+  );
+
   res.json({
     status: 'healthy',
     aiProviders: providersStatus,
@@ -223,8 +228,8 @@ app.get('/api/providers', (req, res) => {
     recommendations: {
       development: 'Use Ollama (free, local) or Mock AI for development',
       staging: 'Use Groq (free tier) or OpenAI',
-      production: 'Use OpenAI or Anthropic for best reliability'
-    }
+      production: 'Use OpenAI or Anthropic for best reliability',
+    },
   });
 });
 
