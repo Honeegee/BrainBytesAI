@@ -49,6 +49,14 @@ BrainBytes is an innovative AI-powered tutoring platform designed to provide acc
 - **CI/CD**: GitHub Actions (3-workflow pipeline)
 - **Security**: Automated vulnerability scanning
 
+### Monitoring & Observability
+- **Metrics Collection**: Prometheus with custom business metrics
+- **System Monitoring**: Node Exporter for host metrics
+- **Container Monitoring**: cAdvisor for Docker containers
+- **Performance Tracking**: HTTP request duration, AI response times
+- **Business Intelligence**: User engagement, subject popularity
+- **Philippine Context**: Mobile usage, bandwidth optimization metrics
+
 ## 🏛️ Architecture
 
 ![System Architecture](docs/architecture.png)
@@ -123,6 +131,7 @@ curl http://localhost:3001
 - **[API Documentation](docs/technical/API.md)** - Comprehensive API reference
 - **[Database Schema](docs/technical/DATABASE.md)** - Database design and models
 - **[AI Integration](docs/technical/AI_INTEGRATION.md)** - AI service implementation
+- **[Prometheus Monitoring](docs/PROMETHEUS_MONITORING.md)** - Monitoring and metrics setup
 
 ### 🧪 Testing & Quality
 - **[Testing Guide](docs/testing/TESTING_GUIDE.md)** - Complete testing strategy
@@ -172,6 +181,15 @@ npm run install:all
 
 # Start development servers with hot reload
 docker-compose -f docker-compose.dev.yml up
+
+# Start with monitoring (Prometheus + metrics)
+docker-compose up -d
+# Or use the convenience script:
+# Windows: scripts/start-monitoring.bat
+# Linux/macOS: scripts/start-monitoring.sh
+
+# Generate test metrics data
+cd monitoring && npm run simulate
 
 # Run all tests
 npm run test:all

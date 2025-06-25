@@ -25,6 +25,12 @@ const {
   initializePassport,
 } = require('./middleware/security');
 const { connectDatabase } = require('./config/database');
+const {
+  register,
+  collectHttpMetrics,
+  updateActiveSessions,
+  updateDbConnections
+} = require('./middleware/metrics');
 const messagesRouter = require('./routes/messages');
 const usersRouter = require('./routes/users');
 const learningMaterialsRouter = require('./routes/learningMaterials');
@@ -152,6 +158,9 @@ app.use(passport.session());
 // Serve static files from public directory
 app.use('/uploads', express.static('public/uploads'));
 
+// Prometheus metrics collection middleware
+app.use(collectHttpMetrics);
+
 // Detect if we're in a test environment
 const isTestEnvironment = process.env.NODE_ENV === 'test';
 
@@ -164,10 +173,22 @@ if (!isTestEnvironment) {
   // Handle MongoDB connection events
   mongoose.connection.on('error', err => {
     console.error('MongoDB connection error:', err);
+    updateDbConnections(0);
   });
 
   mongoose.connection.on('disconnected', () => {
     console.log('MongoDB disconnected. Attempting to reconnect...');
+    updateDbConnections(0);
+  });
+
+  mongoose.connection.on('connected', () => {
+    console.log('MongoDB connected');
+    updateDbConnections(1);
+  });
+
+  mongoose.connection.on('reconnected', () => {
+    console.log('MongoDB reconnected');
+    updateDbConnections(1);
   });
 }
 
@@ -216,6 +237,16 @@ app.get('/health', (req, res) => {
 app.get('/api/health', (req, res) => {
   // Redirect to main health endpoint for consistency
   res.redirect('/health');
+});
+
+// Prometheus metrics endpoint
+app.get('/metrics', async (req, res) => {
+  try {
+    res.set('Content-Type', register.contentType);
+    res.end(await register.metrics());
+  } catch (ex) {
+    res.status(500).end(ex);
+  }
 });
 
 // Routes

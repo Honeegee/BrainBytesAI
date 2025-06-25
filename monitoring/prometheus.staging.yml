@@ -1,0 +1,124 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    environment: 'staging'
+    cluster: 'brainbytes-staging'
+
+rule_files:
+  - "alert-rules.yml"
+  - "recording_rules.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+    scrape_interval: 30s
+
+  # BrainBytes Backend API
+  - job_name: 'brainbytes-backend'
+    static_configs:
+      - targets: ['backend:3000']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    honor_labels: true
+    params:
+      format: ['prometheus']
+
+  # BrainBytes AI Service
+  - job_name: 'brainbytes-ai-service'
+    static_configs:
+      - targets: ['ai-service:3002']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    honor_labels: true
+
+  # Node Exporter for host metrics
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    scrape_interval: 30s
+    scrape_timeout: 10s
+
+  # cAdvisor for container metrics
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    honor_labels: true
+
+  # Nginx metrics (if nginx-prometheus-exporter is added)
+  - job_name: 'nginx'
+    static_configs:
+      - targets: ['nginx:9113']
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    honor_labels: true
+
+  # Redis metrics (if redis-exporter is added)
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+    scrape_interval: 30s
+    scrape_timeout: 10s
+
+  # Alertmanager metrics
+  - job_name: 'alertmanager'
+    static_configs:
+      - targets: ['alertmanager:9093']
+    scrape_interval: 30s
+    scrape_timeout: 10s
+
+# Remote write for long-term storage (optional)
+# remote_write:
+#   - url: "https://your-prometheus-remote-write-endpoint/api/v1/write"
+#     basic_auth:
+#       username: "your-username"
+#       password: "your-password"
+
+# Recording rules for performance optimization
+recording_rules:
+  - name: brainbytes.rules
+    rules:
+    # Request rate per service
+    - record: brainbytes:request_rate_5m
+      expr: rate(brainbytes_http_requests_total[5m])
+    
+    # Error rate per service
+    - record: brainbytes:error_rate_5m
+      expr: rate(brainbytes_http_requests_total{status=~"5.."}[5m]) / rate(brainbytes_http_requests_total[5m])
+    
+    # Average response time
+    - record: brainbytes:response_time_avg_5m
+      expr: rate(brainbytes_http_request_duration_seconds_sum[5m]) / rate(brainbytes_http_request_duration_seconds_count[5m])
+    
+    # AI service performance
+    - record: brainbytes:ai_response_time_avg_5m
+      expr: rate(brainbytes_ai_request_duration_seconds_sum[5m]) / rate(brainbytes_ai_request_duration_seconds_count[5m])
+    
+    # System resource utilization
+    - record: instance:cpu_utilization
+      expr: 100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)
+    
+    - record: instance:memory_utilization
+      expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100
+    
+    - record: instance:disk_utilization
+      expr: (1 - (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"})) * 100
+
+# Storage configuration for staging
+storage:
+  tsdb:
+    retention.time: 30d
+    retention.size: 50GB
+    wal-compression: true

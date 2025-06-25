@@ -5,8 +5,8 @@ const nextConfig = {
     domains: [],
     unoptimized: true,
   },
-  // Enable standalone output for Docker optimization (disabled for Heroku)
-  // output: 'standalone',
+  // Enable standalone output for Docker optimization
+  output: 'standalone',
   // Disable telemetry for faster builds
   experimental: {
     // instrumentationHook is no longer needed - removed deprecated option
