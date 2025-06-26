@@ -23,9 +23,24 @@ function Chat() {
   const [activeChatId, setActiveChatId] = useState(null);
   const [chatSubjects, setChatSubjects] = useState({}); // Store subjects per chat
   const messagesEndRef = useRef(null);
+  const messagesContainerRef = useRef(null);
+  const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
+  const [lastMessageCount, setLastMessageCount] = useState(0);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  // Check if user is near bottom of chat
+  const isNearBottom = () => {
+    if (!messagesContainerRef.current) return true;
+    const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
+    return scrollHeight - scrollTop - clientHeight < 100; // Within 100px of bottom
+  };
+
+  // Handle scroll events to detect if user is scrolling up
+  const handleScroll = () => {
+    setShouldAutoScroll(isNearBottom());
   };
 
   const handleDeleteChat = async chatId => {
@@ -241,7 +256,13 @@ function Chat() {
           const response = await api.get(
             `/api/messages?chatId=${activeChatId}${selectedSubject ? `&subject=${selectedSubject}` : ''}`
           );
-          setMessages(response.data.messages);
+          // Only update if messages actually changed
+          setMessages(prevMessages => {
+            if (JSON.stringify(prevMessages) !== JSON.stringify(response.data.messages)) {
+              return response.data.messages;
+            }
+            return prevMessages;
+          });
         } catch (error) {
           console.error('Error refreshing messages:', error);
         }
@@ -252,10 +273,20 @@ function Chat() {
     return () => clearInterval(interval);
   }, [activeChatId, selectedSubject, chatSubjects]);
 
-  // Auto-scroll when messages change
+  // Auto-scroll when messages change, but only if user is near bottom or new messages added
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    const newMessageCount = messages.length;
+    const hasNewMessages = newMessageCount > lastMessageCount;
+    
+    if (hasNewMessages && shouldAutoScroll) {
+      // Slight delay to ensure DOM has updated
+      setTimeout(() => {
+        scrollToBottom();
+      }, 100);
+    }
+    
+    setLastMessageCount(newMessageCount);
+  }, [messages, shouldAutoScroll, lastMessageCount]);
 
   const handleSubmit = async e => {
     e.preventDefault();
@@ -389,7 +420,11 @@ function Chat() {
           onUpdateChat={handleUpdateChat}
         />
         <div className='flex-1 flex flex-col'>
-          <div className='flex-1 overflow-y-auto p-4'>
+          <div
+            ref={messagesContainerRef}
+            className='flex-1 overflow-y-auto p-4'
+            onScroll={handleScroll}
+          >
             <div className='max-w-4xl mx-auto space-y-4'>
               {error && (
                 <div className='bg-red-900 bg-opacity-50 text-red-200 p-3 rounded-md text-center border border-red-700 text-sm'>

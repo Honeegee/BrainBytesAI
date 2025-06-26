@@ -106,53 +106,36 @@ app.post('/api/chat', async (req, res) => {
     const messages = [
       {
         role: 'system',
-        content: `You are an intelligent, friendly, and helpful AI tutor. Always answer in a formal but simple tone suitable for students. Use the following format in your responses:
+        content: `You are a helpful AI tutor. Respond in a clear, student-friendly manner. Structure your answers with:
+1. Brief acknowledgment
+2. Clear explanation with examples
+3. Practical applications
+4. Invitation for follow-up questions
 
-🗣️ Acknowledge the user's question or provide a brief context of the topic if needed. Ensure that your response feels like a natural conversation.
-
-� Explain the concept in simple terms, avoiding unnecessary jargon. Keep your explanation engaging and clear. Use analogies or examples when applicable, and break down difficult concepts into digestible parts.
-
-🔍 Provide practical examples or scenarios to make the explanation more relatable. These can be code snippets, real-life analogies, or step-by-step breakdowns.
-
-�💬 Encourage further questions or prompt the user to explore related concepts. Ensure the response feels interactive and that you're offering follow-up opportunities.
-
-
-Formatting Guidelines:
-
-Use bold or emoji headings where appropriate within sections.
-Always keep a formal, student-friendly tone.
-Do not use difficult vocabulary unless explained.
-
-Avoid:
-Overly technical terms without explanation.
-Long paragraphs.
-Casual or vague responses.`,
+Keep responses concise, avoid jargon, and use examples when helpful.`,
       },
       {
         role: 'user',
         content: (() => {
-          const commonAffirmatives = [
-            'yes',
-            'yeah',
-            'yep',
-            'sure',
-            'ok',
-            'okay',
-            'alright',
-          ];
+          // Limit conversation history to prevent token overflow
+          const maxHistoryLength = 1000;
+          let limitedHistory = conversationHistory;
+          
+          if (conversationHistory && conversationHistory.length > maxHistoryLength) {
+            limitedHistory = '...' + conversationHistory.slice(-maxHistoryLength);
+          }
+
+          const commonAffirmatives = ['yes', 'yeah', 'yep', 'sure', 'ok', 'okay', 'alright'];
           const commonNegatives = ['no', 'nope', 'nah'];
           const lowerRawQuery = rawQuery.toLowerCase().trim();
 
-          if (
-            conversationHistory &&
-            (commonAffirmatives.includes(lowerRawQuery) ||
-              commonNegatives.includes(lowerRawQuery))
-          ) {
-            return `Context:\n${conversationHistory}\n\nThe user responded with "${rawQuery}" to your previous question. Please continue the conversation or address their response appropriately, maintaining the established response format.`;
+          if (limitedHistory && (commonAffirmatives.includes(lowerRawQuery) || commonNegatives.includes(lowerRawQuery))) {
+            return `Context: ${limitedHistory}\n\nUser: "${rawQuery}"\n\nContinue the conversation appropriately.`;
           }
-          return conversationHistory
-            ? `Context:\n${conversationHistory}\n\nCurrent Query: ${prompt}\n\nProvide a structured response that builds on previous information while addressing the current query. Use clear sections and concise explanations.`
-            : `Query: ${prompt}\n\nProvide a structured response with clear sections and concise explanations.`;
+          
+          return limitedHistory
+            ? `Context: ${limitedHistory}\n\nQuery: ${prompt}`
+            : `Query: ${prompt}`;
         })(),
       },
     ];

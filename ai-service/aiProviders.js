@@ -20,6 +20,7 @@ const providers = {
       model: process.env.GROQ_MODEL || 'llama3-8b-8192',
       enabled: !!process.env.GROQ_API_KEY,
     }),
+    fallbackModels: ['llama3-8b-8192', 'mixtral-8x7b-32768', 'gemma-7b-it'], // Models with different token limits
   },
 
   anthropic: {
@@ -242,7 +243,42 @@ async function callOllama(provider, messages, config) {
   };
 }
 
-// Main AI call function with provider fallback
+// Estimate token count (rough approximation)
+function estimateTokens(text) {
+  return Math.ceil(text.length / 4);
+}
+
+// Truncate messages to fit token limit
+function truncateMessages(messages, maxTokens = 4000) {
+  let totalTokens = 0;
+  const result = [];
+  
+  // Always keep system message
+  if (messages[0]?.role === 'system') {
+    result.push(messages[0]);
+    totalTokens += estimateTokens(messages[0].content);
+  }
+  
+  // Add messages from the end (most recent first)
+  for (let i = messages.length - 1; i >= (messages[0]?.role === 'system' ? 1 : 0); i--) {
+    const messageTokens = estimateTokens(messages[i].content);
+    if (totalTokens + messageTokens > maxTokens) {
+      // If this message would exceed limit, truncate its content
+      const remainingTokens = maxTokens - totalTokens;
+      if (remainingTokens > 100) { // Only add if we have reasonable space
+        const truncatedContent = messages[i].content.slice(0, remainingTokens * 4);
+        result.unshift({ ...messages[i], content: '...' + truncatedContent });
+      }
+      break;
+    }
+    result.unshift(messages[i]);
+    totalTokens += messageTokens;
+  }
+  
+  return result;
+}
+
+// Main AI call function with provider fallback and token management
 async function callAI(messages, options = {}) {
   const { subject = 'general', forceProvider = null } = options;
 
@@ -272,38 +308,57 @@ async function callAI(messages, options = {}) {
       continue;
     }
 
-    try {
-      console.log(
-        `Attempting to use ${provider.name} with model ${config.model}`
-      );
+    // Try with different token limits and models for token-related errors
+    const tokenLimits = [8000, 4000, 2000]; // Progressive reduction
+    const modelsToTry = provider.fallbackModels || [config.model];
+    
+    for (const model of modelsToTry) {
+      for (const tokenLimit of tokenLimits) {
+        try {
+          const truncatedMessages = truncateMessages(messages, tokenLimit);
+          const modelConfig = { ...config, model };
+          
+          console.log(
+            `Attempting ${provider.name} with model ${model} (token limit: ${tokenLimit})`
+          );
 
-      let response;
-      switch (providerName) {
-        case 'openai':
-        case 'groq':
-          response = await callOpenAICompatible(provider, messages, config);
+          let response;
+          switch (providerName) {
+            case 'openai':
+            case 'groq':
+              response = await callOpenAICompatible(provider, truncatedMessages, modelConfig);
+              break;
+            case 'anthropic':
+              response = await callAnthropic(provider, truncatedMessages, modelConfig);
+              break;
+            case 'google':
+              response = await callGoogle(provider, truncatedMessages, modelConfig);
+              break;
+            case 'ollama':
+              response = await callOllama(provider, truncatedMessages, modelConfig);
+              break;
+            default:
+              throw new Error(`Unknown provider: ${providerName}`);
+          }
+
+          console.log(`Successfully used ${provider.name} with model ${model}`);
+          return response;
+        } catch (error) {
+          console.error(`${provider.name} (${model}, limit: ${tokenLimit}) failed:`, error.message);
+          lastError = error;
+          
+          // If it's a token-related error, try next token limit
+          if (error.response?.status === 413 ||
+              error.message.includes('token') ||
+              error.message.includes('length')) {
+            console.log('Token limit exceeded, trying smaller limit...');
+            continue;
+          }
+          
+          // For other errors, try next model
           break;
-        case 'anthropic':
-          response = await callAnthropic(provider, messages, config);
-          break;
-        case 'google':
-          response = await callGoogle(provider, messages, config);
-          break;
-        case 'ollama':
-          response = await callOllama(provider, messages, config);
-          break;
-        default:
-          throw new Error(`Unknown provider: ${providerName}`);
+        }
       }
-
-      console.log(`Successfully used ${provider.name}`);
-      return response;
-    } catch (error) {
-      console.error(`${provider.name} failed:`, error.message);
-      lastError = error;
-
-      // Continue to next provider
-      continue;
     }
   }
 
