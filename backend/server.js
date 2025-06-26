@@ -98,7 +98,7 @@ const corsOptions = {
     'Access-Control-Allow-Headers',
     'Origin',
     'Accept',
-    'X-Requested-With'
+    'X-Requested-With',
   ],
   exposedHeaders: ['Set-Cookie'],
   optionsSuccessStatus: 200,
@@ -278,6 +278,7 @@ app.use(apiRoutes.users, usersRouter);
 app.use(apiRoutes.materials, learningMaterialsRouter);
 
 // Error handling middleware
+// eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
   console.error('Error:', err.message);
   console.error('Stack:', err.stack);
