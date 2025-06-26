@@ -2,6 +2,14 @@ const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
 const { checkCommonResponse } = require('./commonResponses');
+const { callAI, getProvidersStatus } = require('./aiProviders');
+const {
+  register,
+  collectAiMetrics,
+  recordAiResponse,
+  recordAiError,
+  recordSubjectRequest,
+} = require('./metrics');
 require('dotenv').config();
 
 // Normalize prompt by cleaning and standardizing input
@@ -45,6 +53,9 @@ const PORT = process.env.PORT || 3002;
 
 app.use(express.json());
 
+// Prometheus metrics collection middleware
+app.use(collectAiMetrics);
+
 app.use(
   cors({
     origin: ['http://localhost:3001', 'http://localhost:3000'],
@@ -74,6 +85,10 @@ app.post('/api/chat', async (req, res) => {
     // Check for common, predefined responses
     const commonResponse = checkCommonResponse(query, subject);
     if (commonResponse?.found) {
+      // Record metrics for predefined response
+      recordAiResponse(commonResponse.response, 'predefined', subject);
+      recordSubjectRequest(subject || 'general', 'unknown');
+
       return res.json({
         response: commonResponse.response,
         metadata: {
@@ -91,31 +106,29 @@ app.post('/api/chat', async (req, res) => {
     const messages = [
       {
         role: 'system',
-        content: `You are an intelligent, friendly, and helpful AI tutor. Always answer in a formal but simple tone suitable for students. Use the following format in your responses:
+        content: `You are a helpful AI tutor. Respond in a clear, student-friendly manner. Structure your answers with:
+1. Brief acknowledgment
+2. Clear explanation with examples
+3. Practical applications
+4. Invitation for follow-up questions
 
-🗣️ Acknowledge the user's question or provide a brief context of the topic if needed. Ensure that your response feels like a natural conversation.
-
-� Explain the concept in simple terms, avoiding unnecessary jargon. Keep your explanation engaging and clear. Use analogies or examples when applicable, and break down difficult concepts into digestible parts.
-
-🔍 Provide practical examples or scenarios to make the explanation more relatable. These can be code snippets, real-life analogies, or step-by-step breakdowns.
-
-�💬 Encourage further questions or prompt the user to explore related concepts. Ensure the response feels interactive and that you're offering follow-up opportunities.
-
-
-Formatting Guidelines:
-
-Use bold or emoji headings where appropriate within sections.
-Always keep a formal, student-friendly tone.
-Do not use difficult vocabulary unless explained.
-
-Avoid:
-Overly technical terms without explanation.
-Long paragraphs.
-Casual or vague responses.`,
+Keep responses concise, avoid jargon, and use examples when helpful.`,
       },
       {
         role: 'user',
         content: (() => {
+          // Limit conversation history to prevent token overflow
+          const maxHistoryLength = 1000;
+          let limitedHistory = conversationHistory;
+
+          if (
+            conversationHistory &&
+            conversationHistory.length > maxHistoryLength
+          ) {
+            limitedHistory =
+              '...' + conversationHistory.slice(-maxHistoryLength);
+          }
+
           const commonAffirmatives = [
             'yes',
             'yeah',
@@ -129,35 +142,26 @@ Casual or vague responses.`,
           const lowerRawQuery = rawQuery.toLowerCase().trim();
 
           if (
-            conversationHistory &&
+            limitedHistory &&
             (commonAffirmatives.includes(lowerRawQuery) ||
               commonNegatives.includes(lowerRawQuery))
           ) {
-            return `Context:\n${conversationHistory}\n\nThe user responded with "${rawQuery}" to your previous question. Please continue the conversation or address their response appropriately, maintaining the established response format.`;
+            return `Context: ${limitedHistory}\n\nUser: "${rawQuery}"\n\nContinue the conversation appropriately.`;
           }
-          return conversationHistory
-            ? `Context:\n${conversationHistory}\n\nCurrent Query: ${prompt}\n\nProvide a structured response that builds on previous information while addressing the current query. Use clear sections and concise explanations.`
-            : `Query: ${prompt}\n\nProvide a structured response with clear sections and concise explanations.`;
+
+          return limitedHistory
+            ? `Context: ${limitedHistory}\n\nQuery: ${prompt}`
+            : `Query: ${prompt}`;
         })(),
       },
     ];
 
-    const openAiResponse = await axios.post(
-      'https://api.groq.com/openai/v1/chat/completions',
-      {
-        model: 'deepseek-r1-distill-llama-70b',
-        messages,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        timeout: 30000,
-      }
-    );
+    // Call AI using the new provider system
+    const aiResult = await callAI(messages, {
+      subject: subject || 'general',
+    });
 
-    const rawResponse = openAiResponse.data?.choices?.[0]?.message?.content;
+    const rawResponse = aiResult?.choices?.[0]?.message?.content;
 
     if (!rawResponse) {
       throw new Error('Received an invalid response from the AI service.');
@@ -173,22 +177,58 @@ Casual or vague responses.`,
         .trim();
     };
 
+    const finalResponse = cleanResponse(rawResponse);
+
+    // Record metrics for AI response
+    recordAiResponse(finalResponse, aiResult.model || 'unknown', subject);
+    recordSubjectRequest(subject || 'general', 'unknown');
+
     res.json({
-      response: cleanResponse(rawResponse),
+      response: finalResponse,
+      metadata: {
+        model: aiResult.model || 'unknown',
+        provider: aiResult.provider || 'unknown',
+        timestamp: new Date().toISOString(),
+      },
     });
   } catch (error) {
     console.error('Error in /api/chat:', error.message);
+
+    // Record error metrics
+    recordAiError(
+      error.message.includes('timeout') ? 'timeout' : 'api_error',
+      'deepseek-r1-distill-llama-70b'
+    );
+
     res.status(500).json({ error: error.message });
   }
 });
 
 app.get('/health', (req, res) => {
-  const apiKeyConfigured = !!process.env.GROQ_API_KEY;
+  const providersStatus = getProvidersStatus();
+  const hasAnyProvider = Object.values(providersStatus).some(
+    p => p.enabled && p.configured
+  );
+
   res.json({
     status: 'healthy',
-    apiKeyConfigured,
+    aiProviders: providersStatus,
+    hasConfiguredProvider: hasAnyProvider,
     environment: process.env.NODE_ENV || 'development',
     port: PORT,
+  });
+});
+
+// New endpoint to check AI providers status
+app.get('/api/providers', (req, res) => {
+  const providersStatus = getProvidersStatus();
+  res.json({
+    providers: providersStatus,
+    recommendations: {
+      development: 'Use Ollama (free, local) or Mock AI for development',
+      staging: 'Use Groq (free tier) or OpenAI',
+      production: 'Use OpenAI or Anthropic for best reliability',
+    },
   });
 });
 
@@ -247,6 +287,16 @@ app.get('/', (req, res) => {
     },
     message: 'AI service is running. Use /api/chat for chat functionality.',
   });
+});
+
+// Prometheus metrics endpoint
+app.get('/metrics', async (req, res) => {
+  try {
+    res.set('Content-Type', register.contentType);
+    res.end(await register.metrics());
+  } catch (ex) {
+    res.status(500).end(ex);
+  }
 });
 
 app.listen(PORT, () => {

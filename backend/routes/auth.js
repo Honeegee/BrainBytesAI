@@ -5,6 +5,19 @@ const Auth = require('../models/auth');
 const UserProfile = require('../models/userProfile');
 const { authLimiter, validateAuthInput } = require('../middleware/security');
 
+// Handle OPTIONS requests for CORS preflight
+router.options('/register', (req, res) => {
+  res.status(200).end();
+});
+
+router.options('/login', (req, res) => {
+  res.status(200).end();
+});
+
+router.options('/logout', (req, res) => {
+  res.status(200).end();
+});
+
 // Register new user
 router.post('/register', validateAuthInput, async (req, res) => {
   try {

@@ -117,6 +117,65 @@ class HerokuDeploymentHelper {
         }
     }
 
+    async setupMonitoring(environment = 'staging') {
+        console.log(`🔧 Setting up monitoring for ${environment} environment...`);
+        
+        const apps = environment === 'staging' ?
+            {
+                frontend: 'brainbytes-frontend-staging-7593f4655363',
+                backend: 'brainbytes-backend-staging-de872da2939f',
+                ai: 'brainbytes-ai-service-staging-4b75c77cf53a'
+            } :
+            {
+                frontend: 'brainbytes-frontend-production-03d1e6b6b158',
+                backend: 'brainbytes-backend-production-d355616d0f1f',
+                ai: 'brainbytes-ai-production-3833f742ba79'
+            };
+
+        console.log('\n📊 This will integrate with:');
+        console.log('1. Grafana Cloud for metrics and dashboards');
+        console.log('2. Heroku built-in logging');
+        console.log('3. Custom application metrics');
+        console.log('4. Uptime monitoring services');
+
+        console.log('\n🔧 Required setup:');
+        console.log('1. Run: node monitoring/heroku/heroku-monitoring.js setup ' + environment);
+        console.log('2. Or run: ./monitoring/heroku/setup-heroku-monitoring.sh ' + environment);
+        console.log('3. Import dashboard: monitoring/heroku/dashboards/brainbytes-heroku-dashboard.json');
+        console.log('4. Configure alerts: monitoring/heroku/alerts/heroku-alert-rules.yml');
+
+        console.log('\n📱 Applications to monitor:');
+        for (const [service, appName] of Object.entries(apps)) {
+            console.log(`   ${service.padEnd(10)}: ${appName}`);
+        }
+
+        console.log('\n🧪 Testing monitoring endpoints...');
+        for (const [service, appName] of Object.entries(apps)) {
+            const healthUrl = service === 'frontend'
+                ? `https://${appName}.herokuapp.com`
+                : `https://${appName}.herokuapp.com/health`;
+            
+            try {
+                const isHealthy = await this.checkUrl(healthUrl);
+                console.log(`   ${service.padEnd(10)}: ${isHealthy ? '✅ Healthy' : '❌ Unhealthy'}`);
+                
+                // Test metrics endpoint for backend services
+                if (service !== 'frontend') {
+                    const metricsUrl = `https://${appName}.herokuapp.com/metrics`;
+                    const hasMetrics = await this.checkUrl(metricsUrl);
+                    console.log(`   ${''.padEnd(10)}  Metrics: ${hasMetrics ? '✅ Available' : '❌ Unavailable'}`);
+                }
+            } catch (error) {
+                console.log(`   ${service.padEnd(10)}: ❌ Error - ${error.message}`);
+            }
+        }
+
+        console.log('\n📖 Documentation:');
+        console.log('   Setup Guide: monitoring/heroku/README.md');
+        console.log('   Heroku Docs: https://devcenter.heroku.com/articles/metrics');
+        console.log('   Grafana Cloud: https://grafana.com/products/cloud/');
+    }
+
     async makeGitHubRequest(method, path, data = null) {
         return new Promise((resolve, reject) => {
             const options = {
@@ -187,6 +246,7 @@ Commands:
   deploy [env]     Trigger deployment (env: staging|production, default: staging)
   status          Check recent deployment status
   apps            Check Heroku app health
+  monitoring [env] Set up monitoring for environment (staging|production)
   help            Show this help
 
 Options:
@@ -197,6 +257,7 @@ Examples:
   node scripts/deploy-heroku.js deploy production --force
   node scripts/deploy-heroku.js status
   node scripts/deploy-heroku.js apps
+  node scripts/deploy-heroku.js monitoring staging
 
 Environment Variables:
   GITHUB_TOKEN    GitHub personal access token (optional, for API access)
@@ -229,6 +290,11 @@ async function main() {
             
         case 'apps':
             await helper.checkHerokuApps();
+            break;
+            
+        case 'monitoring':
+            const monitoringEnv = args[1] || 'staging';
+            await helper.setupMonitoring(monitoringEnv);
             break;
             
         case 'help':

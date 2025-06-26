@@ -21,17 +21,17 @@ The CI/CD pipeline consists of three primary workflows:
 ### 1. Code Quality & Security Workflow
 - **File**: [`.github/workflows/code-quality.yml`](.github/workflows/code-quality.yml)
 - **Purpose**: Ensures code quality, security, and maintainability standards
-- **Triggers**: Push to main/development, PRs, daily scheduled runs
+- **Triggers**: Push to main/development, PRs, daily scheduled runs, manual dispatch
 
 ### 2. CI/CD Pipeline Workflow
 - **File**: [`.github/workflows/ci-cd.yml`](.github/workflows/ci-cd.yml)
 - **Purpose**: Runs comprehensive testing including unit tests, E2E tests, and performance tests
-- **Triggers**: After successful code quality checks, manual dispatch
+- **Triggers**: Push to main/development, PRs, manual dispatch (runs independently)
 
-### 3. Deploy to Environments Workflow
-- **File**: [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml)
-- **Purpose**: Builds Docker images and deploys to staging/production environments
-- **Triggers**: After successful CI/CD pipeline, manual dispatch
+### 3. Heroku Deployment Workflow
+- **File**: [`.github/workflows/deploy-heroku.yml`](.github/workflows/deploy-heroku.yml)
+- **Purpose**: Deploys to Heroku staging and production environments
+- **Triggers**: Push to main/develop branches, manual dispatch (runs independently)
 
 ## Workflow Details
 
@@ -68,27 +68,28 @@ The CI/CD pipeline consists of three primary workflows:
 
 ### CI/CD Pipeline Workflow
 
-**Purpose**: Comprehensive testing across multiple Node.js versions and deployment scenarios.
+**Purpose**: Comprehensive testing across multiple Node.js versions with Docker builds and MongoDB Atlas integration.
 
 **Jobs**:
-1. **Check Code Quality Status** (`check-code-quality`)
-   - Validates that code quality workflow passed
-   - Only runs when triggered by workflow_run event
-
-2. **Setup Dependencies** (`setup`)
+1. **Setup Dependencies** (`setup`)
    - Installs dependencies for all services
    - Caches dependencies for performance
    - Verifies installation success
 
-3. **Test Matrix** (`test-matrix`)
+2. **Test Matrix** (`test-matrix`)
    - **Matrix Strategy**: Tests across Node.js versions 18, 20, 22
    - **Services**: frontend, backend, ai-service
    - **Coverage**: Uploads test coverage to Codecov
    - **Artifacts**: Stores test results and coverage reports
 
+3. **Docker Build & Test** (`docker-build`)
+   - Builds Docker images for all services
+   - Runs health checks on containerized services
+   - Validates Docker configurations
+
 4. **E2E Tests** (`e2e-tests`)
-   - Spins up MongoDB service
-   - Starts all application services (frontend:3001, backend:3000, ai-service:3002)
+   - Uses MongoDB Atlas for cloud database testing
+   - Starts all application services with proper health checks
    - Runs Playwright end-to-end tests
    - Creates dynamic health check tests
 
@@ -96,11 +97,12 @@ The CI/CD pipeline consists of three primary workflows:
    - Only runs on main/development branches or manual dispatch
    - Uses Artillery for load testing
    - Tests against running application services
-   - Generates performance reports
+   - Generates comprehensive performance reports
 
 6. **Test Summary** (`test-summary`)
    - Aggregates all test results
    - Creates comprehensive test report
+   - Manages artifacts and cleanup
 
 7. **Notifications** (`notify`)
    - Sends workflow status notifications
@@ -109,52 +111,51 @@ The CI/CD pipeline consists of three primary workflows:
 
 **Node.js Version Support**: 18.x, 20.x, 22.x
 
-### Deploy to Environments Workflow
+### Heroku Deployment Workflow
 
-**Purpose**: Builds and deploys applications to staging and production environments.
+**Purpose**: Deploys applications to Heroku staging and production environments with health verification.
 
 **Jobs**:
-1. **Check CI/CD Status** (`check-ci-cd`)
-   - Ensures CI/CD pipeline passed before deployment
+1. **Deploy to Staging** (`deploy-staging`)
+   - **Trigger**: Push to `develop` branch
+   - **Services**: Frontend, Backend, AI Service
+   - **Environment URLs**:
+     - Frontend: https://brainbytes-frontend-staging-7593f4655363.herokuapp.com
+     - Backend: https://brainbytes-backend-staging-de872da2939f.herokuapp.com
+     - AI Service: https://brainbytes-ai-service-staging-4b75c77cf53a.herokuapp.com
+   - **Health Checks**: Post-deployment verification for all services
 
-2. **Setup Deployment** (`setup`)
-   - Determines target environment (staging/production)
-   - Sets deployment URLs and configuration
+2. **Deploy to Production** (`deploy-production`)
+   - **Trigger**: Push to `main` branch
+   - **Services**: Frontend, Backend, AI Service
+   - **Environment URLs**:
+     - Frontend: https://brainbytes-frontend-production-03d1e6b6b158.herokuapp.com
+     - Backend: https://brainbytes-backend-production-d355616d0f1f.herokuapp.com
+     - AI Service: https://brainbytes-ai-production-3833f742ba79.herokuapp.com
+   - **Health Checks**: Comprehensive production verification
 
-3. **Build & Push Images** (`build-images`)
-   - **Matrix Strategy**: Builds Docker images for all services
-   - **Multi-platform**: Supports linux/amd64 and linux/arm64
-   - **Registry**: Uses GitHub Container Registry (ghcr.io)
-   - **Caching**: Implements Docker layer caching
+3. **Manual Deployment** (`manual-deploy`)
+   - **Trigger**: Manual workflow dispatch
+   - **Options**: Environment selection (staging/production)
+   - **Force Deploy**: Option to skip validation checks
 
-4. **Deploy to Staging** (`deploy-staging`)
-   - Deploys to staging environment
-   - Runs health checks and smoke tests
-   - Environment URL: https://staging.brainbytes.app
-
-5. **Deploy to Production** (`deploy-production`)
-   - Blue-green deployment strategy
-   - Pre-deployment backup
-   - Comprehensive production verification
-   - Environment URL: https://brainbytes.app
-
-6. **Rollback** (`rollback`)
-   - Automatic rollback on deployment failure
-   - Restores previous version
-
-7. **Deployment Notifications** (`notify-deployment`)
-   - Slack notifications (if configured)
-   - GitHub deployment status updates
+**Deployment Features**:
+- **Heroku CLI Integration**: Uses official Heroku actions
+- **Multi-service Coordination**: Deploys all services in proper order
+- **Environment-specific Configuration**: Secure secrets and variables
+- **Health Verification**: Automated post-deployment testing
+- **Failure Handling**: Automatic error detection and reporting
 
 **Environment Mapping**:
-- `main` branch → Production environment
-- `development` branch → Staging environment
+- `main` branch → Production environment (automatic)
+- `develop` branch → Staging environment (automatic)
+- Manual dispatch → User-selected environment
 
 ## Manual Workflow Execution
 
 ### Running Code Quality Checks Manually
 
-The Code Quality workflow cannot be run manually as it's designed to trigger on push/PR events. However, you can run individual quality checks locally:
+The Code Quality workflow can be run manually using workflow dispatch with scan level options. You can also run individual quality checks locally:
 
 **Linux/macOS:**
 ```bash
@@ -223,10 +224,10 @@ npm audit
    gh workflow run "CI/CD Pipeline" --ref main
    ```
 
-### Running Deployment Manually
+### Running Heroku Deployment Manually
 
 1. **Navigate to Actions Tab**:
-   - Go to "Deploy to Environments" workflow
+   - Go to "Deploy to Heroku" workflow
    - Click "Run workflow"
 
 2. **Configure Manual Deployment**:
@@ -239,13 +240,13 @@ npm audit
    **Linux/macOS:**
    ```bash
    # Deploy to staging
-   gh workflow run "Deploy to Environments" \
-     --ref development \
+   gh workflow run "Deploy to Heroku" \
+     --ref develop \
      -f environment=staging \
      -f force_deploy=false
 
    # Deploy to production
-   gh workflow run "Deploy to Environments" \
+   gh workflow run "Deploy to Heroku" \
      --ref main \
      -f environment=production \
      -f force_deploy=false
@@ -254,10 +255,10 @@ npm audit
    **Windows (Command Prompt/PowerShell):**
    ```cmd
    # Deploy to staging
-   gh workflow run "Deploy to Environments" --ref development -f environment=staging -f force_deploy=false
+   gh workflow run "Deploy to Heroku" --ref develop -f environment=staging -f force_deploy=false
 
    # Deploy to production
-   gh workflow run "Deploy to Environments" --ref main -f environment=production -f force_deploy=false
+   gh workflow run "Deploy to Heroku" --ref main -f environment=production -f force_deploy=false
    ```
 
 ## Status Badges
@@ -276,7 +277,7 @@ Add these badges to your README.md to display workflow status:
 
 ### Deployment Badge
 ```markdown
-[![Deploy to Environments](https://github.com/YOUR_USERNAME/BrainBytesAI/actions/workflows/deploy.yml/badge.svg)](https://github.com/YOUR_USERNAME/BrainBytesAI/actions/workflows/deploy.yml)
+[![Deploy to Heroku](https://github.com/YOUR_USERNAME/BrainBytesAI/actions/workflows/deploy-heroku.yml/badge.svg)](https://github.com/YOUR_USERNAME/BrainBytesAI/actions/workflows/deploy-heroku.yml)
 ```
 
 ### Badge Status Meanings
@@ -363,7 +364,7 @@ npm run test:working
 ```
 
 **Port Conflicts**:
-- The pipeline uses ports 3000 (backend), 3001 (frontend), 3002 (ai-service)
+- The pipeline uses ports 3000 (frontend), 3001 (backend), 3002 (ai-service)
 
 *Linux/macOS:*
 ```bash
@@ -520,15 +521,14 @@ npm ls
 
 Configure these secrets in GitHub repository settings:
 
-#### Staging Environment
-- `STAGING_DATABASE_URL`: MongoDB connection string for staging
-- `STAGING_JWT_SECRET`: JWT secret for staging
-- `STAGING_AI_API_KEY`: AI service API key for staging
+#### Heroku Deployment
+- `HEROKU_API_KEY`: Heroku API key for deployment authentication
+- `HEROKU_EMAIL`: Email associated with Heroku account
 
-#### Production Environment
-- `PRODUCTION_DATABASE_URL`: MongoDB connection string for production
-- `PRODUCTION_JWT_SECRET`: JWT secret for production
-- `PRODUCTION_AI_API_KEY`: AI service API key for production
+#### Application Environment Variables (configured in Heroku)
+- `DATABASE_URL`: MongoDB connection string
+- `JWT_SECRET`: JWT secret for authentication
+- `GROQ_API_KEY`: AI service API key for Groq integration
 
 #### Optional Secrets
 - `SLACK_WEBHOOK_URL`: For deployment notifications
@@ -542,9 +542,9 @@ The workflows use these environment variables:
 # CI/CD Pipeline
 NODE_VERSION_MATRIX: '[18, 20, 22]'
 
-# Deployment
-REGISTRY: ghcr.io
-IMAGE_NAME: ${{ github.repository }}
+# Heroku Deployment
+HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+HEROKU_EMAIL: ${{ secrets.HEROKU_EMAIL }}
 ```
 
 ### File Structure
@@ -554,7 +554,7 @@ IMAGE_NAME: ${{ github.repository }}
 ├── workflows/
 │   ├── code-quality.yml     # Code quality and security checks
 │   ├── ci-cd.yml           # CI/CD pipeline with testing
-│   └── deploy.yml          # Deployment to environments
+│   └── deploy-heroku.yml   # Heroku deployment workflow
 ├── performance-test.yml    # Artillery performance test config
 └── performance-test-quick.yml # Quick performance test config
 ```

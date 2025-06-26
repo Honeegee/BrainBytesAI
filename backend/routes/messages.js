@@ -276,9 +276,9 @@ router.post('/', async (req, res) => {
       const aiServiceUrl =
         process.env.AI_SERVICE_URL || 'http://localhost:3002';
 
-      // Check if AI service URL is reachable
-      if (!aiServiceUrl || aiServiceUrl === 'http://ai-service:3002') {
-        throw new Error('AI service is not available in this environment');
+      // Check if AI service URL is configured
+      if (!aiServiceUrl) {
+        throw new Error('AI service URL is not configured');
       }
 
       openAiResponse = await axios

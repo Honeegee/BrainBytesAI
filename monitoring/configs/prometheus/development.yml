@@ -1,0 +1,61 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    environment: 'development'
+    cluster: 'brainbytes-local'
+
+rule_files:
+  - "/etc/prometheus/alert-rules.yml"
+  - "/etc/prometheus/recording_rules.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Backend API metrics
+  - job_name: 'brainbytes-backend'
+    static_configs:
+      - targets: ['backend:3000']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  # AI Service metrics
+  - job_name: 'brainbytes-ai-service'
+    static_configs:
+      - targets: ['ai-service:3002']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  # Frontend metrics
+  - job_name: 'brainbytes-frontend'
+    static_configs:
+      - targets: ['frontend:3000']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  # Node Exporter for host metrics
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    scrape_interval: 15s
+
+  # cAdvisor for container metrics
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+    scrape_interval: 15s
+
+  # Alertmanager metrics
+  - job_name: 'alertmanager'
+    static_configs:
+      - targets: ['alertmanager:9093']
+    scrape_interval: 15s

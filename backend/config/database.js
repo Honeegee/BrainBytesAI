@@ -100,7 +100,11 @@ const connectDatabase = async () => {
     console.log(`✅ MongoDB connected successfully (${process.env.NODE_ENV})`);
   } catch (error) {
     console.error('❌ MongoDB connection error:', error);
-    process.exit(1);
+    console.log('⚠️  Starting server without database connection...');
+    // Don't exit in development, allow server to start
+    if (process.env.NODE_ENV === 'production') {
+      process.exit(1);
+    }
   }
 };
 

@@ -1,0 +1,53 @@
+# Recording Rules for BrainBytes AI Monitoring
+# Homework Task 1.3: Implement Recording Rules
+
+groups:
+  - name: brainbytes_application_rules
+    interval: 30s
+    rules:
+    # Frequently used rate calculations
+    - record: brainbytes:request_rate_5m
+      expr: rate(brainbytes_http_requests_total[5m])
+      labels:
+        rule_type: "application_performance"
+    
+    - record: brainbytes:error_rate_5m
+      expr: |
+        rate(brainbytes_http_requests_total{status_code=~"5.."}[5m]) / 
+        rate(brainbytes_http_requests_total[5m])
+      labels:
+        rule_type: "application_performance"
+
+  - name: brainbytes_ai_rules
+    interval: 30s
+    rules:
+    # AI service performance rules
+    - record: brainbytes:ai_response_time_p95
+      expr: histogram_quantile(0.95, rate(brainbytes_ai_request_duration_seconds_bucket[5m]))
+      labels:
+        rule_type: "ai_performance"
+    
+    - record: brainbytes:ai_success_rate_5m
+      expr: |
+        rate(brainbytes_ai_requests_total{status="success"}[5m]) / 
+        rate(brainbytes_ai_requests_total[5m])
+      labels:
+        rule_type: "ai_performance"
+
+  - name: brainbytes_business_rules
+    interval: 60s
+    rules:
+    # Business intelligence rules
+    - record: brainbytes:questions_per_session_1h
+      expr: |
+        sum(rate(brainbytes_questions_total[1h])) / 
+        sum(rate(brainbytes_tutoring_sessions_total[1h]))
+      labels:
+        rule_type: "business_intelligence"
+    
+    - record: brainbytes:mobile_traffic_percentage_5m
+      expr: |
+        rate(brainbytes_mobile_requests_total[5m]) / 
+        rate(brainbytes_http_requests_total[5m]) * 100
+      labels:
+        rule_type: "filipino_context"
