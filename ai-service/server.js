@@ -289,6 +289,7 @@ app.get('/', (req, res) => {
   });
 });
 
+<<<<<<< development
 // Prometheus metrics endpoint
 app.get('/metrics', async (req, res) => {
   try {
@@ -299,6 +300,8 @@ app.get('/metrics', async (req, res) => {
   }
 });
 
+=======
+>>>>>>> main
 app.listen(PORT, () => {
   console.log(`AI service running on port ${PORT}`);
 });
