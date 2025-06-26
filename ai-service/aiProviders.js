@@ -252,21 +252,29 @@ function estimateTokens(text) {
 function truncateMessages(messages, maxTokens = 4000) {
   let totalTokens = 0;
   const result = [];
-  
+
   // Always keep system message
   if (messages[0]?.role === 'system') {
     result.push(messages[0]);
     totalTokens += estimateTokens(messages[0].content);
   }
-  
+
   // Add messages from the end (most recent first)
-  for (let i = messages.length - 1; i >= (messages[0]?.role === 'system' ? 1 : 0); i--) {
+  for (
+    let i = messages.length - 1;
+    i >= (messages[0]?.role === 'system' ? 1 : 0);
+    i--
+  ) {
     const messageTokens = estimateTokens(messages[i].content);
     if (totalTokens + messageTokens > maxTokens) {
       // If this message would exceed limit, truncate its content
       const remainingTokens = maxTokens - totalTokens;
-      if (remainingTokens > 100) { // Only add if we have reasonable space
-        const truncatedContent = messages[i].content.slice(0, remainingTokens * 4);
+      if (remainingTokens > 100) {
+        // Only add if we have reasonable space
+        const truncatedContent = messages[i].content.slice(
+          0,
+          remainingTokens * 4
+        );
         result.unshift({ ...messages[i], content: '...' + truncatedContent });
       }
       break;
@@ -274,7 +282,7 @@ function truncateMessages(messages, maxTokens = 4000) {
     result.unshift(messages[i]);
     totalTokens += messageTokens;
   }
-  
+
   return result;
 }
 
@@ -311,13 +319,13 @@ async function callAI(messages, options = {}) {
     // Try with different token limits and models for token-related errors
     const tokenLimits = [8000, 4000, 2000]; // Progressive reduction
     const modelsToTry = provider.fallbackModels || [config.model];
-    
+
     for (const model of modelsToTry) {
       for (const tokenLimit of tokenLimits) {
         try {
           const truncatedMessages = truncateMessages(messages, tokenLimit);
           const modelConfig = { ...config, model };
-          
+
           console.log(
             `Attempting ${provider.name} with model ${model} (token limit: ${tokenLimit})`
           );
@@ -326,16 +334,32 @@ async function callAI(messages, options = {}) {
           switch (providerName) {
             case 'openai':
             case 'groq':
-              response = await callOpenAICompatible(provider, truncatedMessages, modelConfig);
+              response = await callOpenAICompatible(
+                provider,
+                truncatedMessages,
+                modelConfig
+              );
               break;
             case 'anthropic':
-              response = await callAnthropic(provider, truncatedMessages, modelConfig);
+              response = await callAnthropic(
+                provider,
+                truncatedMessages,
+                modelConfig
+              );
               break;
             case 'google':
-              response = await callGoogle(provider, truncatedMessages, modelConfig);
+              response = await callGoogle(
+                provider,
+                truncatedMessages,
+                modelConfig
+              );
               break;
             case 'ollama':
-              response = await callOllama(provider, truncatedMessages, modelConfig);
+              response = await callOllama(
+                provider,
+                truncatedMessages,
+                modelConfig
+              );
               break;
             default:
               throw new Error(`Unknown provider: ${providerName}`);
@@ -344,17 +368,22 @@ async function callAI(messages, options = {}) {
           console.log(`Successfully used ${provider.name} with model ${model}`);
           return response;
         } catch (error) {
-          console.error(`${provider.name} (${model}, limit: ${tokenLimit}) failed:`, error.message);
+          console.error(
+            `${provider.name} (${model}, limit: ${tokenLimit}) failed:`,
+            error.message
+          );
           lastError = error;
-          
+
           // If it's a token-related error, try next token limit
-          if (error.response?.status === 413 ||
-              error.message.includes('token') ||
-              error.message.includes('length')) {
+          if (
+            error.response?.status === 413 ||
+            error.message.includes('token') ||
+            error.message.includes('length')
+          ) {
             console.log('Token limit exceeded, trying smaller limit...');
             continue;
           }
-          
+
           // For other errors, try next model
           break;
         }

@@ -120,19 +120,35 @@ Keep responses concise, avoid jargon, and use examples when helpful.`,
           // Limit conversation history to prevent token overflow
           const maxHistoryLength = 1000;
           let limitedHistory = conversationHistory;
-          
-          if (conversationHistory && conversationHistory.length > maxHistoryLength) {
-            limitedHistory = '...' + conversationHistory.slice(-maxHistoryLength);
+
+          if (
+            conversationHistory &&
+            conversationHistory.length > maxHistoryLength
+          ) {
+            limitedHistory =
+              '...' + conversationHistory.slice(-maxHistoryLength);
           }
 
-          const commonAffirmatives = ['yes', 'yeah', 'yep', 'sure', 'ok', 'okay', 'alright'];
+          const commonAffirmatives = [
+            'yes',
+            'yeah',
+            'yep',
+            'sure',
+            'ok',
+            'okay',
+            'alright',
+          ];
           const commonNegatives = ['no', 'nope', 'nah'];
           const lowerRawQuery = rawQuery.toLowerCase().trim();
 
-          if (limitedHistory && (commonAffirmatives.includes(lowerRawQuery) || commonNegatives.includes(lowerRawQuery))) {
+          if (
+            limitedHistory &&
+            (commonAffirmatives.includes(lowerRawQuery) ||
+              commonNegatives.includes(lowerRawQuery))
+          ) {
             return `Context: ${limitedHistory}\n\nUser: "${rawQuery}"\n\nContinue the conversation appropriately.`;
           }
-          
+
           return limitedHistory
             ? `Context: ${limitedHistory}\n\nQuery: ${prompt}`
             : `Query: ${prompt}`;

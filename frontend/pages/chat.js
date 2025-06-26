@@ -34,7 +34,8 @@ function Chat() {
   // Check if user is near bottom of chat
   const isNearBottom = () => {
     if (!messagesContainerRef.current) return true;
-    const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
+    const { scrollTop, scrollHeight, clientHeight } =
+      messagesContainerRef.current;
     return scrollHeight - scrollTop - clientHeight < 100; // Within 100px of bottom
   };
 
@@ -258,7 +259,10 @@ function Chat() {
           );
           // Only update if messages actually changed
           setMessages(prevMessages => {
-            if (JSON.stringify(prevMessages) !== JSON.stringify(response.data.messages)) {
+            if (
+              JSON.stringify(prevMessages) !==
+              JSON.stringify(response.data.messages)
+            ) {
               return response.data.messages;
             }
             return prevMessages;
@@ -277,14 +281,14 @@ function Chat() {
   useEffect(() => {
     const newMessageCount = messages.length;
     const hasNewMessages = newMessageCount > lastMessageCount;
-    
+
     if (hasNewMessages && shouldAutoScroll) {
       // Slight delay to ensure DOM has updated
       setTimeout(() => {
         scrollToBottom();
       }, 100);
     }
-    
+
     setLastMessageCount(newMessageCount);
   }, [messages, shouldAutoScroll, lastMessageCount]);
 
