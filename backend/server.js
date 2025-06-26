@@ -47,7 +47,7 @@ mongoose.set('debug', false); // Disable debug mode in production
 // Ensure uploads directory exists
 fs.mkdirSync(uploadDir, { recursive: true });
 
-// CORS configuration - Must be first
+// CORS configuration - Handled by nginx in production, but keep for direct backend access
 const corsOptions = {
   origin: function (origin, callback) {
     // Allow requests with no origin (mobile apps, postman, etc.)
@@ -56,8 +56,13 @@ const corsOptions = {
     }
 
     const allowedOrigins = [
+      'http://localhost', // Development (via Nginx)
+      'http://localhost:80', // Development (explicit port 80)
+      'http://localhost:8080', // Development (common dev port)
       'http://localhost:3001', // Development
       'http://localhost:3000', // Development backend
+      'http://localhost:5000', // Development (common dev port)
+      'http://localhost:8000', // Development (common dev port)
     ];
 
     // Allow all brainbytes heroku apps (handles dynamic URLs)
@@ -74,20 +79,38 @@ const corsOptions = {
     const isEnvUrl = envFrontendUrl && origin === envFrontendUrl;
 
     if (isAllowedOrigin || isHerokuApp || isStagingApp || isEnvUrl) {
+      console.log(`CORS allowed origin: ${origin}`);
       callback(null, true);
     } else {
       console.log(`CORS blocked origin: ${origin}`);
+      console.log('Allowed origins:', allowedOrigins);
+      console.log('Environment frontend URL:', envFrontendUrl);
       callback(new Error('Not allowed by CORS'));
     }
   },
   credentials: true,
   methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'x-requested-with'],
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'x-requested-with',
+    'Access-Control-Allow-Origin',
+    'Access-Control-Allow-Headers',
+    'Origin',
+    'Accept',
+    'X-Requested-With',
+  ],
   exposedHeaders: ['Set-Cookie'],
   optionsSuccessStatus: 200,
   preflightContinue: false,
 };
-app.use(cors(corsOptions));
+
+// Only apply CORS middleware if not behind nginx proxy
+if (process.env.BEHIND_PROXY !== 'true') {
+  app.use(cors(corsOptions));
+  // Handle preflight OPTIONS requests explicitly
+  app.options('*', cors(corsOptions));
+}
 
 // Basic middleware setup
 app.use(compression());
@@ -255,7 +278,8 @@ app.use(apiRoutes.users, usersRouter);
 app.use(apiRoutes.materials, learningMaterialsRouter);
 
 // Error handling middleware
-app.use((err, req, res) => {
+// eslint-disable-next-line no-unused-vars
+app.use((err, req, res, next) => {
   console.error('Error:', err.message);
   console.error('Stack:', err.stack);
 

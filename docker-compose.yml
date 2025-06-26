@@ -22,6 +22,7 @@ services:
       - prometheus
       - alertmanager
       - cadvisor
+      - grafana
     restart: unless-stopped
 
   # AI Service container
@@ -55,7 +56,9 @@ services:
       - "3000"
     environment:
       - NODE_ENV=development
-      - NODE_OPTIONS=--max_old_space_size=1024  
+      - NODE_OPTIONS=--max_old_space_size=1024
+      - NEXT_PUBLIC_BACKEND_URL=http://localhost
+      - NEXT_PUBLIC_API_URL=http://localhost
     deploy:
       resources:
         limits:
@@ -79,13 +82,14 @@ services:
     env_file:
       - backend/.env
     environment:
-      - NODE_OPTIONS=--max_old_space_size=1024  
+      - NODE_OPTIONS=--max_old_space_size=1024
+      - BEHIND_PROXY=true
     deploy:
       resources:
         limits:
-          memory: 1G  
+          memory: 1G
         reservations:
-          memory: 512M  
+          memory: 512M
     volumes:
       - ./backend:/usr/src/app
       - /usr/src/app/node_modules
@@ -177,7 +181,7 @@ services:
    image: grafana/grafana:latest
    container_name: grafana
    ports:
-     - "3000:3000"
+     - "3003:3000"
    environment:
      - GF_SECURITY_ADMIN_PASSWORD=brainbytes
      - GF_USERS_ALLOW_SIGN_UP=false
