@@ -184,10 +184,19 @@ graph TD
     
     A --> D{Branch?}
     D -->|develop| E[Auto Deploy to Staging]
-    D -->|main| F[Auto Deploy to Production]
+    D -->|main| F[All Tests Pass]
     
-    E --> G[Staging Health Checks]
-    F --> H[Production Health Checks]
+    F --> G[Ready for Production Deploy]
+    G --> H[Manual Trigger Required]
+    H -->|Triggered| I[Deploy to Production]
+    
+    E --> K[Staging Health Checks]
+    I --> L[Production Health Checks]
+    
+    style G fill:#2196f3,stroke:#1565c0,stroke-width:2px
+    style H fill:#ff9800,stroke:#e65100,stroke-width:3px
+    style I fill:#4caf50,stroke:#2e7d32,stroke-width:2px
+
 ```
 
 ---
