@@ -61,10 +61,20 @@ BrainBytes is an innovative AI-powered tutoring platform designed to provide acc
 
 ![System Architecture](docs/architecture.png)
 
-The architecture follows a microservices pattern with three main components:
-- **Frontend Service** (Port 3001): Next.js React application
-- **Backend Service** (Port 3000): Node.js API server
-- **AI Service** (Port 3002): Dedicated AI processing service
+The architecture follows a microservices pattern with different configurations:
+
+### Development Environment (Docker + nginx)
+- **nginx Proxy** (Port 80): Reverse proxy for all services
+- **Frontend Service**: Next.js React application (via nginx)
+- **Backend Service**: Node.js API server (via nginx)
+- **AI Service**: Dedicated AI processing service (via nginx)
+- **Monitoring Stack**: Prometheus, Grafana, Alertmanager (via nginx:8080)
+
+### Production Environment (Heroku)
+- **Frontend Service**: Direct Heroku app deployment
+- **Backend Service**: Direct Heroku app deployment
+- **AI Service**: Direct Heroku app deployment
+- **Monitoring**: Grafana Cloud integration
 
 ## 🚀 Quick Start
 
@@ -83,14 +93,21 @@ The architecture follows a microservices pattern with three main components:
 
 2. **Set up environment variables**:
    ```bash
-   # Copy environment templates
-   cp frontend/.env.local.example frontend/.env.local
+   # Copy example files and configure
+   cp frontend/.env.example frontend/.env.local
    cp backend/.env.example backend/.env
    cp ai-service/.env.example ai-service/.env
    
-   # Edit environment files with your configuration
-   # See Setup Guide for detailed instructions
+   # Configure required variables:
+   # 1. Backend (.env): Add your MongoDB connection string
+   # 2. AI Service (.env): Add your Groq API key
+   # 3. Frontend (.env.local): Usually defaults work for Docker setup
    ```
+
+   **Environment Configuration Guide:**
+   - **Docker Setup** (Recommended): Use `http://ai-service:3002` for inter-container communication
+   - **Local Development**: Use `http://localhost:3002` for direct service access
+   - **Frontend**: Access via nginx proxy at `http://localhost` for Docker setup
 
 3. **Start the application**:
    ```bash
@@ -102,19 +119,24 @@ The architecture follows a microservices pattern with three main components:
    ```
 
 4. **Access the application**:
-   - **Frontend**: http://localhost:3001
-   - **Backend API**: http://localhost:3000
-   - **AI Service**: http://localhost:3002
+   - **Frontend**: http://localhost (via nginx proxy)
+   - **Backend API**: http://localhost/api (via nginx proxy)
+   - **AI Service**: http://localhost:8090 (via nginx proxy)
+   - **Monitoring**: http://localhost:8080 (Prometheus, Grafana, etc.)
 
 ### Verification
 
 ```bash
-# Test API endpoints
-curl http://localhost:3000/api/health
-curl http://localhost:3002/api/health
+# Test API endpoints (via nginx proxy)
+curl http://localhost/api/health
+curl http://localhost:8090/health
 
-# Check frontend accessibility
-curl http://localhost:3001
+# Check frontend accessibility (via nginx proxy)
+curl http://localhost
+
+# Direct service access (if needed for debugging)
+curl http://localhost:9090  # Prometheus
+curl http://localhost:3000  # Grafana
 ```
 
 ## 📚 Documentation
