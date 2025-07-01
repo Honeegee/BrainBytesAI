@@ -1,0 +1,18 @@
+FROM grafana/grafana:latest
+
+# Copy Grafana configuration
+COPY grafana/provisioning/ /etc/grafana/provisioning/
+
+# Set up for Heroku deployment
+USER root
+RUN chmod -R 777 /var/lib/grafana
+USER grafana
+
+# Environment variables for Heroku
+ENV GF_SERVER_HTTP_PORT=${PORT:-3000}
+ENV GF_SECURITY_ADMIN_PASSWORD=brainbytes
+ENV GF_USERS_ALLOW_SIGN_UP=false
+ENV GF_PATHS_PROVISIONING=/etc/grafana/provisioning
+
+# Heroku uses PORT environment variable
+CMD ["sh", "-c", "grafana-server --homepath=/usr/share/grafana --config=/etc/grafana/grafana.ini cfg:default.server.http_port=${PORT:-3000}"]

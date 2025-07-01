@@ -1,13 +1,9 @@
 global:
   scrape_interval: 15s
   evaluation_interval: 15s
-  external_labels:
-    environment: 'production'
-    cluster: 'brainbytes-production'
 
 rule_files:
-  - "/etc/prometheus/alert-rules.yml"
-  - "/etc/prometheus/recording_rules.yml"
+  - "rules/*.yml"
 
 alerting:
   alertmanagers:
@@ -16,46 +12,49 @@ alerting:
           - alertmanager:9093
 
 scrape_configs:
-  # Prometheus self-monitoring
   - job_name: 'prometheus'
     static_configs:
       - targets: ['localhost:9090']
 
-  # Backend API metrics
-  - job_name: 'brainbytes-backend'
+  # Scrape Production Heroku Apps
+  - job_name: 'brainbytes-backend-production'
     static_configs:
-      - targets: ['backend:3000']
+      - targets: ['brainbytes-backend-production-d355616d0f1f.herokuapp.com:443']
+    scheme: https
     metrics_path: '/metrics'
-    scrape_interval: 15s
+    scrape_interval: 30s
+    scrape_timeout: 10s
 
-  # AI Service metrics
-  - job_name: 'brainbytes-ai-service'
+  - job_name: 'brainbytes-ai-production'
     static_configs:
-      - targets: ['ai-service:3002']
+      - targets: ['brainbytes-ai-production-3833f742ba79.herokuapp.com:443']
+    scheme: https
     metrics_path: '/metrics'
-    scrape_interval: 15s
+    scrape_interval: 30s
+    scrape_timeout: 10s
 
-  # Frontend metrics
-  - job_name: 'brainbytes-frontend'
+  # Scrape Staging Heroku Apps
+  - job_name: 'brainbytes-backend-staging'
     static_configs:
-      - targets: ['frontend:3000']
+      - targets: ['brainbytes-backend-staging-de872da2939f.herokuapp.com:443']
+    scheme: https
     metrics_path: '/metrics'
-    scrape_interval: 15s
+    scrape_interval: 30s
+    scrape_timeout: 10s
 
-  # Node Exporter for host metrics
-  - job_name: 'node-exporter'
+  - job_name: 'brainbytes-ai-staging'
     static_configs:
-      - targets: ['node-exporter:9100']
-    scrape_interval: 15s
+      - targets: ['brainbytes-ai-service-staging-4b75c77cf53a.herokuapp.com:443']
+    scheme: https
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    scrape_timeout: 10s
 
-  # cAdvisor for container metrics
-  - job_name: 'cadvisor'
+  # Self-monitoring for production Prometheus
+  - job_name: 'prometheus-production'
     static_configs:
-      - targets: ['cadvisor:8080']
-    scrape_interval: 15s
-
-  # Alertmanager metrics
-  - job_name: 'alertmanager'
-    static_configs:
-      - targets: ['alertmanager:9093']
-    scrape_interval: 15s
+      - targets: ['brainbytes-prometheus-prod-941726856e4c.herokuapp.com:443']
+    scheme: https
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    scrape_timeout: 10s
