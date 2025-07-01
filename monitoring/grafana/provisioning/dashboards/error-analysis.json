@@ -30,7 +30,35 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "thresholds"
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "vis": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
           },
           "mappings": [],
           "thresholds": {
@@ -57,32 +85,28 @@
       },
       "id": 1,
       "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "values": false,
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": ""
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
         },
-        "textMode": "auto"
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
       },
-      "pluginVersion": "9.0.0",
       "targets": [
         {
           "datasource": {
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "brainbytes_active_sessions",
+          "expr": "sum(rate(brainbytes_http_requests_total{status_code=~\"4..|5..\"}[5m])) by (status_code)",
           "refId": "A"
         }
       ],
-      "title": "Active Sessions",
-      "type": "stat"
+      "title": "Error Rate by Status Code",
+      "type": "timeseries"
     },
     {
       "datasource": {
@@ -135,8 +159,7 @@
                 "value": 80
               }
             ]
-          },
-          "unit": "s"
+          }
         },
         "overrides": []
       },
@@ -164,11 +187,11 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "rate(brainbytes_ai_response_time_seconds_sum[5m]) / rate(brainbytes_ai_response_time_seconds_count[5m])",
+          "expr": "sum(rate(brainbytes_http_requests_total{status_code=~\"4..|5..\"}[5m])) by (route)",
           "refId": "A"
         }
       ],
-      "title": "AI Response Time (seconds)",
+      "title": "Error Rate by Route",
       "type": "timeseries"
     },
     {
@@ -179,7 +202,7 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "thresholds"
+            "mode": "palette-classic"
           },
           "mappings": [],
           "thresholds": {
@@ -206,9 +229,6 @@
       },
       "id": 3,
       "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
         "orientation": "auto",
         "reduceOptions": {
           "values": false,
@@ -217,7 +237,8 @@
           ],
           "fields": ""
         },
-        "textMode": "auto"
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
       },
       "pluginVersion": "9.0.0",
       "targets": [
@@ -226,107 +247,29 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "rate(brainbytes_ai_requests_total[10m])",
+          "expr": "100 - (avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
+          "legendFormat": "CPU Usage",
           "refId": "A"
-        }
-      ],
-      "title": "Questions per Session (avg)",
-      "type": "stat"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "vis": false
-            },
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "short"
         },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 8
-      },
-      "id": 4,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom"
-        },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "targets": [
         {
           "datasource": {
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(rate(brainbytes_mobile_requests_total[5m])) by (platform)",
-          "refId": "A"
+          "expr": "(sum(rate(brainbytes_http_requests_total{status_code=~\"5..\"}[5m])) / sum(rate(brainbytes_http_requests_total[5m])))",
+          "legendFormat": "Error Rate",
+          "refId": "B"
         }
       ],
-      "title": "Mobile Platform Usage",
-      "type": "timeseries"
+      "title": "System Health vs Error Rate",
+      "type": "gauge"
     }
   ],
-  "refresh": "",
   "schemaVersion": 36,
   "style": "dark",
   "tags": [
     "brainbytes",
-    "user-experience"
+    "errors"
   ],
   "templating": {
     "list": []
@@ -337,8 +280,8 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "BrainBytes - User Experience",
-  "uid": "brainbytes-user-experience",
+  "title": "Error Analysis Dashboard",
+  "uid": "brainbytes-error-analysis",
   "version": 1,
   "weekStart": ""
 }

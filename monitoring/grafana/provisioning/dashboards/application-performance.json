@@ -73,8 +73,7 @@
                 "value": 80
               }
             ]
-          },
-          "unit": "reqps"
+          }
         },
         "overrides": []
       },
@@ -106,7 +105,7 @@
           "refId": "A"
         }
       ],
-      "title": "Request Rate (req/sec)",
+      "title": "HTTP Request Rate",
       "type": "timeseries"
     },
     {
@@ -160,8 +159,7 @@
                 "value": 80
               }
             ]
-          },
-          "unit": "s"
+          }
         },
         "overrides": []
       },
@@ -193,7 +191,7 @@
           "refId": "A"
         }
       ],
-      "title": "Average Response Time (seconds)",
+      "title": "Average Response Time",
       "type": "timeseries"
     },
     {
@@ -247,14 +245,13 @@
                 "value": 80
               }
             ]
-          },
-          "unit": "percent"
+          }
         },
         "overrides": []
       },
       "gridPos": {
         "h": 8,
-        "w": 24,
+        "w": 12,
         "x": 0,
         "y": 8
       },
@@ -282,14 +279,99 @@
       ],
       "title": "Error Rate (%)",
       "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "vis": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 8
+      },
+      "id": 4,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "rate(brainbytes_ai_request_duration_seconds_sum[5m]) / rate(brainbytes_ai_request_duration_seconds_count[5m])",
+          "refId": "A"
+        }
+      ],
+      "title": "AI Response Time",
+      "type": "timeseries"
     }
   ],
-  "refresh": "",
   "schemaVersion": 36,
   "style": "dark",
   "tags": [
     "brainbytes",
-    "application"
+    "performance"
   ],
   "templating": {
     "list": []
@@ -300,7 +382,7 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "BrainBytes - Application Performance",
+  "title": "Application Performance Dashboard",
   "uid": "brainbytes-application-performance",
   "version": 1,
   "weekStart": ""

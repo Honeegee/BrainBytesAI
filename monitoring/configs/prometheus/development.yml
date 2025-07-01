@@ -8,6 +8,7 @@ global:
 rule_files:
   - "/etc/prometheus/alert-rules.yml"
   - "/etc/prometheus/recording_rules.yml"
+  - "/etc/prometheus/advanced-alert-rules.yml"
 
 alerting:
   alertmanagers:
@@ -34,13 +35,13 @@ scrape_configs:
       - targets: ['ai-service:3002']
     metrics_path: '/metrics'
     scrape_interval: 15s
+# Frontend metrics - Disabled (Next.js doesn't expose metrics by default)
+# - job_name: 'brainbytes-frontend'
+#   static_configs:
+#     - targets: ['frontend:3000']
+#   metrics_path: '/metrics'
+#   scrape_interval: 15s
 
-  # Frontend metrics
-  - job_name: 'brainbytes-frontend'
-    static_configs:
-      - targets: ['frontend:3000']
-    metrics_path: '/metrics'
-    scrape_interval: 15s
 
   # Node Exporter for host metrics
   - job_name: 'node-exporter'

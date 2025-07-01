@@ -1,0 +1,265 @@
+groups:
+- name: brainbytes.advanced.rules
+  rules:
+  # Layered Alerting - Warning and Critical Thresholds
+  
+  # System Health Alerts with Layered Severity
+  - alert: HighCpuUsageWarning
+    expr: 100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 70
+    for: 5m
+    labels:
+      severity: warning
+      team: infrastructure
+      service: system
+    annotations:
+      summary: "Moderate CPU usage detected"
+      description: "CPU usage is above 70% for more than 5 minutes on instance {{ $labels.instance }}"
+      runbook_url: "https://wiki.brainbytes.ai/runbooks/high-cpu-usage"
+      troubleshooting: |
+        1. Check running processes: `top` or `htop`
+        2. Identify resource-heavy applications
+        3. Scale horizontally if needed
+        4. Consider upgrading instance size
+
+  - alert: HighCpuUsageCritical
+    expr: 100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 85
+    for: 2m
+    labels:
+      severity: critical
+      team: infrastructure
+      service: system
+      escalation: "true"
+    annotations:
+      summary: "Critical CPU usage detected - immediate action required"
+      description: "CPU usage is above 85% for more than 2 minutes on instance {{ $labels.instance }}"
+      runbook_url: "https://wiki.brainbytes.ai/runbooks/critical-cpu-usage"
+      troubleshooting: |
+        IMMEDIATE ACTIONS:
+        1. Scale application horizontally NOW
+        2. Check for resource leaks
+        3. Consider emergency instance upgrade
+        4. Monitor for cascading failures
+
+  # Business-Level Alerts for User Experience
+  - alert: PoorUserExperienceWarning
+    expr: histogram_quantile(0.95, rate(brainbytes_ai_request_duration_seconds_bucket[10m])) > 3
+    for: 5m
+    labels:
+      severity: warning
+      team: product
+      service: ai
+      impact: user_experience
+    annotations:
+      summary: "AI response times degrading - user experience impact"
+      description: "95th percentile AI response time is {{ $value }}s (threshold: 3s)"
+      runbook_url: "https://wiki.brainbytes.ai/runbooks/slow-ai-responses"
+      troubleshooting: |
+        1. Check AI service health and capacity
+        2. Verify external AI provider status
+        3. Review recent deployments
+        4. Scale AI service if needed
+        5. Check database performance
+
+  - alert: PoorUserExperienceCritical
+    expr: histogram_quantile(0.95, rate(brainbytes_ai_request_duration_seconds_bucket[5m])) > 8
+    for: 2m
+    labels:
+      severity: critical
+      team: product
+      service: ai
+      impact: user_experience
+      escalation: "true"
+    annotations:
+      summary: "CRITICAL: AI responses extremely slow - major user impact"
+      description: "95th percentile AI response time is {{ $value }}s (critical threshold: 8s)"
+      runbook_url: "https://wiki.brainbytes.ai/runbooks/critical-ai-performance"
+      troubleshooting: |
+        IMMEDIATE ACTIONS:
+        1. Check AI service status immediately
+        2. Verify external provider connectivity
+        3. Consider failover to backup AI provider
+        4. Scale AI service urgently
+        5. Communicate to users if needed
+
+  # Session and Engagement Alerts
+  - alert: LowSessionEngagement
+    expr: rate(brainbytes_questions_total[30m]) / rate(brainbytes_tutoring_sessions_total[30m]) < 2
+    for: 10m
+    labels:
+      severity: warning
+      team: product
+      service: application
+      impact: engagement
+    annotations:
+      summary: "Low user engagement detected"
+      description: "Average questions per session is {{ $value }} (threshold: <2)"
+      troubleshooting: |
+        1. Check for UI/UX issues
+        2. Review recent feature changes
+        3. Analyze user feedback
+        4. Check for performance problems
+
+  - alert: UnusualSessionPattern
+    expr: rate(brainbytes_tutoring_sessions_total[1h]) > 50 or rate(brainbytes_tutoring_sessions_total[1h]) < 1
+    for: 15m
+    labels:
+      severity: warning
+      team: product
+      service: application
+      impact: business
+    annotations:
+      summary: "Unusual session activity pattern detected"
+      description: "Session rate is {{ $value }} sessions/hour (normal: 5-30)"
+      troubleshooting: |
+        1. Check for traffic spikes or drops
+        2. Verify monitoring systems
+        3. Look for external factors (marketing campaigns, outages)
+        4. Check authentication systems
+
+  # Error Rate Alerts with Grouping Prevention
+  - alert: ElevatedErrorRateWarning
+    expr: (sum(rate(brainbytes_http_requests_total{status_code=~"5.."}[5m])) / sum(rate(brainbytes_http_requests_total[5m]))) * 100 > 2
+    for: 3m
+    labels:
+      severity: warning
+      team: engineering
+      service: application
+      component: "{{ $labels.route }}"
+    annotations:
+      summary: "Elevated error rate detected"
+      description: "Error rate is {{ $value }}% (threshold: 2%)"
+      troubleshooting: |
+        1. Check application logs for errors
+        2. Verify database connectivity
+        3. Check external service dependencies
+        4. Review recent deployments
+
+  - alert: HighErrorRateCritical
+    expr: (sum(rate(brainbytes_http_requests_total{status_code=~"5.."}[5m])) / sum(rate(brainbytes_http_requests_total[5m]))) * 100 > 10
+    for: 1m
+    labels:
+      severity: critical
+      team: engineering
+      service: application
+      escalation: "true"
+    annotations:
+      summary: "CRITICAL: High error rate - service degradation"
+      description: "Error rate is {{ $value }}% (critical threshold: 10%)"
+      runbook_url: "https://wiki.brainbytes.ai/runbooks/high-error-rate"
+      troubleshooting: |
+        IMMEDIATE ACTIONS:
+        1. Check service health immediately
+        2. Review error logs urgently
+        3. Verify database and dependencies
+        4. Consider rolling back recent deployments
+        5. Scale services if capacity issue
+
+  # Filipino Context - Mobile and Connectivity Alerts
+  - alert: HighMobileDataUsage
+    expr: rate(brainbytes_response_size_bytes_sum{platform=~"android|ios"}[10m]) / rate(brainbytes_response_size_bytes_count{platform=~"android|ios"}[10m]) > 150000
+    for: 5m
+    labels:
+      severity: warning
+      team: product
+      service: frontend
+      impact: mobile_users
+      context: filipino
+    annotations:
+      summary: "High mobile data usage detected - Filipino user impact"
+      description: "Average mobile response size is {{ $value }} bytes (threshold: 150KB)"
+      troubleshooting: |
+        1. Check for oversized responses on mobile
+        2. Optimize images and assets for mobile
+        3. Review API response payloads
+        4. Consider implementing response compression
+        5. Monitor Filipino user feedback
+
+  - alert: HighConnectionDropRate
+    expr: rate(brainbytes_connection_drops_total[10m]) > 0.5
+    for: 5m
+    labels:
+      severity: warning
+      team: infrastructure
+      service: network
+      context: filipino
+    annotations:
+      summary: "High connection drop rate - potential connectivity issues"
+      description: "Connection drop rate is {{ $value }} drops/second"
+      troubleshooting: |
+        1. Check network infrastructure
+        2. Review CDN performance
+        3. Monitor ISP-specific issues in Philippines
+        4. Consider connection retry mechanisms
+        5. Check mobile network performance
+
+  # AI Service Specific Alerts
+  - alert: AIServiceDegraded
+    expr: rate(brainbytes_ai_errors_total[5m]) > 0.1
+    for: 3m
+    labels:
+      severity: warning
+      team: ai
+      service: ai
+    annotations:
+      summary: "AI service showing errors"
+      description: "AI error rate is {{ $value }} errors/second"
+      troubleshooting: |
+        1. Check AI provider status
+        2. Verify API keys and authentication
+        3. Review rate limiting
+        4. Check model availability
+
+  - alert: AITokenUsageHigh
+    expr: rate(brainbytes_ai_tokens_used_total[1h]) > 1000
+    for: 10m
+    labels:
+      severity: warning
+      team: ai
+      service: ai
+      impact: cost
+    annotations:
+      summary: "High AI token usage detected - cost impact"
+      description: "Token usage rate is {{ $value }} tokens/hour"
+      troubleshooting: |
+        1. Review token usage patterns
+        2. Check for inefficient prompts
+        3. Optimize AI request logic
+        4. Monitor cost implications
+
+# Alert Grouping Rules to Prevent Alert Storms
+- name: brainbytes.grouping.rules
+  rules:
+  # Group related system alerts
+  - alert: SystemHealthDegraded
+    expr: |
+      (
+        ALERTS{alertname="HighCpuUsageCritical"} or
+        ALERTS{alertname="HighMemoryUsage"} or 
+        ALERTS{alertname="DiskSpaceLow"}
+      ) and on() count(ALERTS{severity="critical"}) >= 2
+    for: 1m
+    labels:
+      severity: critical
+      team: infrastructure
+      type: grouped_alert
+    annotations:
+      summary: "Multiple critical system issues detected"
+      description: "System experiencing multiple critical issues simultaneously"
+
+  # Group user experience issues
+  - alert: UserExperienceDegraded
+    expr: |
+      (
+        ALERTS{alertname="PoorUserExperienceCritical"} or
+        ALERTS{alertname="HighErrorRateCritical"} or
+        ALERTS{alertname="LowSessionEngagement"}
+      ) and on() count(ALERTS{impact=~"user_experience|engagement"}) >= 2
+    for: 2m
+    labels:
+      severity: critical
+      team: product
+      type: grouped_alert
+      impact: user_experience
+    annotations:
+      summary: "Multiple user experience issues detected"
+      description: "Users experiencing multiple service degradations"
