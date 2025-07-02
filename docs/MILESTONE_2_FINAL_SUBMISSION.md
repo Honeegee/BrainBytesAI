@@ -9,6 +9,10 @@
 
 **Production API:** [https://brainbytes-backend-production-d355616d0f1f.herokuapp.com]
 
+Test Credentials:
+Email : Test@example.com   
+Password : Test12345,
+
 
 ---
 
@@ -93,7 +97,7 @@ The BrainBytes AI platform follows a modern microservices architecture with inte
 Our CI/CD implementation consists of three interconnected workflows:
 
 #### 1. Code Quality & Security Workflow
-**File:** [`.github/workflows/code-quality.yml`](.github/workflows/code-quality.yml)
+**File:** [`.github/workflows/code-quality.yml`](../.github/workflows/code-quality.yml)
 
 **Triggers:**
 - Push to main, development branches
@@ -118,7 +122,7 @@ strategy:
 ```
 
 #### 2. CI/CD Pipeline Workflow
-**File:** [`.github/workflows/ci-cd.yml`](.github/workflows/ci-cd.yml)
+**File:** [`.github/workflows/ci-cd.yml`](../.github/workflows/ci-cd.yml)
 
 **Triggers:**
 - Push to main, development branches
@@ -142,7 +146,7 @@ strategy:
 - **Failure Handling**: Automatic cleanup and detailed error reporting
 
 #### 3. Heroku Deployment Workflow
-**File:** [`.github/workflows/deploy-heroku.yml`](.github/workflows/deploy-heroku.yml)
+**File:** [`.github/workflows/deploy-heroku.yml`](../.github/workflows/deploy-heroku.yml)
 
 **Triggers:**
 - Push to main branch (production deployment)
