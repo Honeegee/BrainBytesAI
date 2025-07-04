@@ -53,7 +53,7 @@ scrape_configs:
   # Self-monitoring for production Prometheus
   - job_name: 'prometheus-production'
     static_configs:
-      - targets: ['brainbytes-prometheus-prod-941726856e4c.herokuapp.com:443']
+      - targets: ['brainbytes-prometheus-prod-e140dc0c840c.herokuapp.com:443']
     scheme: https
     metrics_path: '/metrics'
     scrape_interval: 30s

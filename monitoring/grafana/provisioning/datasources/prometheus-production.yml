@@ -4,7 +4,7 @@ datasources:
   - name: Prometheus-Production
     type: prometheus
     access: proxy
-    url: https://brainbytes-prometheus-prod-941726856e4c.herokuapp.com
+    url: https://brainbytes-prometheus-prod-e140dc0c840c.herokuapp.com
     uid: prometheus-production
     isDefault: true
     editable: true
