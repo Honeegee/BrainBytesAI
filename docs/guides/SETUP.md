@@ -41,10 +41,14 @@ git clone https://github.com/Honeegee/BrainBytesAI.git
 Copy the example environment files and configure them:
 
 ```bash
-# Copy example files
+# Copy example environment files for each service
 cp frontend/.env.example frontend/.env.local
 cp backend/.env.example backend/.env
 cp ai-service/.env.example ai-service/.env
+
+# Copy the root .env file
+cp .env.example .env
+
 ```
 
 #### Step-by-Step Configuration Guide
@@ -147,8 +151,6 @@ RATE_LIMIT_MAX=50
 # Groq Configuration - REPLACE WITH YOUR GROQ API KEY
 GROQ_API_KEY=gsk_your_actual_groq_api_key_here
 GROQ_MODEL=deepseek-r1-distill-llama-70b
-
-
 ```
 
 **Frontend Environment (frontend/.env.local)**
@@ -157,7 +159,12 @@ GROQ_MODEL=deepseek-r1-distill-llama-70b
 
 # Backend API URL (via nginx proxy for Docker)
 NEXT_PUBLIC_BACKEND_URL=http://localhost
+```
 
+**Root Folder Environment for Heroku Monitoring (.env)**
+```bash
+HEROKU_API_TOKEN=your_heroku_api_token_here
+NODE_ENV=development
 ```
 
 #### Configuration Verification
