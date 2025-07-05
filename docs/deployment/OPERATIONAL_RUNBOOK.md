@@ -19,6 +19,7 @@
 8. [Monitoring Checklist](#monitoring-checklist)
 9. [Philippine-Specific Operations](#philippine-specific-operations)
 10. [Contact Information](#contact-information)
+11. [Eco Dyno Management](#eco-dyno-management)
 
 ---
 
@@ -974,3 +975,66 @@ echo "Mobile optimization check completed"
 **Next Review**: January 2025
 
 This operational runbook provides comprehensive guidance for day-to-day operations, incident response, and Philippines-specific considerations for the BrainBytesAI application deployed on Heroku.
+
+---
+
+## 11. Eco Dyno Management
+
+### Cost Optimization - Eco Dynos
+
+#### Current Production Apps (Eco Dyno Configuration)
+```bash
+# Production apps using eco dynos ($5/month each):
+# - brainbytes-backend-production-d355616d0f1f
+# - brainbytes-ai-production-3833f742ba79  
+# - brainbytes-frontend-production-03d1e6b6b158
+# Total cost: $15/month
+
+# Check current dyno types
+heroku ps --app brainbytes-backend-production-d355616d0f1f
+heroku ps --app brainbytes-ai-production-3833f742ba79
+heroku ps --app brainbytes-frontend-production-03d1e6b6b158
+
+# Switch to eco dynos (if not already)
+heroku ps:type eco --app brainbytes-backend-production-d355616d0f1f
+heroku ps:type eco --app brainbytes-ai-production-3833f742ba79
+heroku ps:type eco --app brainbytes-frontend-production-03d1e6b6b158
+
+# Scale to 1 dyno each (recommended for eco)
+heroku ps:scale web=1 --app brainbytes-backend-production-d355616d0f1f
+heroku ps:scale web=1 --app brainbytes-ai-production-3833f742ba79
+heroku ps:scale web=1 --app brainbytes-frontend-production-03d1e6b6b158
+```
+
+#### Eco Dyno Benefits
+- **Cost**: $5/month per dyno (vs $25 for standard-1x)
+- **Always On**: Never sleeps (unlike free dynos)
+- **Memory**: 512MB RAM (sufficient for most small apps)
+- **Performance**: Good for low-moderate traffic
+
+#### When to Upgrade from Eco
+```bash
+# Upgrade to standard-1x if experiencing:
+# - High memory usage (>80% of 512MB)
+# - Slow response times consistently
+# - High traffic (>10,000 requests/hour)
+
+# Upgrade commands:
+heroku ps:type standard-1x --app [APP_NAME]
+```
+
+#### Performance Issues
+
+**Issue**: Backend performance slow
+```bash
+# Diagnosis
+# 1. Check database query performance
+# 2. Analyze slow endpoints
+# 3. Monitor resource usage
+
+# Solutions:
+# 1. Optimize database queries
+# 2. Implement caching
+# 3. Scale resources if needed (for eco dynos, consider upgrading type instead of scaling)
+heroku ps:type standard-1x --app brainbytes-backend-production-d355616d0f1f
+```

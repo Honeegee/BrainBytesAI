@@ -6,9 +6,9 @@ global:
     cluster: 'brainbytes-local'
 
 rule_files:
-  - "/etc/prometheus/alert-rules.yml"
-  - "/etc/prometheus/recording_rules.yml"
-  - "/etc/prometheus/advanced-alert-rules.yml"
+  - "/etc/prometheus/rules/alert-rules.yml"
+  - "/etc/prometheus/rules/recording_rules.yml"
+  - "/etc/prometheus/rules/advanced-alert-rules.yml"
 
 alerting:
   alertmanagers:
@@ -60,3 +60,10 @@ scrape_configs:
     static_configs:
       - targets: ['alertmanager:9093']
     scrape_interval: 15s
+
+  # Heroku Exporter (only active when heroku-exporter service is running)
+  - job_name: 'heroku-exporter'
+    static_configs:
+      - targets: ['heroku-exporter:9595']
+    scrape_interval: 30s
+    metrics_path: '/metrics'

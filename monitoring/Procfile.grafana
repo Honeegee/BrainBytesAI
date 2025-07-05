@@ -1,1 +1,0 @@
-web: grafana-server --homepath=/usr/share/grafana --config=/etc/grafana/grafana.ini cfg:default.server.http_port=$PORT

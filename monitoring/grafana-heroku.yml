@@ -1,9 +1,0 @@
-build:
-  docker:
-    web: Dockerfile.grafana
-release:
-  image: web
-  command:
-    - echo "Grafana container built"
-run:
-  web: grafana-server --homepath=/usr/share/grafana --config=/etc/grafana/grafana.ini cfg:default.server.http_port=$PORT

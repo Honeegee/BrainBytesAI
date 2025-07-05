@@ -2,6 +2,9 @@ networks:
   app-network:
     driver: bridge
 
+# Environment variables from .env file
+# Set HEROKU_API_TOKEN in .env to enable Heroku monitoring
+
 services:
   # Nginx reverse proxy
   nginx:
@@ -118,6 +121,8 @@ services:
       - '--web.console.templates=/etc/prometheus/consoles'
       - '--storage.tsdb.retention.time=200h'
       - '--web.enable-lifecycle'
+      - '--web.external-url=http://localhost:8080/prometheus/'
+      - '--web.route-prefix=/'
       - '--alertmanager.notification-queue-capacity=10000'
     networks:
       - app-network
@@ -137,7 +142,8 @@ services:
     command:
       - '--config.file=/etc/alertmanager/alertmanager.yml'
       - '--storage.path=/alertmanager'
-      - '--web.external-url=http://localhost:9093'
+      - '--web.external-url=http://localhost:8080/alertmanager/'
+      - '--web.route-prefix=/'
       - '--cluster.listen-address=0.0.0.0:9094'
     networks:
       - app-network
@@ -184,9 +190,11 @@ services:
    ports:
      - "3003:3000"
    environment:
-     - GF_SECURITY_ADMIN_PASSWORD=brainbytes
+     - GF_SECURITY_ADMIN_PASSWORD=brainbytes123
      - GF_USERS_ALLOW_SIGN_UP=false
-     - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource
+     - GF_INSTALL_PLUGINS=grafana-clock-panel
+     - GF_SERVER_ROOT_URL=http://localhost:8080/grafana/
+     - GF_SERVER_SERVE_FROM_SUB_PATH=true
    volumes:
      - grafana_data:/var/lib/grafana
      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
@@ -195,7 +203,23 @@ services:
    restart: unless-stopped
    depends_on:
      - prometheus
-# Redis for session storage and caching (for monitoring consistency)
+
+  # Heroku Exporter (optional - only when HEROKU_API_TOKEN is set)
+  heroku-exporter:
+    image: heroku/heroku-exporter:latest
+    container_name: heroku-exporter
+    ports:
+      - "9595:9595"
+    environment:
+      - HEROKU_API_TOKEN=${HEROKU_API_TOKEN}
+    command: ["--heroku.api-token", "${HEROKU_API_TOKEN}"]
+    networks:
+      - app-network
+    restart: unless-stopped
+    profiles:
+      - heroku  # Only start when using 'heroku' profile
+
+  # Redis for session storage and caching (for monitoring consistency)
   redis:
     image: redis:7-alpine
     container_name: redis-local
