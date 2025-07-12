@@ -141,77 +141,7 @@ The architecture follows a microservices pattern with different configurations:
 
 ## 🚀 Quick Start
 
-### Prerequisites
-
-Ensure you have the following installed:
-
-- **Docker Desktop** (v20.10+) - [Download](https://www.docker.com/products/docker-desktop)
-- **Git** (v2.30+) - [Download](https://git-scm.com/downloads)
-- **Node.js** (v18.0+) - [Download](https://nodejs.org/)
-
-### Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/Honeegee/BrainBytesAI.git
-   ```
-
-2. **Environment Setup**
-   ```bash
-  # Copy example environment files for each service
-   cp frontend/.env.example frontend/.env.local
-   cp backend/.env.example backend/.env
-   cp ai-service/.env.example ai-service/.env
-
-# Copy the root .env file
-   cp .env.example .env
-   ```
-
-3. **Configure Environment Variables**
-   
-   **Backend (`.env`)**:
-   ```env
-   MONGODB_URI=your_mongodb_connection_string
-   JWT_SECRET=your_jwt_secret_key
-   PORT=3000
-   ```
-
-   **AI Service (`.env`)**:
-   ```env
-   GROQ_API_KEY=your_groq_api_key
-   PORT=3002
-   ```
-
-   **Frontend (`.env.local`)**:
-   ```env
-   NEXT_PUBLIC_BACKEND_URL=http://localhost
-   NEXT_PUBLIC_API_URL=http://localhost
-   ```
-
-   **Root Folder Environment for Heroku Monitoring (.env)**
-   ```bash
-   HEROKU_API_TOKEN=your_heroku_api_token_here
-   NODE_ENV=development
-   ```
-
-4. **Start the Application**
-   ```bash
-   # Build and start all services
-   npm run dev
-
-   # Or start in detached mode
-   npm run dev:detached
-   ```
-
-5. **Verify Installation**
-   ```bash
-   # Check service status
-   docker-compose ps
-
-   # Test API endpoints
-   curl http://localhost/api/health
-   curl http://localhost:8090/health
-   ```
+- **[Setup Guide](docs/guides/SETUP.md)** - Complete installation and configuration
 
 ### Access Points
 
