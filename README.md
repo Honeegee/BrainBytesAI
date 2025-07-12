@@ -8,7 +8,7 @@
 
 **🎓 An innovative AI-powered tutoring platform designed for Filipino students**
 
-[🚀 Live Demo](https://brainbytes-frontend-production-03d1e6b6b158.herokuapp.com) • [📖 Documentation](docs/DOCUMENTATION_INDEX.md) • [🐛 Report Bug](https://github.com/Honeegee/BrainBytesAI/issues) • [💡 Request Feature](https://github.com/Honeegee/BrainBytesAI/discussions)
+[🚀 Live Demo](https://brainbytes-frontend-production-03d1e6b6b158.herokuapp.com) • [📖 Documentation](docs/DOCUMENTATION_INDEX.md) 
 
 > **🎓 Milestone 2: CI/CD Implementation and Cloud Deployment - COMPLETE**
 > **📋 [Final Submission Document](docs/MILESTONE_2_FINAL_SUBMISSION.md)**
@@ -281,37 +281,91 @@ npm run production:up
 
 ### Database
 
-- **Development**: Local MongoDB or MongoDB Atlas
+- **Development**:  MongoDB Atlas (Asia-Pacific region)
 - **Production**: MongoDB Atlas (Asia-Pacific region)
 - **Backup**: Automated daily backups via MongoDB Atlas
 
 ## 📊 Monitoring
 
-### Metrics Collection
+### Comprehensive Monitoring Stack
 
-The platform includes comprehensive monitoring with:
+BrainBytesAI implements enterprise-grade monitoring with a complete observability solution:
 
-- **Application Metrics**: Response times, error rates, throughput
-- **Business Metrics**: User engagement, subject popularity, learning progress
-- **Infrastructure Metrics**: CPU, memory, disk usage, network I/O
-- **Container Metrics**: Docker container performance and resource usage
+- **🔍 Prometheus**: Metrics collection and time-series storage
+- **📊 Grafana**: Professional dashboards and visualization
+- **🚨 AlertManager**: Intelligent alerting and notification routing
+- **📈 Custom Metrics**: BrainBytesAI-specific educational and business metrics
+- **🖥️ Infrastructure Monitoring**: Node Exporter and cAdvisor for system metrics
+- **🔄 Real-time Monitoring**: Live system health and performance tracking
 
-### Dashboards
+### Key Metrics & Business Impact
 
-Access monitoring dashboards at `http://localhost:8080/grafana`:
+**Application Performance**:
+- 🚀 **Response Time**: < 2s (optimized for mobile users)
+- 📊 **Request Rate**: Real-time throughput monitoring
+- ❌ **Error Rate**: < 1% reliability assurance
+- 🧠 **AI Response Time**: < 5s for optimal tutoring effectiveness
 
-- **Application Overview**: High-level application health
-- **Performance Metrics**: Response times and throughput
-- **Error Tracking**: Error rates and failure analysis
-- **Business Intelligence**: User engagement and learning analytics
+**Business Intelligence**:
+- 👥 **User Engagement**: Session duration and interaction patterns
+- 📚 **Subject Popularity**: Content effectiveness tracking
+- 📱 **Mobile Usage**: Filipino student mobile-first patterns
+- 🌐 **Geographic Distribution**: Philippines-focused usage analytics
 
-### Alerting
+**Infrastructure Health**:
+- 💾 **Resource Usage**: CPU, memory, disk optimization
+- 🔄 **Uptime**: 99.9% availability guarantee
+- 🐳 **Container Performance**: Docker resource consumption
+- 🌐 **Network Performance**: Connectivity and latency monitoring
 
-Automated alerts for:
-- High error rates (>5%)
-- Slow response times (>500ms)
-- High resource usage (>80%)
-- Service downtime
+### Professional Dashboards
+
+Access monitoring dashboards at `http://localhost:8080/grafana` (admin/brainbytes123):
+
+- **📊 Application Overview**: High-level system health and performance
+- **🚀 Performance Metrics**: Response times, throughput, and optimization
+- **❌ Error Tracking**: Error rates, failure analysis, and debugging
+- **👥 Business Intelligence**: User engagement and educational analytics
+- **🖥️ Infrastructure Monitoring**: System resources and container health
+- **📱 Filipino Context**: Mobile performance and connectivity insights
+
+### Intelligent Alerting
+
+**Alert Categories**:
+- 🔴 **Critical**: Service down, high error rate, database connectivity
+- ⚠️ **Warning**: Resource pressure, performance degradation
+- 📊 **Business**: User engagement drops, AI service quality issues
+- 🌐 **Context-Specific**: Mobile errors, network stability for Filipino users
+
+**Professional Features**:
+- Severity-based alert routing and escalation
+- Intelligent alert grouping and deduplication
+- Integration with communication tools and workflows
+- Automated incident response procedures
+
+
+
+### Monitoring Documentation
+
+**📚 Comprehensive Monitoring Guides**:
+- **[Monitoring Quick Start](docs/monitoring/QUICK_START.md)** - Get started with monitoring
+- **[System Architecture](docs/monitoring/01-system-architecture.md)** - Complete monitoring architecture
+- **[Metrics Catalog](docs/monitoring/02-metrics-catalog.md)** - All available metrics reference
+- **[Query Reference](docs/monitoring/03-query-reference.md)** - PromQL queries and examples
+- **[Alert Rules](docs/monitoring/04-alert-rules.md)** - Alert configuration and procedures
+- **[Dashboard Catalog](docs/monitoring/05-dashboard-catalog.md)** - Grafana dashboards guide
+- **[Monitoring Procedures](docs/monitoring/06-monitoring-procedures.md)** - Operational procedures
+- **[Filipino Context](docs/monitoring/07-filipino-context.md)** - Philippines-specific monitoring
+- **[Manual Testing Guide](docs/Prometheus_MANUAL_TESTING_GUIDE.md)** - Step-by-step testing procedures
+
+### Production-Ready Features
+
+- **🔄 Automated Health Checks**: Continuous service monitoring
+- **📈 Performance Optimization**: Resource usage tracking and optimization
+- **🚨 Proactive Alerting**: Issue detection before user impact
+- **📊 Business Analytics**: Educational effectiveness measurement
+- **🌐 Mobile-First Monitoring**: Optimized for Filipino student usage patterns
+- **🔧 Operational Excellence**: Enterprise-grade monitoring procedures
 
 ## 🤝 Contributing
 
@@ -347,6 +401,16 @@ We welcome contributions from the community! Please read our contributing guidel
 - **[Database Schema](docs/technical/DATABASE.md)** - Database design and models
 - **[AI Integration](docs/technical/AI_INTEGRATION.md)** - AI service implementation
 - **[Monitoring Setup](docs/monitoring/QUICK_START.md)** - Monitoring and metrics
+
+### 📊 Monitoring & Operations
+- **[Monitoring Operations Package](docs/terminal-assessment/MONITORING_OPERATIONS_README.md)** - Complete terminal assessment materials
+- **[Monitoring System Architecture](docs/monitoring/01-system-architecture.md)** - Complete monitoring architecture
+- **[Metrics Catalog](docs/monitoring/02-metrics-catalog.md)** - All available metrics reference
+- **[Query Reference Guide](docs/monitoring/03-query-reference.md)** - PromQL queries and examples
+- **[Alert Rules Documentation](docs/monitoring/04-alert-rules.md)** - Alert configuration and procedures
+- **[Dashboard Catalog](docs/monitoring/05-dashboard-catalog.md)** - Grafana dashboards guide
+- **[Monitoring Procedures](docs/monitoring/06-monitoring-procedures.md)** - Operational procedures
+- **[Manual Testing Guide](docs/Prometheus_MANUAL_TESTING_GUIDE.md)** - Step-by-step testing procedures
 
 ### 🧪 Testing & Quality
 - **[Testing Guide](docs/testing/TESTING_GUIDE.md)** - Complete testing strategy
@@ -405,8 +469,7 @@ We welcome contributions from the community! Please read our contributing guidel
 - **🛡️ Security Headers**: Comprehensive security header implementation
 - **🔍 Vulnerability Scanning**: Automated security audits in CI/CD
 
-### Reporting Security Issues
-For security vulnerabilities, please email: **security@brainbytes.app**
+
 
 ## 📞 Support
 

@@ -37,6 +37,24 @@ docs/
 ├── 📊 project/                     # Project Management
 │   └── task-distribution.md        # Roadmap & task assignments
 │
+├── 📊 monitoring/                  # Monitoring & Observability
+│   ├── README.md                   # Monitoring documentation index
+│   ├── QUICK_START.md              # Quick start guide
+│   ├── 01-system-architecture.md   # Complete monitoring architecture
+│   ├── 02-metrics-catalog.md       # All available metrics reference
+│   ├── 03-query-reference.md       # PromQL queries and examples
+│   ├── 04-alert-rules.md           # Alert configuration and procedures
+│   ├── 05-dashboard-catalog.md     # Grafana dashboards guide
+│   ├── 06-monitoring-procedures.md # Operational procedures
+│   ├── 07-filipino-context.md      # Philippines-specific monitoring
+│   ├── 08-demo-simulation.md       # Traffic simulation guides
+│   ├── 09-configuration-reference.md # Configuration files reference
+│   ├── grafana-manual-usage-guide.md # Grafana usage guide
+│   ├── grafana-quick-reference.md  # Grafana quick reference
+│   └── grafana-step-by-step-tutorial.md # Grafana tutorial
+│
+├── 📋 Prometheus_MANUAL_TESTING_GUIDE.md # Step-by-step testing procedures
+│
 └── 📁 legacy/                      # Archived Documents
     ├── README.md                   # Legacy folder explanation
     ├── TESTING_STRATEGY_AND_CHALLENGES.md
@@ -73,9 +91,24 @@ docs/
 1. **[Comprehensive Deployment Plan](deployment/COMPREHENSIVE_DEPLOYMENT_PLAN.md)** - Complete deployment strategy
 2. **[CI/CD Documentation](deployment/CI_CD_DOCUMENTATION.md)** - Pipeline management
 3. **[Operational Runbook](deployment/OPERATIONAL_RUNBOOK.md)** - Daily operations & incident response
-4. **[Heroku Setup Guide](deployment/HEROKU_SETUP.md)** - Platform-specific setup
-5. **[Architecture Diagrams](deployment/ARCHITECTURE_DIAGRAM.md)** - System architecture visualization
-6. **[Performance Testing](testing/PERFORMANCE_TESTING.md)** - Load testing setup
+4. **[Monitoring Quick Start](monitoring/QUICK_START.md)** - Get started with monitoring stack
+5. **[Monitoring System Architecture](monitoring/01-system-architecture.md)** - Complete monitoring architecture
+6. **[Alert Rules & Procedures](monitoring/04-alert-rules.md)** - Alert configuration and response
+7. **[Monitoring Procedures](monitoring/06-monitoring-procedures.md)** - Operational monitoring procedures
+8. **[Heroku Setup Guide](deployment/HEROKU_SETUP.md)** - Platform-specific setup
+9. **[Architecture Diagrams](deployment/ARCHITECTURE_DIAGRAM.md)** - System architecture visualization
+10. **[Performance Testing](testing/PERFORMANCE_TESTING.md)** - Load testing setup
+
+### 📊 **Site Reliability Engineer (SRE)**
+1. **[Monitoring Operations Package](terminal-assessment/MONITORING_OPERATIONS_README.md)** - Complete monitoring demonstration
+2. **[Monitoring System Architecture](monitoring/01-system-architecture.md)** - Complete monitoring architecture
+3. **[Metrics Catalog](monitoring/02-metrics-catalog.md)** - All available metrics reference
+4. **[Query Reference Guide](monitoring/03-query-reference.md)** - PromQL queries and troubleshooting
+5. **[Alert Rules Documentation](monitoring/04-alert-rules.md)** - Alert configuration and procedures
+6. **[Dashboard Catalog](monitoring/05-dashboard-catalog.md)** - Grafana dashboards guide
+7. **[Monitoring Procedures](monitoring/06-monitoring-procedures.md)** - Operational procedures
+8. **[Incident Simulation Guide](terminal-assessment/INCIDENT_SIMULATION_GUIDE.md)** - Incident response procedures
+9. **[Manual Testing Guide](Prometheus_MANUAL_TESTING_GUIDE.md)** - Step-by-step testing procedures
 
 ### 🧪 **QA Engineer**
 1. **[Testing Guide](testing/TESTING_GUIDE.md)** - Complete testing strategy
@@ -109,6 +142,24 @@ docs/
 |----------|---------|----------|
 | **[Testing Guide](testing/TESTING_GUIDE.md)** | Comprehensive testing strategy & implementation | All developers, QA |
 | **[Performance Testing](testing/PERFORMANCE_TESTING.md)** | Load testing, performance monitoring | Performance engineers, DevOps |
+
+### 📊 **Monitoring & Observability**
+| Document | Purpose | Audience |
+|----------|---------|----------|
+| **[Monitoring Quick Start](monitoring/QUICK_START.md)** | Get started with monitoring stack | DevOps, SRE |
+| **[System Architecture](monitoring/01-system-architecture.md)** | Complete monitoring architecture overview | DevOps, SRE, Architects |
+| **[Metrics Catalog](monitoring/02-metrics-catalog.md)** | All available metrics with descriptions | DevOps, SRE, Developers |
+| **[Query Reference Guide](monitoring/03-query-reference.md)** | PromQL queries and troubleshooting examples | DevOps, SRE |
+| **[Alert Rules Documentation](monitoring/04-alert-rules.md)** | Alert configuration and response procedures | DevOps, SRE, Operations |
+| **[Dashboard Catalog](monitoring/05-dashboard-catalog.md)** | Grafana dashboards with usage guides | DevOps, SRE, Stakeholders |
+| **[Monitoring Procedures](monitoring/06-monitoring-procedures.md)** | Operational procedures and troubleshooting | DevOps, SRE, Operations |
+| **[Filipino Context Monitoring](monitoring/07-filipino-context.md)** | Philippines-specific monitoring considerations | Product, DevOps |
+| **[Demo & Simulation](monitoring/08-demo-simulation.md)** | Traffic simulation and demonstration guides | DevOps, SRE |
+| **[Configuration Reference](monitoring/09-configuration-reference.md)** | All monitoring configuration files | DevOps, SRE |
+| **[Grafana Usage Guide](monitoring/grafana-manual-usage-guide.md)** | Complete Grafana usage documentation | All users |
+| **[Manual Testing Guide](Prometheus_MANUAL_TESTING_GUIDE.md)** | Step-by-step testing procedures | DevOps, QA |
+
+
 
 ### 🚀 **Deployment & Operations**
 | Document | Purpose | Audience |
@@ -147,6 +198,24 @@ docs/
 ### **Performance & Optimization**
 1. [Performance Testing](testing/PERFORMANCE_TESTING.md) - Load testing guide
 2. [Testing Guide](testing/TESTING_GUIDE.md#performance-testing) - Performance testing section
+3. [Monitoring System Architecture](monitoring/01-system-architecture.md) - Monitoring performance architecture
+4. [Metrics Catalog](monitoring/02-metrics-catalog.md) - Performance metrics reference
+
+### **Monitoring & Operations**
+1. [Monitoring Quick Start](monitoring/QUICK_START.md) - Get started with monitoring
+2. [Monitoring Operations Package](terminal-assessment/MONITORING_OPERATIONS_README.md) - Complete monitoring demonstration
+3. [System Architecture](monitoring/01-system-architecture.md) - Complete monitoring architecture
+4. [Dashboard Catalog](monitoring/05-dashboard-catalog.md) - Grafana dashboards guide
+5. [Alert Rules Documentation](monitoring/04-alert-rules.md) - Alert configuration and procedures
+6. [Query Reference Guide](monitoring/03-query-reference.md) - PromQL queries and examples
+7. [Manual Testing Guide](Prometheus_MANUAL_TESTING_GUIDE.md) - Step-by-step testing procedures
+
+### **Terminal Assessment Preparation**
+1. [Monitoring Operations Package](terminal-assessment/MONITORING_OPERATIONS_README.md) - Complete assessment materials
+2. [Interactive Presentation](terminal-assessment/MONITORING_OPERATIONS_PRESENTATION.html) - Professional presentation
+3. [Demo Script & Procedures](terminal-assessment/MONITORING_DEMO_SCRIPT.md) - Demonstration guide
+4. [Demo Checklist](terminal-assessment/DEMO_CHECKLIST.md) - Pre-demo verification
+5. [Incident Simulation Guide](terminal-assessment/INCIDENT_SIMULATION_GUIDE.md) - Incident response demo
 
 ### **Milestone 2 Submission**
 1. [Milestone 2 Final Submission](MILESTONE_2_FINAL_SUBMISSION.md) - Complete final submission document
@@ -162,9 +231,13 @@ docs/
 
 ### **Troubleshooting**
 1. [Operational Runbook](deployment/OPERATIONAL_RUNBOOK.md#troubleshooting-guide) - Complete troubleshooting guide
-2. [Testing Guide](testing/TESTING_GUIDE.md#troubleshooting) - Test issues
-3. [CI/CD Documentation](deployment/CI_CD_DOCUMENTATION.md#troubleshooting) - Pipeline issues
-4. [Setup Guide](guides/SETUP.md) - Environment issues
+2. [Monitoring Procedures](monitoring/06-monitoring-procedures.md) - Monitoring troubleshooting
+3. [Query Reference Guide](monitoring/03-query-reference.md) - PromQL troubleshooting queries
+4. [Alert Rules Documentation](monitoring/04-alert-rules.md) - Alert troubleshooting
+5. [Manual Testing Guide](Prometheus_MANUAL_TESTING_GUIDE.md) - Monitoring stack testing
+6. [Testing Guide](testing/TESTING_GUIDE.md#troubleshooting) - Test issues
+7. [CI/CD Documentation](deployment/CI_CD_DOCUMENTATION.md#troubleshooting) - Pipeline issues
+8. [Setup Guide](guides/SETUP.md) - Environment issues
 
 ## 🔄 Document Maintenance
 
