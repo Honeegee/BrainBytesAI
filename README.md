@@ -69,7 +69,6 @@ Empowering Filipino students through intelligent tutoring technology that adapts
 
 ### 🌐 User Experience
 - **Responsive Design**: Optimized for desktop, tablet, and mobile devices
-- **Progressive Web App**: Offline capability and mobile-first design
 - **Accessibility**: WCAG 2.1 compliant interface
 - **Multi-language Support**: English and Filipino language support
 
@@ -343,8 +342,6 @@ Access monitoring dashboards at `http://localhost:8080/grafana` (admin/brainbyte
 - Integration with communication tools and workflows
 - Automated incident response procedures
 
-
-
 ### Monitoring Documentation
 
 **📚 Comprehensive Monitoring Guides**:
@@ -469,15 +466,10 @@ We welcome contributions from the community! Please read our contributing guidel
 - **🛡️ Security Headers**: Comprehensive security header implementation
 - **🔍 Vulnerability Scanning**: Automated security audits in CI/CD
 
-
-
 ## 📞 Support
 
 ### Getting Help
 - **📖 Documentation**: Check the [Documentation Index](docs/DOCUMENTATION_INDEX.md)
-- **🐛 Bug Reports**: Create [GitHub Issues](https://github.com/Honeegee/BrainBytesAI/issues)
-- **💬 Discussions**: Use [GitHub Discussions](https://github.com/Honeegee/BrainBytesAI/discussions)
-- **📧 Email**: team@brainbytes.app
 
 ### Community
 - **Discord**: [Join our community](https://discord.gg/brainbytes) (Coming Soon)
