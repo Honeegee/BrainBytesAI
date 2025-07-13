@@ -100,6 +100,7 @@ services:
       - app-network
     depends_on:
       - ai-service
+      - mongo
     restart: unless-stopped
 
   # Prometheus monitoring service
@@ -219,6 +220,25 @@ services:
     profiles:
       - heroku  # Only start when using 'heroku' profile
 
+  # MongoDB for local development
+  mongo:
+    image: mongo:7
+    container_name: mongo-local
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=brainbytes
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - app-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.runCommand('ping').ok"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
   # Redis for session storage and caching (for monitoring consistency)
   redis:
     image: redis:7-alpine
@@ -242,3 +262,4 @@ volumes:
  alertmanager_data:
  grafana_data:
  redis_data:
+ mongo_data:
