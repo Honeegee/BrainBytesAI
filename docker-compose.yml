@@ -206,18 +206,15 @@ services:
 
   # Heroku Exporter (optional - only when HEROKU_API_TOKEN is set)
   heroku-exporter:
-    image: heroku/heroku-exporter:latest
+    build: ./heroku-exporter
     container_name: heroku-exporter
     ports:
       - "9595:9595"
     environment:
       - HEROKU_API_TOKEN=${HEROKU_API_TOKEN}
-    command: ["--heroku.api-token", "${HEROKU_API_TOKEN}"]
     networks:
       - app-network
     restart: unless-stopped
-    profiles:
-      - heroku  # Only start when using 'heroku' profile
 
   # Redis for session storage and caching (for monitoring consistency)
   redis:

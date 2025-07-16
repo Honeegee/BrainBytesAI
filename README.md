@@ -116,6 +116,7 @@ Empowering Filipino students through intelligent tutoring technology that adapts
 | **Alertmanager** | Latest | Alert management |
 | **cAdvisor** | Latest | Container metrics |
 | **Node Exporter** | Latest | Host metrics |
+| **Heroku Exporter** | Custom | Production Heroku app metrics |
 | **Redis** | 7-alpine | Caching and session storage |
 
 ## 🏛️ Architecture
@@ -150,9 +151,12 @@ The architecture follows a microservices pattern with different configurations:
 | **Backend API** | http://localhost/api | REST API endpoints |
 | **AI Service** | http://localhost:8090 | AI processing service |
 | **Monitoring** | http://localhost:8080 | Prometheus, Grafana dashboards |
-| **Grafana** | http://localhost:8080/grafana | Visualization dashboards |
+| **Grafana** | http://localhost:8080/grafana | Visualization dashboards with Heroku metrics |
+| **Heroku Metrics** | http://localhost:9595/metrics | Production Heroku app metrics |
 
 **Default Grafana Credentials**: `admin` / `brainbytes123`
+
+**Heroku Integration**: All dashboards automatically include production metrics when `HEROKU_API_TOKEN` is configured
 
 ## 💻 Development
 
@@ -296,6 +300,7 @@ BrainBytesAI implements enterprise-grade monitoring with a complete observabilit
 - **📈 Custom Metrics**: BrainBytesAI-specific educational and business metrics
 - **🖥️ Infrastructure Monitoring**: Node Exporter and cAdvisor for system metrics
 - **🔄 Real-time Monitoring**: Live system health and performance tracking
+- **☁️ Heroku Production Monitoring**: Integrated production metrics from Heroku apps
 
 ### Key Metrics & Business Impact
 
@@ -310,6 +315,8 @@ BrainBytesAI implements enterprise-grade monitoring with a complete observabilit
 - 📚 **Subject Popularity**: Content effectiveness tracking
 - 📱 **Mobile Usage**: Filipino student mobile-first patterns
 - 🌐 **Geographic Distribution**: Philippines-focused usage analytics
+- ☁️ **Production Insights**: Real Heroku app performance and usage
+- 🚀 **Deployment Tracking**: Release monitoring and dyno health
 
 **Infrastructure Health**:
 - 💾 **Resource Usage**: CPU, memory, disk optimization
@@ -321,12 +328,13 @@ BrainBytesAI implements enterprise-grade monitoring with a complete observabilit
 
 Access monitoring dashboards at `http://localhost:8080/grafana` (admin/brainbytes123):
 
-- **📊 Application Overview**: High-level system health and performance
-- **🚀 Performance Metrics**: Response times, throughput, and optimization
-- **❌ Error Tracking**: Error rates, failure analysis, and debugging
-- **👥 Business Intelligence**: User engagement and educational analytics
-- **🖥️ Infrastructure Monitoring**: System resources and container health
-- **📱 Filipino Context**: Mobile performance and connectivity insights
+- **📊 Application Overview**: High-level system health and performance with Heroku production metrics
+- **🚀 Performance Metrics**: Response times, throughput, and optimization across dev and production
+- **❌ Error Tracking**: Error rates, failure analysis, and debugging for all environments
+- **👥 Business Intelligence**: User engagement and educational analytics with production insights
+- **🖥️ Infrastructure Monitoring**: System resources, container health, and Heroku dyno status
+- **📱 Filipino Context**: Mobile performance and connectivity insights from production data
+- **☁️ Heroku Production**: Dedicated production monitoring with app health, quota, and releases
 
 ### Intelligent Alerting
 
@@ -357,12 +365,13 @@ Access monitoring dashboards at `http://localhost:8080/grafana` (admin/brainbyte
 
 ### Production-Ready Features
 
-- **🔄 Automated Health Checks**: Continuous service monitoring
-- **📈 Performance Optimization**: Resource usage tracking and optimization
-- **🚨 Proactive Alerting**: Issue detection before user impact
-- **📊 Business Analytics**: Educational effectiveness measurement
-- **🌐 Mobile-First Monitoring**: Optimized for Filipino student usage patterns
-- **🔧 Operational Excellence**: Enterprise-grade monitoring procedures
+- **🔄 Automated Health Checks**: Continuous service monitoring across all environments
+- **📈 Performance Optimization**: Resource usage tracking and optimization for dev and production
+- **🚨 Proactive Alerting**: Issue detection before user impact with Heroku integration
+- **📊 Business Analytics**: Educational effectiveness measurement with production data
+- **🌐 Mobile-First Monitoring**: Optimized for Filipino student usage patterns from real usage
+- **🔧 Operational Excellence**: Enterprise-grade monitoring procedures with cloud integration
+- **☁️ Unified Monitoring**: Single dashboard view of development and production environments
 
 ## 🤝 Contributing
 

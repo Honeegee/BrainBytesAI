@@ -37,7 +37,7 @@
             "axisPlacement": "auto",
             "barAlignment": 0,
             "drawStyle": "line",
-            "fillOpacity": 0,
+            "fillOpacity": 10,
             "gradientMode": "none",
             "hideFrom": {
               "legend": false,
@@ -50,7 +50,7 @@
             "scaleDistribution": {
               "type": "linear"
             },
-            "showPoints": "auto",
+            "showPoints": "never",
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -73,7 +73,8 @@
                 "value": 80
               }
             ]
-          }
+          },
+          "unit": "short"
         },
         "overrides": []
       },
@@ -101,11 +102,13 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(rate(brainbytes_http_requests_total[5m])) / count(count by (cpu)(node_cpu_seconds_total))",
+          "expr": "heroku_app_info",
+          "interval": "",
+          "legendFormat": "{{app_name}} ({{region}})",
           "refId": "A"
         }
       ],
-      "title": "Request Rate per CPU Core",
+      "title": "Heroku Applications",
       "type": "timeseries"
     },
     {
@@ -116,35 +119,7 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "vis": false
-            },
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
+            "mode": "thresholds"
           },
           "mappings": [],
           "thresholds": {
@@ -171,28 +146,32 @@
       },
       "id": 2,
       "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom"
+        "orientation": "auto",
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
         },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
       },
+      "pluginVersion": "9.0.0",
       "targets": [
         {
           "datasource": {
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(rate(brainbytes_ai_requests_total[5m]))",
+          "expr": "count(heroku_app_info)",
+          "interval": "",
+          "legendFormat": "Total Apps",
           "refId": "A"
         }
       ],
-      "title": "AI Request Rate",
-      "type": "timeseries"
+      "title": "Total Heroku Apps",
+      "type": "gauge"
     },
     {
       "datasource": {
@@ -209,7 +188,7 @@
             "axisPlacement": "auto",
             "barAlignment": 0,
             "drawStyle": "line",
-            "fillOpacity": 0,
+            "fillOpacity": 10,
             "gradientMode": "none",
             "hideFrom": {
               "legend": false,
@@ -222,7 +201,7 @@
             "scaleDistribution": {
               "type": "linear"
             },
-            "showPoints": "auto",
+            "showPoints": "never",
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -245,7 +224,8 @@
                 "value": 80
               }
             ]
-          }
+          },
+          "unit": "short"
         },
         "overrides": []
       },
@@ -273,30 +253,13 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "100 - (avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
-          "legendFormat": "CPU Usage %",
+          "expr": "heroku_dyno_info",
+          "interval": "",
+          "legendFormat": "{{app_name}} - {{dyno_type}} ({{state}})",
           "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100",
-          "legendFormat": "Memory Usage %",
-          "refId": "B"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "sum(rate(brainbytes_http_requests_total[5m]))",
-          "legendFormat": "Request Rate",
-          "refId": "C"
         }
       ],
-      "title": "Resource Usage vs Load",
+      "title": "Heroku Dynos Status",
       "type": "timeseries"
     },
     {
@@ -310,47 +273,13 @@
             "mode": "palette-classic"
           },
           "custom": {
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
             "hideFrom": {
               "legend": false,
               "tooltip": false,
               "vis": false
-            },
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
             }
           },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
+          "mappings": []
         },
         "overrides": []
       },
@@ -363,9 +292,16 @@
       "id": 4,
       "options": {
         "legend": {
-          "calcs": [],
           "displayMode": "list",
           "placement": "bottom"
+        },
+        "pieType": "pie",
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
         },
         "tooltip": {
           "mode": "single",
@@ -378,13 +314,14 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(rate(container_cpu_usage_seconds_total{name=~\".+\"}[5m])) by (name) * 100",
-          "legendFormat": "{{name}} CPU",
+          "expr": "count by (state) (heroku_dyno_info)",
+          "interval": "",
+          "legendFormat": "{{state}}",
           "refId": "A"
         }
       ],
-      "title": "Container CPU Usage",
-      "type": "timeseries"
+      "title": "Dyno States Distribution",
+      "type": "piechart"
     },
     {
       "datasource": {
@@ -421,8 +358,8 @@
       "gridPos": {
         "h": 8,
         "w": 12,
-        "x": 0,
-        "y": 24
+        "x": 12,
+        "y": 16
       },
       "id": 5,
       "options": {
@@ -448,19 +385,9 @@
           "interval": "",
           "legendFormat": "Used Hours",
           "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "heroku_app_quota_used{quota_type=\"dyno_hours\"}",
-          "interval": "",
-          "legendFormat": "Total Hours",
-          "refId": "B"
         }
       ],
-      "title": "Production Dyno Hours Usage",
+      "title": "Dyno Hours Used",
       "type": "gauge"
     },
     {
@@ -474,35 +401,63 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
             "hideFrom": {
               "legend": false,
               "tooltip": false,
               "vis": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
             }
           },
-          "mappings": []
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
         },
         "overrides": []
       },
       "gridPos": {
         "h": 8,
-        "w": 12,
-        "x": 12,
+        "w": 24,
+        "x": 0,
         "y": 24
       },
       "id": 6,
       "options": {
         "legend": {
+          "calcs": [],
           "displayMode": "list",
-          "placement": "right"
-        },
-        "pieType": "pie",
-        "reduceOptions": {
-          "values": false,
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": ""
+          "placement": "bottom"
         },
         "tooltip": {
           "mode": "single",
@@ -515,21 +470,103 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "count by (dyno_type) (heroku_dyno_info)",
+          "expr": "heroku_release_info",
           "interval": "",
-          "legendFormat": "{{dyno_type}}",
+          "legendFormat": "{{app_name}} - v{{release_version}} ({{status}})",
           "refId": "A"
         }
       ],
-      "title": "Production Dyno Types Distribution",
-      "type": "piechart"
+      "title": "Heroku Releases",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "displayMode": "auto",
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 32
+      },
+      "id": 7,
+      "options": {
+        "showHeader": true
+      },
+      "pluginVersion": "9.0.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "heroku_app_info",
+          "format": "table",
+          "instant": true,
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "title": "Heroku Applications Details",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "Value": true,
+              "__name__": true,
+              "app": true,
+              "instance": true,
+              "job": true
+            },
+            "indexByName": {},
+            "renameByName": {
+              "app_name": "Application",
+              "created_at": "Created",
+              "region": "Region",
+              "stack": "Stack",
+              "updated_at": "Updated"
+            }
+          }
+        }
+      ],
+      "type": "table"
     }
   ],
+  "refresh": "30s",
   "schemaVersion": 36,
   "style": "dark",
   "tags": [
-    "brainbytes",
-    "optimization"
+    "heroku",
+    "monitoring",
+    "cloud"
   ],
   "templating": {
     "list": []
@@ -540,8 +577,8 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "Resource Optimization Dashboard",
-  "uid": "brainbytes-resource-optimization",
+  "title": "Heroku Monitoring Dashboard",
+  "uid": "heroku-monitoring",
   "version": 1,
   "weekStart": ""
 }

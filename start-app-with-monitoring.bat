@@ -10,6 +10,15 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
+REM Load environment variables from .env file
+if exist .env (
+    for /f "usebackq tokens=1,2 delims==" %%a in (".env") do (
+        if not "%%a"=="" if not "%%a:~0,1%"=="#" (
+            set "%%a=%%b"
+        )
+    )
+)
+
 echo Stopping any existing containers...
 docker-compose down
 
@@ -20,17 +29,14 @@ echo - Grafana: http://localhost:3003 (admin/brainbytes123)
 echo - Prometheus: http://localhost:9090
 echo.
 
-REM Check if HEROKU_API_TOKEN is set for Heroku monitoring
+REM Start all services including Heroku monitoring (if HEROKU_API_TOKEN is configured)
+echo Starting all services...
+docker-compose up -d --build
+
 if defined HEROKU_API_TOKEN (
-    echo HEROKU_API_TOKEN found. Starting with Heroku monitoring...
-    docker-compose --profile heroku up -d --build
+    echo ✓ Heroku production monitoring enabled
 ) else (
-    echo Starting without Heroku monitoring...
-    docker-compose up -d --build
-    echo.
-    echo To enable Heroku monitoring:
-    echo 1. Set HEROKU_API_TOKEN in .env file
-    echo 2. Restart: docker-compose --profile heroku up -d
+    echo ⚠ Heroku monitoring disabled (set HEROKU_API_TOKEN in .env to enable)
 )
 
 echo.

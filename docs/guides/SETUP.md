@@ -161,11 +161,36 @@ GROQ_MODEL=deepseek-r1-distill-llama-70b
 NEXT_PUBLIC_BACKEND_URL=http://localhost
 ```
 
-**Root Folder Environment for Heroku Monitoring (.env)**
+**Root Environment for Heroku Production Monitoring (.env)**
 ```bash
+# Heroku API Token for Production Monitoring
 HEROKU_API_TOKEN=your_heroku_api_token_here
 NODE_ENV=development
 ```
+
+**STEP 4: Set Up Heroku Production Monitoring (Optional but Recommended)**
+
+If you want to monitor your Heroku production applications in your local Grafana dashboards:
+
+1. **Get Heroku API Token**
+   - Go to [Heroku Account Settings](https://dashboard.heroku.com/account)
+   - Scroll down to "API Key" section
+   - Click "Reveal" to show your API key
+   - Copy the API key
+
+2. **Configure Heroku Monitoring**
+   - Add your Heroku API token to the root `.env` file:
+   ```bash
+   HEROKU_API_TOKEN=your_actual_heroku_api_token_here
+   ```
+   - The monitoring system will automatically detect this token and start collecting Heroku metrics
+   - All Grafana dashboards will show production metrics alongside local development metrics
+
+**Benefits of Heroku Monitoring Integration:**
+- **Production Insights**: See real production app performance in your local dashboards
+- **Unified Monitoring**: Compare development vs production metrics side-by-side
+- **Heroku Metrics**: App counts, dyno states, quota usage, release tracking
+- **Automatic Integration**: No separate commands needed - starts with main application
 
 #### Configuration Verification
 
@@ -236,12 +261,27 @@ Before running `docker-compose up`:
 ### 3. Start the Application
 
 ```bash
-# Build and start all services with monitoring
+# Build and start all services with integrated monitoring
 docker-compose up -d --build
 
-# Verify all services are running
+# Verify all services are running (including Heroku monitoring if token is configured)
 docker-compose ps
 ```
+
+or
+
+```bash
+#run in terminal
+start-app-with-monitoring.bat
+```
+
+**What starts automatically:**
+- ✅ Frontend, Backend, and AI Service
+- ✅ Complete monitoring stack (Prometheus, Grafana, Alertmanager)
+- ✅ Heroku production monitoring (if `HEROKU_API_TOKEN` is configured)
+- ✅ Traffic generation tools and scripts
+
+**No separate commands needed** - everything starts together with one command!
 
 ### 4. Access the Application
 
@@ -268,10 +308,17 @@ docker-compose ps
 - **Alertmanager**: http://localhost:9093
 - **cAdvisor**: http://localhost:8081
 - **Node Exporter**: http://localhost:9100
+- **Heroku Exporter**: http://localhost:9595 (if Heroku token configured)
 
 **Grafana Credentials:**
 - Username: `admin`
 - Password: `brainbytes123`
+
+**Integrated Heroku Production Monitoring:**
+- All Grafana dashboards automatically include Heroku production metrics
+- Monitor your live Heroku apps alongside local development
+- Metrics include: app status, dyno states, quota usage, releases
+- No separate setup required - works automatically with `HEROKU_API_TOKEN`
 
 **Note**: After making configuration changes, restart the services with `docker-compose down && docker-compose up -d --build`
 
@@ -458,6 +505,7 @@ curl http://localhost:3003/api/health # Grafana health
 curl http://localhost:9093/-/healthy  # Alertmanager health
 curl http://localhost:9100/metrics    # Node Exporter metrics
 curl http://localhost:8081/metrics    # cAdvisor metrics (correct port)
+curl http://localhost:9595/metrics    # Heroku Exporter metrics (if configured)
 
 # Check AI service functionality (note the trailing slash)
 curl -X POST http://localhost/api/ai/chat \
@@ -468,6 +516,9 @@ curl -X POST http://localhost/api/ai/chat \
 curl -X POST http://localhost:8090/api/chat \
   -H "Content-Type: application/json" \
   -d '{"prompt":"Hello, test message"}'
+
+# Check Heroku monitoring (if HEROKU_API_TOKEN is configured)
+curl http://localhost:9595/metrics | grep heroku_app_info
 ```
 
 ### Container Status
@@ -486,6 +537,7 @@ docker-compose logs prometheus
 docker-compose logs alertmanager
 docker-compose logs node-exporter
 docker-compose logs cadvisor
+docker-compose logs heroku-exporter    # Heroku production monitoring logs
 ```
 
 ## Troubleshooting

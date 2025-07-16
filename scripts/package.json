@@ -1,0 +1,24 @@
+{
+  "name": "brainbytes-traffic-generator",
+  "version": "1.0.0",
+  "description": "Traffic generator for BrainBytes AI application",
+  "main": "generate-traffic.js",
+  "scripts": {
+    "start": "node generate-traffic.js",
+    "light": "DURATION=60 RPS=2 CONCURRENCY=2 node generate-traffic.js",
+    "medium": "DURATION=300 RPS=10 CONCURRENCY=5 node generate-traffic.js",
+    "heavy": "DURATION=600 RPS=20 CONCURRENCY=10 node generate-traffic.js",
+    "stress": "DURATION=300 RPS=50 CONCURRENCY=20 node generate-traffic.js"
+  },
+  "dependencies": {
+    "axios": "^1.6.0"
+  },
+  "keywords": [
+    "traffic",
+    "load-testing",
+    "performance",
+    "monitoring"
+  ],
+  "author": "BrainBytes AI",
+  "license": "MIT"
+}
