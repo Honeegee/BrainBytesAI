@@ -6,9 +6,9 @@ global:
     cluster: 'brainbytes-local'
 
 rule_files:
-  - "/etc/prometheus/rules/alert-rules.yml"
-  - "/etc/prometheus/rules/recording_rules.yml"
-  - "/etc/prometheus/rules/advanced-alert-rules.yml"
+  - "/etc/prometheus/alert-rules.yml"
+  - "/etc/prometheus/recording_rules.yml"
+  - "/etc/prometheus/advanced-alert-rules.yml"
 
 alerting:
   alertmanagers:
