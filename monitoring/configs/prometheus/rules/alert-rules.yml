@@ -31,7 +31,7 @@ groups:
 
   # Application Performance Alerts
   - alert: HighErrorRate
-    expr: (sum(rate(brainbytes_http_requests_total{status=~"5.."}[5m])) / sum(rate(brainbytes_http_requests_total[5m]))) * 100 > 5
+    expr: (sum(rate(brainbytes_http_requests_total{status_code=~"5.."}[5m])) / sum(rate(brainbytes_http_requests_total[5m]))) * 100 > 5
     for: 1m
     labels:
       severity: critical

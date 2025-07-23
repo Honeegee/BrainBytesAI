@@ -271,6 +271,19 @@ app.get('/metrics', async (req, res) => {
   }
 });
 
+// Simulate error endpoint for monitoring testing
+app.get('/api/simulate-error', (req, res) => {
+  // Always return a 500 error for incident simulation
+  res.status(500).json({
+    error: {
+      message: 'Simulated server error for monitoring testing',
+      status: 500,
+      timestamp: new Date().toISOString(),
+      type: 'SIMULATED_ERROR'
+    }
+  });
+});
+
 // Routes
 app.use(apiRoutes.auth, authRouter);
 app.use(apiRoutes.messages, messagesRouter);

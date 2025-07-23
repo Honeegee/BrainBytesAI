@@ -110,9 +110,7 @@ services:
       - "9090:9090"
     volumes:
       - ./monitoring/configs/prometheus/development.yml:/etc/prometheus/prometheus.yml
-      - ./monitoring/configs/prometheus/rules/alert-rules.yml:/etc/prometheus/alert-rules.yml
-      - ./monitoring/configs/prometheus/rules/recording_rules.yml:/etc/prometheus/recording_rules.yml
-      - ./monitoring/configs/prometheus/rules/advanced-alert-rules.yml:/etc/prometheus/advanced-alert-rules.yml
+      - ./monitoring/configs/prometheus/rules:/etc/prometheus/rules
       - prometheus_data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
