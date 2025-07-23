@@ -279,8 +279,8 @@ app.get('/api/simulate-error', (req, res) => {
       message: 'Simulated server error for monitoring testing',
       status: 500,
       timestamp: new Date().toISOString(),
-      type: 'SIMULATED_ERROR'
-    }
+      type: 'SIMULATED_ERROR',
+    },
   });
 });
 
