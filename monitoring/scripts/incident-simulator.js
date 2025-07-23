@@ -7,10 +7,10 @@ const { spawn } = require('child_process');
 const CONFIG = {
   BACKEND_URL: 'http://localhost',  // Through nginx proxy
   AI_SERVICE_URL: 'http://localhost:8090', // AI service on port 8090
-  PROMETHEUS_URL: 'http://localhost:9090',
-  ALERTMANAGER_URL: 'http://localhost:9093',
-  CADVISOR_URL: 'http://localhost:8081',
-  GRAFANA_URL: 'http://localhost:3003'
+  PROMETHEUS_URL: 'http://localhost:8080/prometheus',  // Through nginx proxy
+  ALERTMANAGER_URL: 'http://localhost:8080/alertmanager',  // Through nginx proxy
+  CADVISOR_URL: 'http://localhost:8080/cadvisor',  // Through nginx proxy
+  GRAFANA_URL: 'http://localhost:8080/grafana'  // Through nginx proxy
 };
 
 // Available incident types
@@ -82,7 +82,7 @@ async function checkServices() {
   const results = {};
   for (const service of services) {
     try {
-      await axios.get(service.url, { timeout: 5000 });
+      await axios.get(service.url, { timeout: 10000 });
       log(`${service.name}: Available`, 'success');
       results[service.name] = true;
     } catch (error) {
@@ -148,8 +148,49 @@ async function showSystemStatus() {
 async function triggerHighCPU() {
   log('Triggering High CPU incident...', 'incident');
   
-  // Use stress command to generate CPU load
-  const stressProcess = spawn('stress', ['--cpu', '4', '--timeout', '300s'], {
+  // Create a Windows-compatible CPU stress process using Node.js
+  const cpuStressScript = `
+    const os = require('os');
+    const numCPUs = os.cpus().length;
+    const workers = [];
+    
+    console.log('Starting CPU stress test on', numCPUs, 'cores');
+    
+    // Create worker function that consumes CPU
+    function cpuIntensiveTask() {
+      const start = Date.now();
+      while (Date.now() - start < 100) {
+        // Busy loop to consume CPU
+        Math.random() * Math.random();
+      }
+      // Small break to prevent complete system freeze
+      setTimeout(cpuIntensiveTask, 1);
+    }
+    
+    // Start CPU intensive tasks on multiple cores
+    for (let i = 0; i < Math.min(4, numCPUs); i++) {
+      setTimeout(cpuIntensiveTask, i * 10);
+    }
+    
+    // Stop after 5 minutes (300 seconds)
+    setTimeout(() => {
+      console.log('CPU stress test completed');
+      process.exit(0);
+    }, 300000);
+    
+    // Handle graceful shutdown
+    process.on('SIGTERM', () => {
+      console.log('CPU stress test terminated');
+      process.exit(0);
+    });
+    
+    process.on('SIGINT', () => {
+      console.log('CPU stress test interrupted');
+      process.exit(0);
+    });
+  `;
+  
+  const stressProcess = spawn('node', ['-e', cpuStressScript], {
     stdio: 'pipe'
   });
   
