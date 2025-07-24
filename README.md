@@ -8,7 +8,9 @@
 
 **🎓 An innovative AI-powered tutoring platform designed for Filipino students**
 
-[🚀 Live Demo](https://brainbytes-frontend-production-03d1e6b6b158.herokuapp.com) • [📖 Documentation](docs/DOCUMENTATION_INDEX.md) 
+[🚀 Live Demo](https://brainbytes-frontend-production-03d1e6b158.herokuapp.com) • [📖 Documentation](docs/DOCUMENTATION_INDEX.md) 
+
+[📽️ Terminal Assessment Presentation Demo](https://drive.google.com/drive/folders/1FITey_c6E3bHokE2vNh81ijoL4v7yFrJ?usp=sharing)
 
 > **🎓 Milestone 2: CI/CD Implementation and Cloud Deployment - COMPLETE**
 > **📋 [Final Submission Document](docs/MILESTONE_2_FINAL_SUBMISSION.md)**
